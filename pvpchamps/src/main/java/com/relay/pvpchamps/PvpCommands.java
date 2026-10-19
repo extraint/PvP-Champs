@@ -86,7 +86,7 @@ public final class PvpCommands {
 		if (a == null || b == null || a == b) { say(src, "Pick two different roster players. /pvpchamps roster"); return 0; }
 		Kits kit = kitId == null ? Kits.values()[RNG.nextInt(Kits.values().length)] : Kits.byId(kitId);
 		if (kit == null) { say(src, "Unknown kit. /pvpchamps kits"); return 0; }
-		if (!com.relay.spectate.RelayServerApi.canDrive(p)) say(src, "(You don't have the Relay Spectator client mod: you'll see the fight but not the camera or HUD.)");
+		if (!Spec.canDrive(p)) say(src, "(You don't have the Relay Spectator client mod: you'll see the fight but not the camera or HUD.)");
 		MatchManager.begin(new Match(src.getServer(), p, true, a.name(), b.name(), kit, 3, "Main Event", EVENT, null));
 		return 1;
 	}

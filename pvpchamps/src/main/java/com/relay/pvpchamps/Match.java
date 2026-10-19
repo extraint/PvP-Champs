@@ -1,6 +1,5 @@
 package com.relay.pvpchamps;
 
-import com.relay.spectate.RelayServerApi;
 import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
@@ -118,7 +117,7 @@ public final class Match {
 			prepare(humanRef);
 			teleport(humanRef, spot(-10), -90f);
 		}
-		RelayServerApi.stop(humanRef);
+		Spec.stop(humanRef);
 	}
 
 	private Vec3 spot(double dx) {
@@ -161,8 +160,8 @@ public final class Match {
 					VexBotApi.hunt(nameB, nameA);
 					if (watch) VexBotApi.hunt(nameA, nameB);
 					message(Component.literal("§cFIGHT!"), true);
-					if (watch) RelayServerApi.watch(humanRef, nameA, nameB, kit.label, roundLabel(), event, "");
-					else RelayServerApi.play(humanRef, nameA, nameB, kit.label, roundLabel(), event);
+					if (watch) Spec.watch(humanRef, nameA, nameB, kit.label, roundLabel(), event, "");
+					else Spec.play(humanRef, nameA, nameB, kit.label, roundLabel(), event);
 					state = State.FIGHT;
 				} else if (timer > 300) {
 					message(Component.literal("§cThe bot did not spawn (is the area loaded and clear?). Match cancelled."));
@@ -213,7 +212,7 @@ public final class Match {
 		VexBotApi.despawnBot(server, nameB);
 		if (watch) VexBotApi.despawnBot(server, nameA);
 		revive();
-		RelayServerApi.stop(humanRef);
+		Spec.stop(humanRef);
 		humanRef.setGameMode(savedMode);
 		if (!watch && saved.stacks != null) KitManager.apply(humanRef, saved.stacks);
 		if (changedRespawn) command("gamerule immediate_respawn false");
