@@ -62,6 +62,7 @@ public final class RelayClient implements ClientModInitializer {
 	private static boolean active;
 	private static String nameA = "", nameB = "", manualKit;
 	private static Kit detectedKit = Kit.NONE;
+	private static String roundLabel, eventLabel; // set with /spectate round and /spectate event; they persist across rounds
 	private static String pickName; // who picked the kit, shown under its name
 	private static final Map<String, Map<String, Integer>> summaries = new ConcurrentHashMap<>();
 	private static int netTicks;
@@ -140,6 +141,20 @@ public final class RelayClient implements ClientModInitializer {
 					.then(ClientCommands.argument("player", StringArgumentType.word())
 						.suggests((c, b) -> SharedSuggestionProvider.suggest(c.getSource().getOnlinePlayerNames(), b))
 						.executes(c -> { win(c.getSource(), StringArgumentType.getString(c, "player")); return 1; })))
+				.then(ClientCommands.literal("round")
+					.then(ClientCommands.argument("text", StringArgumentType.greedyString()).executes(c -> {
+						String t = StringArgumentType.getString(c, "text");
+						roundLabel = t.equalsIgnoreCase("off") ? null : t;
+						c.getSource().sendFeedback(Component.literal(roundLabel == null ? "Round label hidden." : "Round label: " + roundLabel));
+						return 1;
+					})))
+				.then(ClientCommands.literal("event")
+					.then(ClientCommands.argument("text", StringArgumentType.greedyString()).executes(c -> {
+						String t = StringArgumentType.getString(c, "text");
+						eventLabel = t.equalsIgnoreCase("off") ? null : t;
+						c.getSource().sendFeedback(Component.literal(eventLabel == null ? "Event box hidden." : "Event box: " + eventLabel));
+						return 1;
+					})))
 				.then(ClientCommands.literal("pick")
 					.then(ClientCommands.argument("player", StringArgumentType.word())
 						.suggests((c, b) -> SharedSuggestionProvider.suggest(c.getSource().getOnlinePlayerNames(), b))
@@ -178,6 +193,7 @@ public final class RelayClient implements ClientModInitializer {
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath("relay_spectator", "top_bar"), new TopBar());
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath("relay_spectator", "inventory_bar"), new InventoryBar());
 		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath("relay_spectator", "kit_box"), new KitBox());
+		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath("relay_spectator", "event_boxes"), new EventBoxes());
 		ClientTickEvents.END_CLIENT_TICK.register(RelayClient::tick);
 		LevelRenderEvents.START_MAIN.register(ctx -> frame(Minecraft.getInstance()));
 	}
@@ -199,6 +215,8 @@ public final class RelayClient implements ClientModInitializer {
 	static String kitIcon() { return detectedKit.icon; }
 	static boolean manualKitSet() { return manualKit != null; }
 	static String pickName() { return pickName; }
+	static String roundLabel() { return roundLabel; }
+	static String eventLabel() { return eventLabel; }
 	static String kitLabel() { return manualKit != null ? manualKit : detectedKit.label; }
 	static java.util.List<String> trackedKeys() { return detectedKit.tracked; }
 
@@ -304,6 +322,8 @@ public final class RelayClient implements ClientModInitializer {
 			nameB = System.getProperty("relay.demo.nameB", "x_Kyran_x"); // dev only
 			if (!noServer) detectedKit = Kit.valueOf(System.getProperty("relay.demo.kit", "SPEAR_MACE")); // dev only
 			pickName = "x_Kyran_x";
+			roundLabel = "Main Event - Upper Round 1"; // dev only
+			eventLabel = "PVP CHAMPS II";
 			if (!noServer) {
 				summaries.put(nameA.toLowerCase(Locale.ROOT), Map.of("totem_of_undying", 0, "wind_charge", 51, "ender_pearl", 64));
 				summaries.put(nameB.toLowerCase(Locale.ROOT), Map.of("totem_of_undying", 1, "wind_charge", 51, "ender_pearl", 64));

@@ -5,6 +5,8 @@ A PvP-tournament-style spectator mod.
 | Command | What it does |
 |---|---|
 | `/spectate <playerA> <playerB>` | Auto-directed camera on the duel (you must be in spectator mode). Cuts between side, over-the-shoulder and high shots; follows any ender pearl in flight. |
+| `/spectate round <text\|off>` | Round label bar bottom-left, e.g. `Main Event - Upper Round 1`. |
+| `/spectate event <text\|off>` | Event box top-right (text only). |
 | `/spectate pick <player>` | Show "<player> Pick" under the kit name in the top-left kit box. |
 | `/spectate kit <name>` | Label shown on the breakdown (e.g. `Spear & Mace`). |
 | `/spectate stop` | Stop. |
