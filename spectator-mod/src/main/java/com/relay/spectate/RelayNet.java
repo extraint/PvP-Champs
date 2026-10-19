@@ -40,9 +40,32 @@ public final class RelayNet {
 		public Type<? extends CustomPacketPayload> type() { return TYPE; }
 	}
 
+	/**
+	 * Server to client: start (or, with empty names, stop) a spectate session without the viewer typing /spectate.
+	 * {@code participant} means the viewer is one of the fighters, so they get the HUD and the breakdown but the
+	 * camera is left alone.
+	 */
+	public record AutoSpectate(String a, String b, String kit, String round, String event, String pick, boolean participant)
+			implements CustomPacketPayload {
+		public static final Type<AutoSpectate> TYPE = new Type<>(Identifier.fromNamespaceAndPath("relay_spectator", "auto"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, AutoSpectate> CODEC = StreamCodec.composite(
+			ByteBufCodecs.STRING_UTF8, AutoSpectate::a,
+			ByteBufCodecs.STRING_UTF8, AutoSpectate::b,
+			ByteBufCodecs.STRING_UTF8, AutoSpectate::kit,
+			ByteBufCodecs.STRING_UTF8, AutoSpectate::round,
+			ByteBufCodecs.STRING_UTF8, AutoSpectate::event,
+			ByteBufCodecs.STRING_UTF8, AutoSpectate::pick,
+			ByteBufCodecs.BOOL, AutoSpectate::participant,
+			AutoSpectate::new);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() { return TYPE; }
+	}
+
 	/** Must run on both sides, before any connection. */
 	public static void registerTypes() {
 		PayloadTypeRegistry.serverboundPlay().register(Request.TYPE, Request.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(Summary.TYPE, Summary.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(AutoSpectate.TYPE, AutoSpectate.CODEC);
 	}
 }

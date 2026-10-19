@@ -20,6 +20,9 @@ loom {
 	runs {
 		client {
 			// ./gradlew runClient -Pdemo : join a local server and fake a round for screenshots
+			if (project.hasProperty('connect') && !project.hasProperty('demo')) { // plain client that joins a local server
+				programArgs '--quickPlayMultiplayer', 'localhost:25565', '--width', '1280', '--height', '720', '--username', 'RelayTest'
+			}
 			if (project.hasProperty('demo')) {
 				programArgs '--quickPlayMultiplayer', 'localhost:25565', '--width', '1280', '--height', '720', '--username', 'RelayTest'
 				property 'relay.demo', '1'

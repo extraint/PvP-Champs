@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "pvpchamps",
+  "version": "${version}",
+  "name": "PvP Champs",
+  "description": "A VexBot extension that simulates the PvP Champs event: fight pro-style bots in the event's kits, run a bracket, and watch bot matches with the Relay Spectator camera.",
+  "authors": ["Relay"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": { "main": ["com.relay.pvpchamps.PvpChamps"] },
+  "mixins": ["pvpchamps.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*",
+    "vexbot": ">=3.0.14",
+    "relay_spectator": ">=0.1.0"
+  }
+}

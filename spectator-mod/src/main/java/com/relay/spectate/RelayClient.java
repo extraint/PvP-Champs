@@ -80,6 +80,8 @@ public final class RelayClient implements ClientModInitializer {
 	private static Boolean pendingTotemIsA;
 	private static Boolean pendingDeathIsA; // set by the death entity event
 	private static boolean seenBoth;
+	private static String endedKitLabel;
+	private static boolean participant; // the local player is fighting: HUD and breakdown, no camera
 	private static int tickCount;
 	private static boolean focusWide;      // close-up on a launched fighter, from further back
 	private static int fastId, fastUntil;
@@ -109,6 +111,7 @@ public final class RelayClient implements ClientModInitializer {
 
 	// last finished round, for /breakdown
 	private static BreakdownScreen lastBreakdown;
+	private static int breakdownHold; // ticks left to keep the breakdown up against a respawn closing it
 
 	@Override
 	public void onInitializeClient() {
@@ -185,6 +188,21 @@ public final class RelayClient implements ClientModInitializer {
 				else Minecraft.getInstance().schedule(() -> Minecraft.getInstance().setScreenAndShow(lastBreakdown));
 				return 1;
 			}));
+		});
+		ClientPlayNetworking.registerGlobalReceiver(RelayNet.AutoSpectate.TYPE, (payload, ctx) -> {
+			Minecraft mc = Minecraft.getInstance();
+			if (payload.a().isEmpty()) { cleanupReplay(); active = false; participant = false; return; } // stop: leave any breakdown up
+			// A new round starts: put the previous round's breakdown away.
+			breakdownHold = 0;
+			if (mc.gui.screen() instanceof BreakdownScreen) mc.setScreenAndShow(null);
+			// The same two fighters again is the next round of a match: keep the match score.
+			boolean same = active && participant == payload.participant()
+				&& nameA.equalsIgnoreCase(payload.a()) && nameB.equalsIgnoreCase(payload.b());
+			if (!same) resetSession(payload.a(), payload.b(), payload.participant());
+			roundLabel = payload.round().isEmpty() ? null : payload.round();
+			eventLabel = payload.event().isEmpty() ? null : payload.event();
+			pickName = payload.pick().isEmpty() ? null : payload.pick();
+			manualKit = payload.kit().isEmpty() ? null : payload.kit();
 		});
 		ClientPlayNetworking.registerGlobalReceiver(RelayNet.Summary.TYPE, (payload, ctx) -> {
 			if (DEMO) { System.out.println("[relay_spectator] demo: server answered for " + payload.name() + " " + payload.counts()); return; }
@@ -273,7 +291,8 @@ public final class RelayClient implements ClientModInitializer {
 		String armor = armorMaterial(armorOf(nameA));
 		if (armor == null) armor = armorMaterial(armorOf(nameB));
 		Kit k = Kit.detect(merged, armor);
-		if (k == Kit.NONE && merged == null) k = Kit.fromHeld(sawMace, sawSpear); // no server data: use held items
+		if (k == Kit.NONE && merged == null && !serverHasMod) k = Kit.fromHeld(sawMace, sawSpear); // no server data: use held items
+		if (k == Kit.NONE && serverHasMod && merged == null) return; // the server will answer in a moment
 		detectedKit = k;
 	}
 
@@ -361,6 +380,12 @@ public final class RelayClient implements ClientModInitializer {
 			src.sendFeedback(Component.literal("Pick two different players."));
 			return;
 		}
+		resetSession(a, b, false);
+		src.sendFeedback(Component.literal("Spectating " + a + " vs " + b + ". /spectate stop to end."));
+	}
+
+	/** Fresh state for a new session; {@code asParticipant} = the local player is one of the fighters. */
+	private static void resetSession(String a, String b, boolean asParticipant) {
 		cleanupReplay();
 		summaries.clear();
 		detectedKit = Kit.NONE;
@@ -388,7 +413,7 @@ public final class RelayClient implements ClientModInitializer {
 		recoverA = recoverB = -999;
 		mode = Mode.LIVE;
 		active = true;
-		src.sendFeedback(Component.literal("Spectating " + a + " vs " + b + ". /spectate stop to end."));
+		participant = asParticipant;
 	}
 
 	private static void stop(FabricClientCommandSource src) {
@@ -438,11 +463,15 @@ public final class RelayClient implements ClientModInitializer {
 	}
 
 	private static void tick(Minecraft mc) {
+		if (breakdownHold > 0) {
+			breakdownHold--;
+			if (lastBreakdown != null && mc.gui.screen() == null) mc.setScreenAndShow(lastBreakdown);
+		}
 		if (DEMO) demoTick(mc);
 		if (!active) return;
 		LocalPlayer me = mc.player;
 		if (me == null || mc.level == null) { active = false; cleanupReplay(); return; }
-		if (!me.isSpectator()) return; // never drag a non-spectator around
+		if (!me.isSpectator() && !participant) return; // never drag a non-spectator around
 		tickedSinceFrame = true;
 		netTick();
 
@@ -581,6 +610,8 @@ public final class RelayClient implements ClientModInitializer {
 
 	/** Replay the lead-up to the knockout, then the breakdown. */
 	private static void endRound(Minecraft mc, boolean loserIsA, String why) {
+		endedKitLabel = kitLabel(); // the breakdown shows the kit of the round that just ended, before it is reset for the next
+		System.out.println("[relay_spectator] round end: " + (loserIsA ? nameA : nameB) + " " + why);
 		deathCooldown = DEATH_REARM_TICKS;
 		detectedKit = Kit.NONE; // next round may be a different kit
 		popsA = popsB = 0;
@@ -660,7 +691,7 @@ public final class RelayClient implements ClientModInitializer {
 		List<Recorder.Tick> frames = recorder.snapshot();
 		int keep = replaySeconds * 20;
 		if (frames.size() > keep) frames = frames.subList(frames.size() - keep, frames.size());
-		if (!replaysEnabled || frames.size() < 10) {
+		if (!replaysEnabled || participant || frames.size() < 10) {
 			if (cause == Cause.DEATH) showBreakdown(mc, loserIsA);
 			return;
 		}
@@ -740,9 +771,10 @@ public final class RelayClient implements ClientModInitializer {
 	private static void showBreakdown(Minecraft mc, boolean loserIsA) {
 		boolean aWon = !loserIsA;
 		if (aWon) scoreA++; else scoreB++;
-		lastBreakdown = new BreakdownScreen(nameA, nameB, kitLabel(), stats, skinA, skinB, mc.level == null ? null : find(mc.level, aWon ? nameA : nameB), aWon, scoreA, scoreB);
+		lastBreakdown = new BreakdownScreen(nameA, nameB, endedKitLabel != null ? endedKitLabel : kitLabel(), stats, skinA, skinB, mc.level == null ? null : find(mc.level, aWon ? nameA : nameB), aWon, scoreA, scoreB);
 		stats = new Stats(); // fresh numbers for the next round
 		mc.setScreenAndShow(lastBreakdown);
+		if (participant) breakdownHold = 120;
 	}
 
 	private static void cleanupReplay() {
