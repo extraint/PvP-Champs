@@ -16,9 +16,11 @@ import net.minecraft.world.item.enchantment.Enchantments;
 
 /**
  * The event's game modes as kits. Each builds a 41-slot array in inventory order: 0-8 hotbar, 9-35 main,
- * 36 boots, 37 leggings, 38 chestplate, 39 helmet, 40 offhand. These are my approximations of the real kits.
+ * 36 boots, 37 leggings, 38 chestplate, 39 helmet, 40 offhand. Mode list from PVPHQ/Liquipedia (Sword, Spear & Mace, Diamond SMP, Cart, UHC); exact contents are not published, so items follow the wiki's kit definitions.
  */
 public enum Kits {
+	SWORD("sword", "Sword"),
+	UHC("uhc", "UHC"),
 	SPEAR_MACE("spear_mace", "Spear & Mace"),
 	MACE("mace", "Mace"),
 	CART("cart", "Cart"),
@@ -60,7 +62,7 @@ public enum Kits {
 			case CART -> {
 				b.armor(Material.NETHERITE, true);
 				b.hotbar(b.weapon(Items.NETHERITE_SWORD, 5), b.n(Items.TNT_MINECART, 32), b.n(Items.RAIL, 64), b.n(Items.ACTIVATOR_RAIL, 16),
-					b.n(Items.BOW, 1), b.n(Items.ENDER_PEARL, 16), b.n(Items.GOLDEN_APPLE, 16), b.n(Items.TOTEM_OF_UNDYING, 3));
+					b.cartBow(), b.n(Items.ENDER_PEARL, 16), b.n(Items.GOLDEN_APPLE, 16), b.n(Items.TOTEM_OF_UNDYING, 3));
 				b.main(b.n(Items.EXPERIENCE_BOTTLE, 64), b.n(Items.ARROW, 64), b.n(Items.TOTEM_OF_UNDYING, 1), b.n(Items.WATER_BUCKET, 1), b.n(Items.TNT_MINECART, 32));
 				b.offhand(b.n(Items.SHIELD, 1));
 			}
@@ -116,6 +118,23 @@ public enum Kits {
 			s.enchant(ench(Enchantments.SHARPNESS), sharpness);
 			s.enchant(ench(Enchantments.UNBREAKING), 3);
 			s.enchant(ench(Enchantments.MENDING), 1);
+			if (item == Items.NETHERITE_SWORD || item == Items.DIAMOND_SWORD) s.enchant(ench(Enchantments.SWEEPING_EDGE), 3);
+			return s;
+		}
+
+		/** The Cart kit's bow: Flame lights the TNT minecarts. */
+		ItemStack cartBow() {
+			ItemStack s = new ItemStack(Items.BOW);
+			s.enchant(ench(Enchantments.FLAME), 1);
+			s.enchant(ench(Enchantments.POWER), 5);
+			s.enchant(ench(Enchantments.UNBREAKING), 3);
+			s.enchant(ench(Enchantments.MENDING), 1);
+			return s;
+		}
+
+		ItemStack bow() {
+			ItemStack s = new ItemStack(Items.BOW);
+			s.enchant(ench(Enchantments.POWER), 3);
 			return s;
 		}
 
