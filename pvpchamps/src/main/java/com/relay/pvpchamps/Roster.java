@@ -30,9 +30,9 @@ public final class Roster {
 		List<String> all = Kits.ids();
 		return new ArrayList<>(List.of(
 			new Opponent("Swight", "Spear & Mace specialist", "EXPERT", "AGGRESSIVE", 92, 1.0,
-				List.of("spear_mace", "mace"), List.of("pop_punish", "pearl_close", "bait_retreat", "stun_slam", "spear_lunge")),
+				List.of("spear_mace", "mace"), List.of("pop_punish", "pearl_close", "bait_retreat")),
 			new Opponent("ImMixed", "All-rounder", "EXPERT", "ADAPTIVE", 90, 1.0,
-				all, List.of("pop_punish", "bait_retreat", "mend_reset", "stun_slam")),
+				all, List.of("pop_punish", "bait_retreat", "mend_reset")),
 			new Opponent("Freekee_Fang", "Cart and potion fighter", "HARD", "BALANCED", 84, 1.0,
 				List.of("cart", "netherite_op"), List.of("pearl_close", "mend_reset")),
 			new Opponent("x_Kyran_x", "SMP pressure", "EXPERT", "AGGRESSIVE", 88, 1.0,
