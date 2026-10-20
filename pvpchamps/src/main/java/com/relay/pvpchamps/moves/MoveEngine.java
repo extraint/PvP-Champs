@@ -32,7 +32,7 @@ public final class MoveEngine {
 		final List<Move> moves;
 
 		State() {
-			moves = List.of(punish, new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall());
+			moves = List.of(punish, new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall(), new ShieldBreak(), new ThreeBlockHit());
 		}
 
 		int cooldown(String id) { return Math.max(0, cooldowns.getOrDefault(id, 0) - tick); }
@@ -96,7 +96,7 @@ public final class MoveEngine {
 		} else if (st.tick % 4 == 0) {
 			for (Move m : st.moves) {
 				if (!profile.moves().contains(m.id()) && !(com.relay.pvpchamps.CombatMaster.is(profile.difficulty())
-						&& (m.id().equals("strafe_pressure") || m.id().equals("anti_stall")))) continue;
+						&& (m.id().equals("strafe_pressure") || m.id().equals("anti_stall") || m.id().equals("shield_break") || m.id().equals("three_block_hit")))) continue;
 				diag("try:" + m.id());
 				if (m.start(c)) {
 					st.current = m;
