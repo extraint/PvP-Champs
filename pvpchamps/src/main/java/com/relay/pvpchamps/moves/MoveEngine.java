@@ -49,6 +49,9 @@ public final class MoveEngine {
 
 	private static void diag(String k) { DIAG.merge(k, 1, Integer::sum); }
 
+	/** Why a move's start check said no, counted per move so /pvpchamps moves stats shows the blocker. */
+	public static boolean reject(String move, String why) { DIAG.merge("no:" + move + ":" + why, 1, Integer::sum); return false; }
+
 	public static void setEnabled(boolean on) { enabled = on; }
 
 	public static boolean enabled() { return enabled; }
@@ -82,11 +85,13 @@ public final class MoveEngine {
 
 		boolean skip = false;
 		if (st.current != null) {
+			diag("busy:" + st.current.id());
 			if (st.current.tick(c)) skip = true;
 			else endCurrent(st, c);
 		} else if (st.tick % 4 == 0) {
 			for (Move m : st.moves) {
 				if (!profile.moves().contains(m.id())) continue;
+				diag("try:" + m.id());
 				if (m.start(c)) {
 					st.current = m;
 					USED.merge(bot.getGameProfile().name() + ":" + m.id(), 1, Integer::sum);

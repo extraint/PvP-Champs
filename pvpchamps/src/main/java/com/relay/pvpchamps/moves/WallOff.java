@@ -16,9 +16,11 @@ public final class WallOff implements Move {
 
 	@Override
 	public boolean start(Ctx c) {
-		if (c.st.cooldown(id()) > 0 || c.dist < 2.5 || c.dist > 5.5) return false;
-		if (c.hp() > 10f || c.target.getHealth() < c.bot.getHealth()) return false;
-		if (blockSlot(c) < 0) return false;
+		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
+		if (c.dist < 1.5 || c.dist > 8) return MoveEngine.reject(id(), "distance");
+		if (c.hp() > 10f) return MoveEngine.reject(id(), "healthy");
+		if (c.target.getHealth() < c.bot.getHealth()) return MoveEngine.reject(id(), "winning");
+		if (blockSlot(c) < 0) return MoveEngine.reject(id(), "no_block");
 		t = 0;
 		placed = 0;
 		return true;
