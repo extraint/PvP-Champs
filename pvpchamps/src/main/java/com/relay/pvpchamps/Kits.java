@@ -103,7 +103,7 @@ public enum Kits {
 				b.add(b.n(Items.COOKED_BEEF, 64));
 				b.singles(Items.TOTEM_OF_UNDYING, 2);
 				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
-				b.fillPotions(b.instantHealing(20));
+				b.placePotions(b.instantHealing(20));
 				b.fillPotions(b.nonHealing());
 				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
 				b.shield();
@@ -118,7 +118,7 @@ public enum Kits {
 				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
 				b.add(b.tippedHarming(64));
 				b.singles(Items.TOTEM_OF_UNDYING, 2);
-				b.fillPotions(b.instantHealing(4));
+				b.placePotions(b.instantHealing(4));
 				b.fillPotions(b.nonHealing());
 				b.armor(Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET, true);
 				b.shield();
@@ -234,10 +234,15 @@ public enum Kits {
 			return List.of(Potions.STRONG_STRENGTH, Potions.STRONG_SWIFTNESS, Potions.FIRE_RESISTANCE, Potions.STRONG_REGENERATION);
 		}
 
+		/** Places each potion once, in the next empty slots. */
+		void placePotions(List<Holder<net.minecraft.world.item.alchemy.Potion>> list) {
+			for (Holder<net.minecraft.world.item.alchemy.Potion> p : list) add(potion(p));
+		}
+
 		/** Fills the empty slots with splash potions, cycling through the list. */
 		void fillPotions(List<Holder<net.minecraft.world.item.alchemy.Potion>> list) {
 			int i = 0;
-			while (next < 36 && i < list.size() * 40) {
+			while (next < 36) {
 				add(potion(list.get(i % list.size())));
 				i++;
 			}
