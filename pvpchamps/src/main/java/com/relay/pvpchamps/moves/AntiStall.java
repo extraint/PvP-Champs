@@ -14,6 +14,7 @@ public final class AntiStall implements Move {
 		if (c.st.stillTicks < 20) return false;
 		if (c.dist < 2.0 || c.dist > 24) return MoveEngine.reject(id(), "range");
 		if (c.bot.isUsingItem() || c.bot.isFallFlying()) return MoveEngine.reject(id(), "busy");
+		if (c.hp() <= 12f) return MoveEngine.reject(id(), "low_hp"); // Vexbot heals and pops totems at low health
 		left = 30;
 		return true;
 	}
@@ -21,6 +22,7 @@ public final class AntiStall implements Move {
 	@Override
 	public boolean tick(Ctx c) {
 		if (--left <= 0 || !c.target.isAlive() || c.dist > 26) return false;
+		if (c.hp() <= 10f) return false; // hand control back so Vexbot can heal
 		c.face(c.targetEye());
 		c.run(1f, true);
 		if (c.bot.onGround() && c.dist > 5 && c.st.rng.nextInt(10) == 0) c.jumpOnce();

@@ -73,7 +73,7 @@ public final class Roster {
 			DifficultyParams p;
 			if (CombatMaster.is(o.difficulty())) {
 				p = CombatMaster.params(o.accuracy());
-				BotSettings.strafeInCombo = true;
+				CombatMaster.applySettings();
 			} else {
 				p = DifficultyParams.forPreset(BotSettings.Difficulty.valueOf(o.difficulty().toUpperCase()));
 				p.accuracy = Math.min(1.0, p.accuracy * o.accuracy());

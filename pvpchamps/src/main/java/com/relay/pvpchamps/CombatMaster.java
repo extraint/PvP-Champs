@@ -18,6 +18,14 @@ public final class CombatMaster {
 		return d.equals(NAME);
 	}
 
+	/** Server-wide Vexbot settings that Combat Master relies on; applied when a Combat Master bot is set up. */
+	public static void applySettings() {
+		BotSettings.strafeInCombo = true;
+		BotSettings.offhandTotemHearts = 8.0; // totem in the offhand from 8 hearts (Vexbot's default is 4)
+		BotSettings.usePotions = true;
+		BotSettings.maceTotem = true;
+	}
+
 	public static DifficultyParams params(double accuracy) {
 		DifficultyParams p = DifficultyParams.forPreset(BotSettings.Difficulty.PERFECT);
 		p.missChance = 0;
