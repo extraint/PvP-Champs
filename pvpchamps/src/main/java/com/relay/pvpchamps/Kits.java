@@ -47,31 +47,13 @@ public enum Kits {
 		return out;
 	}
 
-	@SuppressWarnings("unchecked")
 	public ItemStack[] build(MinecraftServer server) {
 		B b = new B(server);
 		switch (this) {
 			case SWORD -> {
 				// Sword PvP: diamond sword and diamond armor, Protection IV / Unbreaking III.
 				b.set(0, b.e(Items.DIAMOND_SWORD, E.SHARPNESS, 5, E.UNBREAKING, 3));
-				b.armor(Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET,
-					new int[][] {{4, 3}}, false);
-			}
-			case NETHERITE_OP -> {
-				// OP PvP: the sword variant with an axe, food, shield and potions, in netherite.
-				b.set(0, b.e(Items.NETHERITE_SWORD, E.SHARPNESS, 5, E.UNBREAKING, 3, E.MENDING, 1));
-				b.set(1, b.e(Items.NETHERITE_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
-				b.set(2, b.potion(Potions.STRONG_STRENGTH));
-				b.set(3, b.potion(Potions.STRONG_SWIFTNESS));
-				b.set(4, b.n(Items.ENDER_PEARL, 16));
-				b.set(5, b.n(Items.GOLDEN_APPLE, 32));
-				b.set(6, b.n(Items.COOKED_BEEF, 64));
-				b.set(7, b.n(Items.TOTEM_OF_UNDYING, 1));
-				b.set(8, b.n(Items.EXPERIENCE_BOTTLE, 64));
-				b.fill(9, b.heals(Potions.STRONG_HEALING, 14));
-				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET,
-					new int[][] {{4, 3}}, true);
-				b.shield();
+				b.armor(Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET, false);
 			}
 			case UHC -> {
 				b.set(0, b.e(Items.DIAMOND_SWORD, E.SHARPNESS, 1));
@@ -88,80 +70,94 @@ public enum Kits {
 				b.set(11, b.n(Items.COOKED_BEEF, 32));
 				b.set(12, b.n(Items.WATER_BUCKET, 1));
 				b.set(13, b.n(Items.LAVA_BUCKET, 1));
-				b.armor(Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET,
-					new int[][] {{2, 0}}, false);
+				b.armor(Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET, false);
 				b.shield();
 			}
 			case CART -> {
-				b.set(0, b.e(Items.DIAMOND_SWORD, E.SHARPNESS, 5, E.UNBREAKING, 3));
-				b.set(1, b.e(Items.DIAMOND_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
-				b.set(2, b.e(Items.BOW, E.POWER, 5, E.UNBREAKING, 3, E.FLAME, 1));
-				b.set(3, b.n(Items.TNT_MINECART, 16));
-				b.set(4, b.n(Items.RAIL, 64));
-				b.set(5, b.n(Items.ENDER_PEARL, 16));
-				b.set(6, b.n(Items.GOLDEN_APPLE, 16));
-				b.set(7, b.n(Items.TOTEM_OF_UNDYING, 1));
-				b.set(8, b.n(Items.OAK_LOG, 64));
-				b.set(9, b.e(Items.DIAMOND_PICKAXE, E.EFFICIENCY, 5, E.UNBREAKING, 3));
-				b.set(10, b.n(Items.ARROW, 64));
-				b.set(11, b.n(Items.COOKED_BEEF, 32));
-				b.set(12, b.n(Items.TNT_MINECART, 16));
-				b.set(13, b.n(Items.TOTEM_OF_UNDYING, 1));
-				// Helmet, chestplate and boots Protection IV; leggings Blast Protection IV.
-				b.set(36, b.e(Items.DIAMOND_BOOTS, E.PROTECTION, 4, E.FEATHER_FALLING, 4, E.UNBREAKING, 3));
-				b.set(37, b.e(Items.DIAMOND_LEGGINGS, E.BLAST_PROTECTION, 4, E.UNBREAKING, 3));
-				b.set(38, b.e(Items.DIAMOND_CHESTPLATE, E.PROTECTION, 4, E.UNBREAKING, 3));
-				b.set(39, b.e(Items.DIAMOND_HELMET, E.PROTECTION, 4, E.UNBREAKING, 3));
+				b.add(b.e(Items.DIAMOND_SWORD, E.SHARPNESS, 5, E.UNBREAKING, 3));
+				b.add(b.e(Items.DIAMOND_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
+				b.add(b.e(Items.BOW, E.POWER, 5, E.UNBREAKING, 3, E.FLAME, 1));
+				b.singles(Items.TNT_MINECART, 8);
+				b.add(b.n(Items.RAIL, 64));
+				b.add(b.n(Items.ENDER_PEARL, 16));
+				b.add(b.n(Items.ENDER_PEARL, 16));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.singles(Items.TOTEM_OF_UNDYING, 2);
+				b.add(b.n(Items.OAK_LOG, 64));
+				b.add(b.n(Items.COOKED_BEEF, 64));
+				b.add(b.n(Items.ARROW, 64));
+				b.fillPotions(b.nonHealing());
+				b.armor(Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET, false);
 				b.shieldPlain(E.UNBREAKING, 3);
 			}
-			case DIAMOND_SMP, NETHERITE_SMP -> {
-				boolean neth = this == NETHERITE_SMP;
-				Item sword = neth ? Items.NETHERITE_SWORD : Items.DIAMOND_SWORD, axe = neth ? Items.NETHERITE_AXE : Items.DIAMOND_AXE;
-				Object[] swordEnch = neth
-					? new Object[] {E.SHARPNESS, 5, E.SWEEPING_EDGE, 3, E.UNBREAKING, 3, E.FIRE_ASPECT, 2, E.KNOCKBACK, 1}
-					: new Object[] {E.SHARPNESS, 5, E.SWEEPING_EDGE, 3, E.UNBREAKING, 3, E.FIRE_ASPECT, 2};
-				b.set(0, b.e(sword, swordEnch));
-				b.set(1, b.e(axe, E.SHARPNESS, 5, E.UNBREAKING, 3));
-				b.set(2, b.e(Items.CROSSBOW, E.QUICK_CHARGE, 3, E.UNBREAKING, 3, E.MULTISHOT, 1));
-				b.set(3, b.e(Items.BOW, E.POWER, 5, E.UNBREAKING, 3, E.PUNCH, 2, E.FLAME, 1));
-				b.set(4, b.n(Items.ENDER_PEARL, 16));
-				b.set(5, b.n(Items.GOLDEN_APPLE, 16));
-				b.set(6, b.potion(Potions.STRONG_STRENGTH));
-				b.set(7, b.potion(Potions.STRONG_SWIFTNESS));
-				b.set(8, b.n(Items.EXPERIENCE_BOTTLE, 64));
-				b.set(9, b.potion(Potions.FIRE_RESISTANCE));
-				b.set(10, b.tippedHarming(64));
-				b.set(11, b.n(Items.TOTEM_OF_UNDYING, 1));
-				b.set(12, b.potion(Potions.STRONG_STRENGTH));
-				b.set(13, b.potion(Potions.STRONG_SWIFTNESS));
-				Item[] a = neth
-					? new Item[] {Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET}
-					: new Item[] {Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET};
-				b.set(36, b.e(a[0], E.PROTECTION, 4, E.FEATHER_FALLING, 4, E.DEPTH_STRIDER, 3, E.UNBREAKING, 3, E.MENDING, 1));
-				b.set(37, b.e(a[1], E.PROTECTION, 4, E.UNBREAKING, 3, E.MENDING, 1));
-				b.set(38, b.e(a[2], E.PROTECTION, 4, E.UNBREAKING, 3, E.MENDING, 1));
-				b.set(39, b.e(a[3], E.PROTECTION, 4, E.RESPIRATION, 3, E.AQUA_AFFINITY, 1, E.UNBREAKING, 3, E.MENDING, 1));
+			case NETHERITE_OP -> {
+				b.add(b.e(Items.NETHERITE_SWORD, E.SHARPNESS, 5, E.UNBREAKING, 3, E.MENDING, 1));
+				b.add(b.e(Items.NETHERITE_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
+				b.add(b.potion(Potions.STRONG_STRENGTH));
+				b.add(b.potion(Potions.STRONG_SWIFTNESS));
+				b.add(b.n(Items.ENDER_PEARL, 16));
+				b.add(b.n(Items.ENDER_PEARL, 16));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.add(b.n(Items.COOKED_BEEF, 64));
+				b.singles(Items.TOTEM_OF_UNDYING, 2);
+				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
+				b.fillPotions(b.instantHealing(20));
+				b.fillPotions(b.nonHealing());
+				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
+				b.shield();
+			}
+			case DIAMOND_SMP -> {
+				b.add(b.e(Items.DIAMOND_SWORD, E.SHARPNESS, 5, E.SWEEPING_EDGE, 3, E.UNBREAKING, 3, E.FIRE_ASPECT, 2));
+				b.add(b.e(Items.DIAMOND_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
+				b.add(b.e(Items.CROSSBOW, E.QUICK_CHARGE, 3, E.UNBREAKING, 3, E.MULTISHOT, 1));
+				b.add(b.e(Items.BOW, E.POWER, 5, E.UNBREAKING, 3, E.PUNCH, 2, E.FLAME, 1));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
+				b.add(b.tippedHarming(64));
+				b.singles(Items.TOTEM_OF_UNDYING, 2);
+				b.fillPotions(b.instantHealing(4));
+				b.fillPotions(b.nonHealing());
+				b.armor(Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET, true);
+				b.shield();
+			}
+			case NETHERITE_SMP -> {
+				b.add(b.e(Items.NETHERITE_SWORD, E.SHARPNESS, 5, E.SWEEPING_EDGE, 3, E.UNBREAKING, 3, E.FIRE_ASPECT, 2, E.KNOCKBACK, 1));
+				b.add(b.e(Items.NETHERITE_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
+				b.add(b.e(Items.CROSSBOW, E.QUICK_CHARGE, 3, E.UNBREAKING, 3, E.MULTISHOT, 1));
+				b.add(b.e(Items.BOW, E.POWER, 5, E.UNBREAKING, 3, E.PUNCH, 2, E.FLAME, 1));
+				b.add(b.n(Items.ENDER_PEARL, 16));
+				b.add(b.n(Items.ENDER_PEARL, 16));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
+				b.add(b.tippedHarming(64));
+				b.singles(Items.TOTEM_OF_UNDYING, 2);
+				b.fillPotions(b.nonHealing());
+				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
 				b.shield();
 			}
 			case MACE, SPEAR_MACE -> {
-				boolean spear = this == SPEAR_MACE;
-				int i = 0;
-				b.set(i++, b.e(Items.NETHERITE_SWORD, E.SHARPNESS, 5, E.SWEEPING_EDGE, 3, E.UNBREAKING, 3, E.KNOCKBACK, 1));
-				b.set(i++, b.e(Items.NETHERITE_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
-				if (spear) b.set(i++, b.e(Items.NETHERITE_SPEAR, E.SHARPNESS, 5, E.LUNGE, 3, E.UNBREAKING, 3));
-				b.set(i++, b.e(Items.MACE, E.DENSITY, 5, E.UNBREAKING, 3, E.WIND_BURST, 1));
-				b.set(i++, b.e(Items.MACE, E.BREACH, 4, E.UNBREAKING, 3));
-				b.set(i++, b.n(Items.WIND_CHARGE, 64));
-				b.set(i++, b.n(Items.ENDER_PEARL, 16));
-				b.set(i++, b.n(Items.GOLDEN_APPLE, 16));
-				if (i < 9) b.set(i++, b.n(Items.TOTEM_OF_UNDYING, 1));
-				b.set(9, b.n(Items.EXPERIENCE_BOTTLE, 64));
-				b.set(10, b.n(Items.TOTEM_OF_UNDYING, 1));
-				b.set(11, b.n(Items.WIND_CHARGE, 64));
-				b.set(36, b.e(Items.NETHERITE_BOOTS, E.PROTECTION, 4, E.FEATHER_FALLING, 4, E.UNBREAKING, 3, E.MENDING, 1));
-				b.set(37, b.e(Items.NETHERITE_LEGGINGS, E.PROTECTION, 4, E.UNBREAKING, 3, E.MENDING, 1));
-				b.set(38, b.e(Items.NETHERITE_CHESTPLATE, E.PROTECTION, 4, E.UNBREAKING, 3, E.MENDING, 1));
-				b.set(39, b.e(Items.NETHERITE_HELMET, E.PROTECTION, 4, E.UNBREAKING, 3, E.MENDING, 1));
+				boolean mace = this == MACE;
+				b.add(b.e(Items.NETHERITE_SWORD, E.SHARPNESS, 5, E.SWEEPING_EDGE, 3, E.UNBREAKING, 3, E.KNOCKBACK, 1));
+				b.add(b.e(Items.NETHERITE_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
+				if (!mace) b.add(b.e(Items.NETHERITE_SPEAR, E.SHARPNESS, 5, E.LUNGE, 3, E.UNBREAKING, 3));
+				b.add(b.e(Items.MACE, E.DENSITY, 5, E.UNBREAKING, 3, E.WIND_BURST, 1));
+				b.add(b.e(Items.MACE, E.BREACH, 4, E.UNBREAKING, 3));
+				b.add(b.n(Items.WIND_CHARGE, 64));
+				b.add(b.n(Items.ENDER_PEARL, 16));
+				b.add(b.n(Items.ENDER_PEARL, 16));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.add(b.n(Items.GOLDEN_APPLE, 64));
+				b.singles(Items.TOTEM_OF_UNDYING, 2);
+				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
+				if (mace) {
+					b.add(b.n(Items.FIREWORK_ROCKET, 64));
+				}
+				b.fillPotions(b.nonHealing());
+				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, mace ? Items.ELYTRA : Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
 				b.shield();
 			}
 		}
@@ -183,6 +179,7 @@ public enum Kits {
 	private static final class B {
 		final MinecraftServer server;
 		final ItemStack[] stacks = new ItemStack[41];
+		int next = 0;
 
 		B(MinecraftServer server) {
 			this.server = server;
@@ -191,7 +188,16 @@ public enum Kits {
 
 		void set(int slot, ItemStack s) { stacks[slot] = s; }
 
-		void fill(int from, ItemStack[] items) { for (int i = 0; i < items.length && from + i < 36; i++) stacks[from + i] = items[i]; }
+		/** Puts the item in the next empty slot, hotbar first. */
+		void add(ItemStack s) {
+			while (next < 36 && !stacks[next].isEmpty()) next++;
+			if (next < 36) stacks[next++] = s;
+		}
+
+		/** Items that do not stack (totems, minecarts): one per slot. */
+		void singles(Item item, int count) {
+			for (int i = 0; i < count; i++) add(new ItemStack(item, 1));
+		}
 
 		ItemStack n(Item i, int count) { return new ItemStack(i, count); }
 
@@ -216,24 +222,43 @@ public enum Kits {
 			return s;
 		}
 
-		/** Potions do not stack, so a pack is one stack per potion. */
-		ItemStack[] heals(Holder<net.minecraft.world.item.alchemy.Potion> p, int count) {
-			ItemStack[] out = new ItemStack[count];
-			for (int i = 0; i < count; i++) out[i] = potion(p);
+		/** Instant healing splashes, one per slot since potions do not stack. */
+		List<Holder<net.minecraft.world.item.alchemy.Potion>> instantHealing(int count) {
+			List<Holder<net.minecraft.world.item.alchemy.Potion>> out = new ArrayList<>();
+			for (int i = 0; i < count; i++) out.add(Potions.STRONG_HEALING);
 			return out;
 		}
 
-		void armor(Item boots, Item legs, Item chest, Item helm, int[][] prot, boolean mending) {
+		/** Everything the kits use to fill spare slots, with no instant health. */
+		List<Holder<net.minecraft.world.item.alchemy.Potion>> nonHealing() {
+			return List.of(Potions.STRONG_STRENGTH, Potions.STRONG_SWIFTNESS, Potions.FIRE_RESISTANCE, Potions.STRONG_REGENERATION);
+		}
+
+		/** Fills the empty slots with splash potions, cycling through the list. */
+		void fillPotions(List<Holder<net.minecraft.world.item.alchemy.Potion>> list) {
+			int i = 0;
+			while (next < 36 && i < list.size() * 40) {
+				add(potion(list.get(i % list.size())));
+				i++;
+			}
+		}
+
+		void armor(Item boots, Item legs, Item chest, Item helm, boolean mending) {
 			Item[] pieces = {boots, legs, chest, helm};
 			for (int i = 0; i < 4; i++) {
-				ItemStack s = new ItemStack(pieces[i]);
-				ResourceKey<Enchantment> p = E.PROTECTION;
-				Holder.Reference<Enchantment> ph = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(p);
-				if (prot[0][0] > 0) s.enchant(ph, prot[0][0]);
-				if (prot[0][1] > 0) s.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(E.UNBREAKING), prot[0][1]);
-				if (mending) s.enchant(server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(E.MENDING), 1);
-				stacks[36 + i] = s;
+				Object[] pairs = mending
+					? new Object[] {E.PROTECTION, 4, E.UNBREAKING, 3, E.MENDING, 1}
+					: new Object[] {E.PROTECTION, 4, E.UNBREAKING, 3};
+				if (i == 0) pairs = concat(pairs, E.FEATHER_FALLING, 4);
+				if (pieces[i] == Items.ELYTRA) pairs = new Object[] {E.UNBREAKING, 3, E.MENDING, 1};
+				stacks[36 + i] = e(pieces[i], pairs);
 			}
+		}
+
+		private static Object[] concat(Object[] a, Object... b) {
+			Object[] out = java.util.Arrays.copyOf(a, a.length + b.length);
+			System.arraycopy(b, 0, out, a.length, b.length);
+			return out;
 		}
 
 		void shield() { stacks[40] = e(Items.SHIELD, E.UNBREAKING, 3, E.MENDING, 1); }
