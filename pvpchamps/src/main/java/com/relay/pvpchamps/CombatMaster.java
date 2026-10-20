@@ -24,6 +24,7 @@ public final class CombatMaster {
 		BotSettings.offhandTotemHearts = 8.0; // totem in the offhand from 8 hearts (Vexbot's default is 4)
 		BotSettings.usePotions = true;
 		BotSettings.maceTotem = true;
+		BotSettings.useCobwebs = true; // Vexbot's cobweb traps and web drain
 	}
 
 	public static DifficultyParams params(double accuracy) {
