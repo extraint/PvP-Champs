@@ -17,7 +17,7 @@ public final class WallOff implements Move {
 	@Override
 	public boolean start(Ctx c) {
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
-		if (c.dist < 1.5 || c.dist > 8) return MoveEngine.reject(id(), "distance");
+		if (c.dist > 8) return MoveEngine.reject(id(), "too_far");
 		if (c.hp() > 10f) return MoveEngine.reject(id(), "healthy");
 		if (c.target.getHealth() < c.bot.getHealth()) return MoveEngine.reject(id(), "winning");
 		if (blockSlot(c) < 0) return MoveEngine.reject(id(), "no_block");
@@ -39,6 +39,12 @@ public final class WallOff implements Move {
 	@Override
 	public boolean tick(Ctx c) {
 		if (++t > 60 || placed >= 5 || !c.target.isAlive()) return false;
+		if (placed == 0 && c.dist < 2.5) {
+			// Too close to wall off: back away first so the wall can go between the two of them.
+			c.face(c.targetEye());
+			c.run(-1f, false);
+			return t <= 60;
+		}
 		// Aim at the floor one block ahead of the bot, toward the opponent, and place the block there.
 		Vec3 toward = c.target.position().subtract(c.bot.position());
 		Vec3 spot = c.bot.position().add(toward.normalize().scale(1.5 + placed * 0.5));
