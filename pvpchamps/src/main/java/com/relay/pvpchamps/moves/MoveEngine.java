@@ -25,12 +25,14 @@ public final class MoveEngine {
 		Move current, next;
 		int tick;
 		int prevSlot = -1;
+		net.minecraft.world.phys.Vec3 lastPos;
+		int stillTicks;
 		float lastTargetAbsorb;
 		final PopPunish punish = new PopPunish();
 		final List<Move> moves;
 
 		State() {
-			moves = List.of(punish, new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new TntMinecart(), new PearlWind());
+			moves = List.of(punish, new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall());
 		}
 
 		int cooldown(String id) { return Math.max(0, cooldowns.getOrDefault(id, 0) - tick); }
@@ -73,6 +75,9 @@ public final class MoveEngine {
 		diag("roster_bot");
 		State st = STATES.computeIfAbsent(bot.getGameProfile().name(), k -> new State());
 		st.tick++;
+		net.minecraft.world.phys.Vec3 here = bot.position();
+		st.stillTicks = (st.lastPos != null && here.distanceToSqr(st.lastPos) < 0.0004) ? st.stillTicks + 1 : 0;
+		st.lastPos = here;
 
 		BotPlayerActionPack pack = ((ServerPlayerInterface) bot).getActionPack();
 		if (target == null || !target.isAlive() || pack == null) {
@@ -90,7 +95,8 @@ public final class MoveEngine {
 			else endCurrent(st, c);
 		} else if (st.tick % 4 == 0) {
 			for (Move m : st.moves) {
-				if (!profile.moves().contains(m.id())) continue;
+				if (!profile.moves().contains(m.id()) && !(com.relay.pvpchamps.CombatMaster.is(profile.difficulty())
+						&& (m.id().equals("strafe_pressure") || m.id().equals("anti_stall")))) continue;
 				diag("try:" + m.id());
 				if (m.start(c)) {
 					st.current = m;

@@ -19,7 +19,7 @@ import vexbot.DifficultyParams;
 public final class Roster {
 	private Roster() {}
 
-	/** @param difficulty VexBot preset (EASY..PERFECT); @param style VexBot play style; @param moves ids of the extra moves this bot uses. */
+	/** @param difficulty VexBot preset (EASY..PERFECT) or COMBAT_MASTER; @param style VexBot play style; @param moves ids of the extra moves this bot uses. */
 	public record Opponent(String name, String title, String difficulty, String style, int rating, double accuracy,
 			List<String> kits, List<String> moves) {}
 
@@ -29,9 +29,9 @@ public final class Roster {
 	private static List<Opponent> defaults() {
 		List<String> all = Kits.ids();
 		return new ArrayList<>(List.of(
-			new Opponent("Swight", "Spear & Mace specialist", "EXPERT", "AGGRESSIVE", 92, 1.0,
+			new Opponent("Swight", "Spear & Mace specialist", "COMBAT_MASTER", "AGGRESSIVE", 92, 1.0,
 				List.of("spear_mace", "mace"), List.of("pop_punish", "pearl_close", "bait_retreat", "lunge_swap", "pearl_wind")),
-			new Opponent("ImMixed", "All-rounder", "EXPERT", "ADAPTIVE", 90, 1.0,
+			new Opponent("ImMixed", "All-rounder", "COMBAT_MASTER", "ADAPTIVE", 90, 1.0,
 				all, List.of("pop_punish", "bait_retreat", "mend_reset", "wall_off")),
 			new Opponent("Freekee_Fang", "Cart and potion fighter", "HARD", "BALANCED", 84, 1.0,
 				List.of("cart", "netherite_op"), List.of("pearl_close", "mend_reset", "tnt_minecart")),
@@ -70,8 +70,14 @@ public final class Roster {
 	/** Pushes the opponent's difficulty and style into VexBot so the bot of that name fights like them. */
 	public static void applyProfile(Opponent o) {
 		try {
-			DifficultyParams p = DifficultyParams.forPreset(BotSettings.Difficulty.valueOf(o.difficulty().toUpperCase()));
-			p.accuracy = Math.min(1.0, p.accuracy * o.accuracy());
+			DifficultyParams p;
+			if (CombatMaster.is(o.difficulty())) {
+				p = CombatMaster.params(o.accuracy());
+				BotSettings.strafeInCombo = true;
+			} else {
+				p = DifficultyParams.forPreset(BotSettings.Difficulty.valueOf(o.difficulty().toUpperCase()));
+				p.accuracy = Math.min(1.0, p.accuracy * o.accuracy());
+			}
 			BotSettings.botDifficulties.put(o.name(), p);
 			BotSettings.setPlayStyle(o.name(), BotSettings.PlayStyle.valueOf(o.style().toUpperCase()));
 		} catch (RuntimeException e) {
