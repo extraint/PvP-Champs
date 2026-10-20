@@ -30,7 +30,7 @@ public final class MoveEngine {
 		final List<Move> moves;
 
 		State() {
-			moves = List.of(punish, new MendReset(), new PearlClose(), new BaitRetreat(punish));
+			moves = List.of(punish, new MendReset(), new PearlClose(), new BaitRetreat(punish), new StunSlam(), new SpearLunge());
 		}
 
 		int cooldown(String id) { return Math.max(0, cooldowns.getOrDefault(id, 0) - tick); }
