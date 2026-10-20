@@ -31,7 +31,7 @@ public final class WallOff implements Move {
 		var inv = c.bot.getInventory();
 		for (int i = 0; i < 36; i++) {
 			ItemStack s = inv.getItem(i);
-			if (s.getItem() instanceof BlockItem && s.getItem() != Items.TNT && s.getItem() != Items.OAK_LOG) return i;
+			if (s.getItem() instanceof BlockItem && s.getItem() != Items.TNT) return i;
 		}
 		return -1;
 	}

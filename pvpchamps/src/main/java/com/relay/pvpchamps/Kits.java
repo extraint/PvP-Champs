@@ -117,6 +117,7 @@ public enum Kits {
 				b.add(b.n(Items.GOLDEN_APPLE, 64));
 				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
 				b.add(b.tippedHarming(64));
+				b.add(b.n(Items.OAK_LOG, 64));
 				b.singles(Items.TOTEM_OF_UNDYING, 2);
 				b.placePotions(b.instantHealing(4));
 				b.fillPotions(b.nonHealing());
@@ -134,6 +135,7 @@ public enum Kits {
 				b.add(b.n(Items.GOLDEN_APPLE, 64));
 				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
 				b.add(b.tippedHarming(64));
+				b.add(b.n(Items.OAK_LOG, 64));
 				b.singles(Items.TOTEM_OF_UNDYING, 2);
 				b.fillPotions(b.nonHealing());
 				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
