@@ -36,18 +36,18 @@ public final class WallOff implements Move {
 
 	@Override
 	public boolean tick(Ctx c) {
-		if (++t > 40 || placed >= 2 || !c.target.isAlive()) return false;
+		if (++t > 60 || placed >= 5 || !c.target.isAlive()) return false;
 		// Aim at the floor one block ahead of the bot, toward the opponent, and place the block there.
 		Vec3 toward = c.target.position().subtract(c.bot.position());
-		Vec3 spot = c.bot.position().add(toward.normalize().scale(1.5));
+		Vec3 spot = c.bot.position().add(toward.normalize().scale(1.5 + placed * 0.5));
 		c.face(new Vec3(spot.x, c.bot.getY() - 0.5, spot.z));
 		if (!c.hold(c.bot.getInventory().getItem(blockSlot(c)).getItem())) return false;
-		if (t % 6 == 0) {
+		if (t % 4 == 0) {
 			c.useOnce();
 			placed++;
 		}
 		c.run(-1f, false); // back away from the new wall
-		return placed < 2;
+		return placed < 5;
 	}
 
 	@Override
