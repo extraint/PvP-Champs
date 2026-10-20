@@ -5,7 +5,7 @@ package com.relay.pvpchamps.moves;
  * reach of a quick rush, run at them and attack until the fight is back on.
  */
 public final class AntiStall implements Move {
-	private int left;
+	private int left, reset;
 
 	@Override public String id() { return "anti_stall"; }
 
@@ -24,9 +24,9 @@ public final class AntiStall implements Move {
 		if (--left <= 0 || !c.target.isAlive() || c.dist > 26) return false;
 		if (c.hp() <= 10f) return false; // hand control back so Vexbot can heal
 		c.face(c.targetEye());
-		c.run(1f, true);
+		if (reset > 0) { reset--; c.run(0f, false); } else c.run(1f, true);
 		if (c.bot.onGround() && c.dist > 5 && c.st.rng.nextInt(10) == 0) c.jumpOnce();
-		if (c.dist <= 3.05 && c.bot.getAttackStrengthScale(0.5f) >= 0.95f) c.attackOnce();
+		if (c.dist <= 3.05 && c.bot.getAttackStrengthScale(0.5f) >= 0.95f) { c.attackOnce(); reset = 2; }
 		return c.dist > 2.2 || left > 10;
 	}
 

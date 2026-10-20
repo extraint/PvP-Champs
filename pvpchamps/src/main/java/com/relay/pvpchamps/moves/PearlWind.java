@@ -14,7 +14,8 @@ public final class PearlWind implements Move {
 
 	@Override
 	public boolean start(Ctx c) {
-		if (c.st.cooldown(id()) > 0 || c.dist < 10 || c.dist > 30) return false;
+		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
+		if (c.dist < 6 || c.dist > 30) return MoveEngine.reject(id(), "range");
 		if (c.bot.isFallFlying() || c.bot.isUsingItem()) return false;
 		if (c.count(Items.ENDER_PEARL) == 0 || c.count(Items.WIND_CHARGE) == 0) return false;
 		phase = 0;

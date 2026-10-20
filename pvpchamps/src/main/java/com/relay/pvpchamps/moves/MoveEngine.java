@@ -89,6 +89,13 @@ public final class MoveEngine {
 		diag("with_target");
 
 		boolean skip = false;
+		if (st.current != null && (st.current.id().equals("strafe_pressure") || st.current.id().equals("anti_stall"))) {
+			// Shield breaks and 3-block hits are worth more than a strafe: they take over the bot mid-strafe.
+			for (Move m : st.moves) {
+				if (!(m.id().equals("shield_break") || m.id().equals("three_block_hit"))) continue;
+				if (m.start(c)) { endCurrent(st, c); st.current = m; skip = m.tick(c); if (!skip) endCurrent(st, c); break; }
+			}
+		}
 		if (st.current != null) {
 			diag("busy:" + st.current.id());
 			if (st.current.tick(c)) skip = true;
