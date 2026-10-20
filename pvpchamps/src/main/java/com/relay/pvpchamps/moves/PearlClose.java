@@ -22,8 +22,9 @@ public final class PearlClose implements Move {
 	@Override
 	public boolean tick(Ctx c) {
 		Vec3 vel = c.target.getDeltaMovement();
-		// Land just ahead of where they are heading, on the ground rather than on their head.
-		Vec3 aimPoint = c.target.position().add(vel.x * 6, 0.2, vel.z * 6);
+		// Land where they will be when the pearl arrives: lead by the flight time, not a fixed guess.
+		double flight = Math.max(1, Math.min(40, c.dist / Ballistics.PEARL_SPEED));
+		Vec3 aimPoint = c.target.position().add(vel.x * flight, 0.2, vel.z * flight);
 		switch (phase) {
 			case 0 -> {
 				if (!c.hold(Items.ENDER_PEARL)) return false;

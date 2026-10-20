@@ -30,13 +30,13 @@ public final class Roster {
 		List<String> all = Kits.ids();
 		return new ArrayList<>(List.of(
 			new Opponent("Swight", "Spear & Mace specialist", "EXPERT", "AGGRESSIVE", 92, 1.0,
-				List.of("spear_mace", "mace"), List.of("pop_punish", "pearl_close", "bait_retreat")),
+				List.of("spear_mace", "mace"), List.of("pop_punish", "pearl_close", "bait_retreat", "lunge_swap")),
 			new Opponent("ImMixed", "All-rounder", "EXPERT", "ADAPTIVE", 90, 1.0,
-				all, List.of("pop_punish", "bait_retreat", "mend_reset")),
+				all, List.of("pop_punish", "bait_retreat", "mend_reset", "wall_off")),
 			new Opponent("Freekee_Fang", "Cart and potion fighter", "HARD", "BALANCED", 84, 1.0,
-				List.of("cart", "netherite_op"), List.of("pearl_close", "mend_reset")),
+				List.of("cart", "netherite_op"), List.of("pearl_close", "mend_reset", "tnt_minecart")),
 			new Opponent("x_Kyran_x", "SMP pressure", "EXPERT", "AGGRESSIVE", 88, 1.0,
-				List.of("diamond_smp", "netherite_smp", "cart"), List.of("pop_punish", "pearl_close")),
+				List.of("diamond_smp", "netherite_smp", "cart"), List.of("pop_punish", "pearl_close", "wall_off", "tnt_minecart")),
 			new Opponent("BLMcheat", "Patient defender", "HARD", "DEFENSIVE", 80, 1.0,
 				List.of("diamond_smp", "netherite_smp"), List.of("mend_reset", "bait_retreat")),
 			new Opponent("Ironclad", "Qualifier", "MEDIUM", "BALANCED", 66, 0.9,
