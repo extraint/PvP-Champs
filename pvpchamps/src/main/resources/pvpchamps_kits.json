@@ -286,7 +286,7 @@
     "item": "splash_potion",
     "count": 1,
     "slot": 15,
-    "potion": "fire_resistance"
+    "potion": "strong_strength"
    },
    {
     "item": "splash_potion",
@@ -304,7 +304,7 @@
     "item": "splash_potion",
     "count": 1,
     "slot": 18,
-    "potion": "fire_resistance"
+    "potion": "strong_swiftness"
    },
    {
     "item": "splash_potion",
@@ -322,7 +322,7 @@
     "item": "splash_potion",
     "count": 1,
     "slot": 21,
-    "potion": "fire_resistance"
+    "potion": "strong_strength"
    },
    {
     "item": "splash_potion",
@@ -340,7 +340,7 @@
     "item": "splash_potion",
     "count": 1,
     "slot": 24,
-    "potion": "fire_resistance"
+    "potion": "strong_swiftness"
    },
    {
     "item": "splash_potion",
@@ -378,6 +378,148 @@
     "item": "ender_pearl",
     "count": 16,
     "slot": 31
+   },
+   {
+    "item": "shulker_box",
+    "count": 1,
+    "slot": 32,
+    "container": [
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_strength"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     },
+     {
+      "item": "splash_potion",
+      "count": 1,
+      "potion": "strong_swiftness"
+     }
+    ]
    }
   ],
   "equipment": {
@@ -887,6 +1029,42 @@
      {
       "item": "tnt_minecart",
       "count": 1
+     },
+     {
+      "item": "rail",
+      "count": 64
+     },
+     {
+      "item": "rail",
+      "count": 64
+     },
+     {
+      "item": "rail",
+      "count": 64
+     },
+     {
+      "item": "arrow",
+      "count": 64
+     },
+     {
+      "item": "arrow",
+      "count": 64
+     },
+     {
+      "item": "oak_log",
+      "count": 64
+     },
+     {
+      "item": "oak_log",
+      "count": 64
+     },
+     {
+      "item": "cooked_beef",
+      "count": 64
+     },
+     {
+      "item": "golden_apple",
+      "count": 64
      }
     ]
    },
@@ -966,6 +1144,42 @@
      {
       "item": "tnt_minecart",
       "count": 1
+     },
+     {
+      "item": "rail",
+      "count": 64
+     },
+     {
+      "item": "rail",
+      "count": 64
+     },
+     {
+      "item": "rail",
+      "count": 64
+     },
+     {
+      "item": "arrow",
+      "count": 64
+     },
+     {
+      "item": "arrow",
+      "count": 64
+     },
+     {
+      "item": "oak_log",
+      "count": 64
+     },
+     {
+      "item": "oak_log",
+      "count": 64
+     },
+     {
+      "item": "cooked_beef",
+      "count": 64
+     },
+     {
+      "item": "golden_apple",
+      "count": 64
      }
     ]
    },
