@@ -137,7 +137,11 @@ public final class Match {
 
 	public void tick() {
 		if (state == State.DONE) return;
-		if (human() == null) { finish(false, true); return; } // the player left the server
+		if (human() == null) { // the player left the server
+			System.err.println("[pvpchamps] match " + nameA + " vs " + nameB + " cancelled: " + humanId + " left the server");
+			finish(false, true);
+			return;
+		}
 		switch (state) {
 			case COUNTDOWN -> {
 				if (timer == 60 || timer == 40 || timer == 20) message(Component.literal("§e" + (timer / 20)), true);
@@ -179,6 +183,13 @@ public final class Match {
 		}
 	}
 
+	/** A fighter left the server mid-round without dying: tell the player and log it instead of ending silently. */
+	private void vanished(String name) {
+		if (loserDecided) return;
+		System.err.println("[pvpchamps] " + name + " left the server mid-round (not a death), round " + round + " after " + fightTicks + " ticks");
+		message(Component.literal("§e" + name + " left the game mid-round (not a death), so the round counts as a loss for them."));
+	}
+
 	/** Called when a fighter dies, from the death event or from polling. */
 	public void fighterDown(String name) {
 		if (state != State.FIGHT || loserDecided) return;
@@ -190,8 +201,19 @@ public final class Match {
 		fightTicks++;
 		ServerPlayer a = watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
-		if (a == null || a.getHealth() <= 0 || !a.isAlive()) { if (a == null ? ++missingA > 20 : true) fighterDown(nameA); }
-		if (b == null || b.getHealth() <= 0 || !b.isAlive()) { if (b == null ? ++missingB > 20 : true) fighterDown(nameB); }
+		// A fighter that is simply gone for a moment is not a loss; wait three seconds before deciding, and say why.
+		if (a == null || a.getHealth() <= 0 || !a.isAlive()) {
+			if (a == null ? ++missingA > 60 : true) {
+				if (a == null) vanished(nameA);
+				fighterDown(nameA);
+			}
+		}
+		if (b == null || b.getHealth() <= 0 || !b.isAlive()) {
+			if (b == null ? ++missingB > 60 : true) {
+				if (b == null) vanished(nameB);
+				fighterDown(nameB);
+			}
+		}
 		if (!loserDecided && fightTicks > 20 * 180) { // three minutes: whoever has more health takes it
 			if (a != null && b != null) { loserDecided = true; aLost = a.getHealth() < b.getHealth(); }
 		}
