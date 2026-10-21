@@ -97,7 +97,7 @@
     "slot": 6
    },
    {
-    "item": "oak_log",
+    "item": "oak_planks",
     "count": 64,
     "slot": 7
    },
@@ -934,7 +934,7 @@
     "slot": 18
    },
    {
-    "item": "oak_log",
+    "item": "oak_planks",
     "count": 64,
     "slot": 19
    },
@@ -1051,11 +1051,11 @@
       "count": 64
      },
      {
-      "item": "oak_log",
+      "item": "oak_planks",
       "count": 64
      },
      {
-      "item": "oak_log",
+      "item": "oak_planks",
       "count": 64
      },
      {
@@ -1166,11 +1166,11 @@
       "count": 64
      },
      {
-      "item": "oak_log",
+      "item": "oak_planks",
       "count": 64
      },
      {
-      "item": "oak_log",
+      "item": "oak_planks",
       "count": 64
      },
      {
@@ -1549,7 +1549,7 @@
     "slot": 4
    },
    {
-    "item": "oak_log",
+    "item": "oak_planks",
     "count": 64,
     "slot": 5
    },
@@ -1807,7 +1807,7 @@
     "slot": 6
    },
    {
-    "item": "oak_log",
+    "item": "oak_planks",
     "count": 64,
     "slot": 7
    },

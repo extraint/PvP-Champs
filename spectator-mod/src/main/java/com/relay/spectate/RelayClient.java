@@ -111,6 +111,7 @@ public final class RelayClient implements ClientModInitializer {
 
 	// last finished round, for /breakdown
 	private static BreakdownScreen lastBreakdown;
+	private static boolean breakdownShownLast;
 	private static int breakdownHold; // ticks left to keep the breakdown up against a respawn closing it
 
 	@Override
@@ -463,10 +464,14 @@ public final class RelayClient implements ClientModInitializer {
 	}
 
 	private static void tick(Minecraft mc) {
+		boolean shownNow = mc.gui.screen() instanceof BreakdownScreen;
 		if (breakdownHold > 0) {
 			breakdownHold--;
-			if (lastBreakdown != null && mc.gui.screen() == null) mc.setScreenAndShow(lastBreakdown);
+			// Only re-open it if a respawn closed it; if the player pressed Esc themself (it was open last tick) leave it shut.
+			if (breakdownShownLast && breakdownHold < 110 && mc.gui.screen() == null) breakdownHold = 0;
+			else if (lastBreakdown != null && mc.gui.screen() == null) mc.setScreenAndShow(lastBreakdown);
 		}
+		breakdownShownLast = shownNow;
 		if (DEMO) demoTick(mc);
 		if (!active) return;
 		LocalPlayer me = mc.player;
