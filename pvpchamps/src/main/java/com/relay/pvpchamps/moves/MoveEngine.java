@@ -1,5 +1,6 @@
 package com.relay.pvpchamps.moves;
 
+import com.relay.pvpchamps.CombatMaster;
 import com.relay.pvpchamps.Roster;
 import java.util.HashMap;
 import java.util.List;
@@ -89,6 +90,17 @@ public final class MoveEngine {
 		diag("with_target");
 
 		boolean skip = false;
+		// Healing is checked every tick and beats whatever else is running: waiting for the 4-tick move check
+		// lets Vexbot's own healing act first.
+		if (st.current == null || !st.current.id().equals("heal_4_hearts")) {
+			Move heal = st.moves.get(0);
+			if (heal.id().equals("heal_4_hearts") && (CombatMaster.is(profile.difficulty()) || profile.moves().contains(heal.id()))
+					&& heal.start(c)) {
+				if (st.current != null) endCurrent(st, c);
+				st.current = heal;
+				USED.merge(bot.getGameProfile().name() + ":" + heal.id(), 1, Integer::sum);
+			}
+		}
 		if (st.current != null && (st.current.id().equals("strafe_pressure") || st.current.id().equals("anti_stall"))) {
 			// Shield breaks and 3-block hits are worth more than a strafe: they take over the bot mid-strafe.
 			for (Move m : st.moves) {
