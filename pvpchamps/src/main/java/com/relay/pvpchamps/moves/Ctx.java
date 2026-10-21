@@ -76,6 +76,9 @@ public final class Ctx {
 		pack.setSprinting(sprint);
 	}
 
+	/** True for mace kits: the bot's own mace logic (wind charge, dive, smash) must run, not a ground melee loop. */
+	public boolean carriesMace() { return count(net.minecraft.world.item.Items.MACE) > 0; }
+
 	public float hp() { return bot.getHealth() + bot.getAbsorptionAmount(); }
 
 	/** Average remaining durability of the armour being worn, 0 to 1. */

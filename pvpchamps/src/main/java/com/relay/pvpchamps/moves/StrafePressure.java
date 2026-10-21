@@ -12,6 +12,7 @@ public final class StrafePressure implements Move {
 
 	@Override
 	public boolean start(Ctx c) {
+		if (c.carriesMace()) return MoveEngine.reject(id(), "mace_kit"); // leave mace fights to Vexbot
 		if (c.dist > 4.2 || c.dist < 0.8) return MoveEngine.reject(id(), "range");
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (c.bot.isUsingItem() || c.bot.isFallFlying()) return MoveEngine.reject(id(), "busy");

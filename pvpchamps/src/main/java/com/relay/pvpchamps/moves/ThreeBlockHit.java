@@ -11,6 +11,7 @@ public final class ThreeBlockHit implements Move {
 
 	@Override
 	public boolean start(Ctx c) {
+		if (c.carriesMace()) return MoveEngine.reject(id(), "mace_kit"); // leave mace fights to Vexbot
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (c.dist < 2.95 || c.dist > 3.25) return MoveEngine.reject(id(), "range");
 		if (c.bot.getAttackStrengthScale(0.5f) < 0.95f) return MoveEngine.reject(id(), "not_charged");

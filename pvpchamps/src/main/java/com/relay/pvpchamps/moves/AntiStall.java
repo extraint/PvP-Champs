@@ -11,6 +11,7 @@ public final class AntiStall implements Move {
 
 	@Override
 	public boolean start(Ctx c) {
+		if (c.carriesMace()) return MoveEngine.reject(id(), "mace_kit"); // leave mace fights to Vexbot
 		if (c.st.stillTicks < 20) return false;
 		if (c.dist < 2.0 || c.dist > 24) return MoveEngine.reject(id(), "range");
 		if (c.bot.isUsingItem() || c.bot.isFallFlying()) return MoveEngine.reject(id(), "busy");
