@@ -129,6 +129,7 @@ public final class Match {
 		timer = 60;
 		loserDecided = false;
 		missingA = missingB = fightTicks = 0;
+		gearSeen.clear();
 		lastPos[0] = lastPos[1] = null;
 		respawnWait[0] = respawnWait[1] = 0;
 		respawnsLeft = 2;
@@ -254,10 +255,33 @@ public final class Match {
 		else if (name.equalsIgnoreCase(nameB)) { loserDecided = true; aLost = false; }
 	}
 
+	private final java.util.Map<String, java.util.Map<String, Integer>> gearSeen = new java.util.HashMap<>();
+
+	/** Diagnostics: logs the moment a weapon or tool leaves a fighter's inventory, and how (dropped in the world vs. broken). */
+	private void auditGear(String name, ServerPlayer p) {
+		if (p == null || !p.isAlive()) return;
+		java.util.Map<String, Integer> now = new java.util.HashMap<>();
+		for (int i = 0; i < 41; i++) {
+			var st = p.getInventory().getItem(i);
+			String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(st.getItem()).getPath();
+			if (id.matches(".*(sword|_axe|pickaxe|shovel|mace|spear|shield|elytra|totem).*")) now.merge(id, st.getCount(), Integer::sum);
+		}
+		var was = gearSeen.put(name, now);
+		if (was == null) return;
+		for (var e : was.entrySet()) {
+			int have = now.getOrDefault(e.getKey(), 0);
+			if (have < e.getValue() && !e.getKey().contains("totem")) {
+				System.err.println("[pvpchamps] " + name + " lost " + e.getKey() + " (" + e.getValue() + " -> " + have + ") at tick " + fightTicks
+					+ ", round " + round + ", selected slot " + p.getInventory().getSelectedSlot());
+			}
+		}
+	}
+
 	private void fightTick() {
 		fightTicks++;
 		ServerPlayer a = watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
+		if (fightTicks % 5 == 0) { if (watch) auditGear(nameA, a); auditGear(nameB, b); }
 		if (watch && (fightTicks == 5 || fightTicks == 25 || fightTicks == 60)) { // heads-only fix: make clients redraw the full bodies
 			for (ServerPlayer p : new ServerPlayer[] {a, b}) {
 				if (p == null) continue;
