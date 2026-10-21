@@ -131,6 +131,8 @@ public final class Roster {
 			} else {
 				p = DifficultyParams.forPreset(BotSettings.Difficulty.valueOf(o.difficulty().toUpperCase()));
 				p.accuracy = Math.min(1.0, p.accuracy * o.accuracy());
+				p.stunSlamChance = Math.max(p.stunSlamChance, 80);
+				CombatMaster.enableStunSlam();
 			}
 			BotSettings.botDifficulties.put(o.name(), p);
 			BotSettings.setPlayStyle(o.name(), BotSettings.PlayStyle.valueOf(o.style().toUpperCase()));

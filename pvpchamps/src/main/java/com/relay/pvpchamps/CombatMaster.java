@@ -39,6 +39,11 @@ public final class CombatMaster {
 		BotSettings.webDrainChance = 100; // web them whenever the chance comes up
 		BotSettings.webEscape = true;
 		BotSettings.hitWeb = true;
+		enableStunSlam();
+	}
+
+	/** The axe-stun-then-mace-slam combos are off in Vexbot unless these technique toggles are on; every roster bot gets them. */
+	public static void enableStunSlam() {
 		var t = BotSettings.techniques; // the axe-stun-then-mace-slam combos are off unless a technique toggle is on
 		t.stunSlam = true;
 		t.spearStunSlam = true;

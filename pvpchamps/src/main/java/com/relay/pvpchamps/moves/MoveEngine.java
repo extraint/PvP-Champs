@@ -88,6 +88,12 @@ public final class MoveEngine {
 		}
 		Ctx c = new Ctx(bot, target, pack, st);
 		diag("with_target");
+		// Mid-dive with a mace: the slam is Vexbot's (or mace_smash's) to finish; nothing else may grab the bot's hands.
+		if (c.carriesMace() && st.moves.stream().noneMatch(x -> x.id().equals("mace_smash")) && !bot.onGround() && bot.getDeltaMovement().y < -0.2 && (st.current == null || !st.current.id().equals("heal_4_hearts"))
+				&& (st.current == null || !st.current.id().equals("mace_smash"))) {
+			boolean heal = bot.getHealth() <= 8f;
+			if (!heal) { if (st.current != null) endCurrent(st, c); return false; }
+		}
 
 		boolean skip = false;
 		// Healing is checked every tick and beats whatever else is running: waiting for the 4-tick move check
