@@ -28,21 +28,37 @@ public final class Roster {
 
 	private static List<Opponent> defaults() {
 		List<String> all = Kits.ids();
+		// Names are PvP Champs II players; styles, ratings and move lists are invented. Everyone fights aggressively.
+		List<String> press = List.of("strafe_pressure", "anti_stall");
 		return new ArrayList<>(List.of(
+			new Opponent("Coldified", "Champion, all-rounder", "COMBAT_MASTER", "AGGRESSIVE", 95, 1.0,
+				all, join(press, "pop_punish", "pearl_close", "bait_retreat", "lunge_swap", "pearl_wind", "wall_off")),
 			new Opponent("Swight", "Spear & Mace specialist", "COMBAT_MASTER", "AGGRESSIVE", 92, 1.0,
-				List.of("spear_mace", "mace"), List.of("pop_punish", "pearl_close", "bait_retreat", "lunge_swap", "pearl_wind")),
-			new Opponent("ImMixed", "All-rounder", "COMBAT_MASTER", "ADAPTIVE", 90, 1.0,
-				all, List.of("pop_punish", "bait_retreat", "mend_reset", "wall_off")),
-			new Opponent("Freekee_Fang", "Cart and potion fighter", "HARD", "BALANCED", 84, 1.0,
-				List.of("cart", "netherite_op"), List.of("pearl_close", "mend_reset", "tnt_minecart")),
-			new Opponent("x_Kyran_x", "SMP pressure", "EXPERT", "AGGRESSIVE", 88, 1.0,
-				List.of("diamond_smp", "netherite_smp", "cart"), List.of("pop_punish", "pearl_close", "wall_off", "tnt_minecart")),
-			new Opponent("BLMcheat", "Patient defender", "HARD", "DEFENSIVE", 80, 1.0,
-				List.of("diamond_smp", "netherite_smp"), List.of("mend_reset", "bait_retreat")),
-			new Opponent("Ironclad", "Qualifier", "MEDIUM", "BALANCED", 66, 0.9,
-				all, List.of("pearl_close")),
-			new Opponent("Nightfall", "Qualifier", "HARD", "SAFE", 72, 0.95,
-				all, List.of("mend_reset"))));
+				List.of("spear_mace", "mace"), join(press, "pop_punish", "pearl_close", "bait_retreat", "lunge_swap", "pearl_wind")),
+			new Opponent("ImMixed", "All-rounder", "COMBAT_MASTER", "AGGRESSIVE", 90, 1.0,
+				all, join(press, "pop_punish", "bait_retreat", "mend_reset", "wall_off")),
+			new Opponent("x_Kyran_x", "SMP pressure", "COMBAT_MASTER", "AGGRESSIVE", 88, 1.0,
+				List.of("diamond_smp", "netherite_smp", "cart"), join(press, "pop_punish", "pearl_close", "wall_off", "tnt_minecart")),
+			new Opponent("Freekee_Fang", "Cart and potion fighter", "EXPERT", "AGGRESSIVE", 86, 1.0,
+				List.of("cart", "netherite_op"), join(press, "pearl_close", "mend_reset", "tnt_minecart")),
+			new Opponent("ninorc15", "Sword and SMP", "EXPERT", "AGGRESSIVE", 85, 1.0,
+				List.of("sword", "diamond_smp", "netherite_smp"), join(press, "pop_punish", "wall_off")),
+			new Opponent("mikagoated", "Mace and cart", "EXPERT", "AGGRESSIVE", 83, 1.0,
+				List.of("mace", "spear_mace", "cart"), join(press, "pearl_close", "lunge_swap", "tnt_minecart")),
+			new Opponent("Sweatgod", "Spear mace", "EXPERT", "AGGRESSIVE", 82, 1.0,
+				List.of("spear_mace", "mace", "uhc"), join(press, "pop_punish", "lunge_swap", "pearl_wind")),
+			new Opponent("BLMcheat", "Patient defender, now pushing", "EXPERT", "AGGRESSIVE", 80, 1.0,
+				List.of("diamond_smp", "netherite_smp"), join(press, "mend_reset", "bait_retreat", "wall_off")),
+			new Opponent("Ironclad", "Qualifier", "HARD", "AGGRESSIVE", 66, 0.9,
+				all, join(press, "pearl_close")),
+			new Opponent("Nightfall", "Qualifier", "EXPERT", "AGGRESSIVE", 72, 0.95,
+				all, join(press, "mend_reset"))));
+	}
+
+	private static List<String> join(List<String> base, String... more) {
+		List<String> out = new ArrayList<>(base);
+		out.addAll(List.of(more));
+		return out;
 	}
 
 	public static void load() {

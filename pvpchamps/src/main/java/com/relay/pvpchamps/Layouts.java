@@ -25,6 +25,31 @@ public final class Layouts {
 
 	private static final Gson GSON = new Gson();
 
+	/** A player who is arranging a kit: what they had before, restored when they finish. */
+	private record Editing(Kits kit, ItemStack[] stash) {}
+
+	private static final Map<UUID, Editing> EDITING = new java.util.HashMap<>();
+
+	public static boolean editing(ServerPlayer p) { return EDITING.containsKey(p.getUUID()); }
+
+	/** Swaps the player's inventory for the kit (in their saved layout) so they can rearrange it. */
+	public static void edit(ServerPlayer p, Kits kit) {
+		ItemStack[] stash = new ItemStack[41];
+		for (int i = 0; i < 41; i++) stash[i] = p.getInventory().getItem(i).copy();
+		EDITING.put(p.getUUID(), new Editing(kit, stash));
+		ItemStack[] built = kit.build(p.level().getServer());
+		vexbot.kit.KitManager.apply(p, apply(p, kit, built));
+	}
+
+	/** Ends editing: optionally saves the arrangement, then gives the player's own inventory back. */
+	public static Kits finish(ServerPlayer p, boolean save) throws IOException {
+		Editing e = EDITING.remove(p.getUUID());
+		if (e == null) return null;
+		if (save) save(p, e.kit());
+		vexbot.kit.KitManager.apply(p, e.stash());
+		return e.kit();
+	}
+
 	private static Path file(UUID player, Kits kit) {
 		return FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("layouts").resolve(player + "_" + kit.id + ".json");
 	}

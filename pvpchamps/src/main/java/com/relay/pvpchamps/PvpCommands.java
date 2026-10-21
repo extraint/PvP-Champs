@@ -24,14 +24,18 @@ public final class PvpCommands {
 			.then(Commands.literal("roster").executes(c -> roster(c.getSource())))
 			.then(Commands.literal("kits").executes(c -> kits(c.getSource())))
 			.then(Commands.literal("layout")
-				.then(Commands.literal("save")
+				.then(Commands.literal("save").executes(c -> layoutFinish(c, true))
 					.then(Commands.argument("kit", StringArgumentType.word())
 						.suggests((c, b) -> SharedSuggestionProvider.suggest(Kits.ids(), b))
-						.executes(c -> layout(c, true))))
+						.executes(c -> layoutSaveDirect(c))))
+				.then(Commands.literal("cancel").executes(c -> layoutFinish(c, false)))
 				.then(Commands.literal("reset")
 					.then(Commands.argument("kit", StringArgumentType.word())
 						.suggests((c, b) -> SharedSuggestionProvider.suggest(Kits.ids(), b))
-						.executes(c -> layout(c, false)))))
+						.executes(c -> layoutReset(c))))
+				.then(Commands.argument("kit", StringArgumentType.word())
+					.suggests((c, b) -> SharedSuggestionProvider.suggest(Kits.ids(), b))
+					.executes(c -> layoutEdit(c))))
 			.then(Commands.literal("challenge")
 				.then(Commands.argument("opponent", StringArgumentType.word())
 					.suggests((c, b) -> SharedSuggestionProvider.suggest(Roster.all().stream().map(Roster.Opponent::name), b))
@@ -69,22 +73,59 @@ public final class PvpCommands {
 		return Roster.all().size();
 	}
 
-	/** /pvpchamps layout save|reset <kit>: remember where you put each item, and get the kit back that way. */
-	private static int layout(CommandContext<CommandSourceStack> c, boolean save) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+	/** /pvpchamps layout <kit>: hands you the kit (in your saved layout) so you can rearrange it, then save. */
+	private static int layoutEdit(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		CommandSourceStack src = c.getSource();
+		ServerPlayer p = src.getPlayerOrException();
+		Kits kit = Kits.byId(StringArgumentType.getString(c, "kit"));
+		if (kit == null) { say(src, "Unknown kit. /pvpchamps kits"); return 0; }
+		if (MatchManager.busy()) { say(src, "A match is running (/pvpchamps stop)."); return 0; }
+		if (Layouts.editing(p)) { say(src, "You are already arranging a kit: /pvpchamps layout save or cancel."); return 0; }
+		Layouts.edit(p, kit);
+		say(src, "Here is the " + kit.label + " kit. Move things around, then /pvpchamps layout save (or cancel). Your own inventory comes back either way.");
+		return 1;
+	}
+
+	/** /pvpchamps layout save | cancel: finish arranging; save keeps your layout, both give your inventory back. */
+	private static int layoutFinish(CommandContext<CommandSourceStack> c, boolean save) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		CommandSourceStack src = c.getSource();
+		ServerPlayer p = src.getPlayerOrException();
+		try {
+			Kits kit = Layouts.finish(p, save);
+			if (kit == null) { say(src, "You are not arranging a kit. Start with /pvpchamps layout <kit>."); return 0; }
+			say(src, save ? "Saved your " + kit.label + " layout. Your inventory is back." : "Cancelled. Your inventory is back.");
+			return 1;
+		} catch (java.io.IOException e) {
+			say(src, "Could not save the layout: " + e.getMessage());
+			return 0;
+		}
+	}
+
+	/** /pvpchamps layout save <kit>: saves whatever is in your slots right now as that kit's layout. */
+	private static int layoutSaveDirect(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		CommandSourceStack src = c.getSource();
 		ServerPlayer p = src.getPlayerOrException();
 		Kits kit = Kits.byId(StringArgumentType.getString(c, "kit"));
 		if (kit == null) { say(src, "Unknown kit. /pvpchamps kits"); return 0; }
 		try {
-			if (save) {
-				int n = Layouts.save(p, kit);
-				say(src, "Saved your " + kit.label + " layout (" + n + " slots). It applies the next time you get this kit.");
-			} else {
-				say(src, Layouts.reset(p, kit) ? "Reset your " + kit.label + " layout." : "You had no saved " + kit.label + " layout.");
-			}
+			say(src, "Saved your " + kit.label + " layout (" + Layouts.save(p, kit) + " slots).");
 			return 1;
 		} catch (java.io.IOException e) {
-			say(src, "Could not " + (save ? "save" : "reset") + " the layout: " + e.getMessage());
+			say(src, "Could not save the layout: " + e.getMessage());
+			return 0;
+		}
+	}
+
+	private static int layoutReset(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		CommandSourceStack src = c.getSource();
+		ServerPlayer p = src.getPlayerOrException();
+		Kits kit = Kits.byId(StringArgumentType.getString(c, "kit"));
+		if (kit == null) { say(src, "Unknown kit. /pvpchamps kits"); return 0; }
+		try {
+			say(src, Layouts.reset(p, kit) ? "Reset your " + kit.label + " layout." : "You had no saved " + kit.label + " layout.");
+			return 1;
+		} catch (java.io.IOException e) {
+			say(src, "Could not reset the layout: " + e.getMessage());
 			return 0;
 		}
 	}
