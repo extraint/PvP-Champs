@@ -245,6 +245,11 @@ public final class Match {
 	/** Called when a fighter dies, from the death event or from polling. */
 	public void fighterDown(String name) {
 		if (state != State.FIGHT || loserDecided) return;
+		ServerPlayer who = name.equalsIgnoreCase(nameA) ? (watch ? VexBotApi.resolveBot(server, nameA) : humanRef) : VexBotApi.resolveBot(server, nameB);
+		if (who != null && who.isAlive() && who.getHealth() > 0) { // a death event for someone still standing is not a loss
+			System.err.println("[pvpchamps] ignored a death event for " + name + ": still alive at " + who.getHealth());
+			return;
+		}
 		if (name.equalsIgnoreCase(nameA)) { loserDecided = true; aLost = true; }
 		else if (name.equalsIgnoreCase(nameB)) { loserDecided = true; aLost = false; }
 	}
@@ -273,9 +278,6 @@ public final class Match {
 		if (b == null || b.getHealth() <= 0 || !b.isAlive()) {
 			if (b != null) fighterDown(nameB);
 			else if (++missingB == 60) vanished(nameB);
-		}
-		if (!loserDecided && fightTicks > 20 * 180) { // three minutes: whoever has more health takes it
-			if (a != null && b != null) { loserDecided = true; aLost = a.getHealth() < b.getHealth(); }
 		}
 		if (!loserDecided) return;
 		if (aLost) scoreB++; else scoreA++;
