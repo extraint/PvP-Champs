@@ -10,6 +10,7 @@ public final class PvpChamps implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		Roster.load();
+		vexbot.BotSettings.botDontLeave = true; // bots stay on the server instead of dropping out on their own
 		CommandRegistrationCallback.EVENT.register((dispatcher, registry, env) -> PvpCommands.register(dispatcher));
 		ServerTickEvents.END_SERVER_TICK.register(server -> MatchManager.tick());
 		VexBotEvents.registerDeathListener((victim, killer) -> MatchManager.onDeath(victim.getGameProfile().name()));

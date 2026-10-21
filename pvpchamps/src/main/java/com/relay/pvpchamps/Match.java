@@ -37,6 +37,10 @@ public final class Match {
 
 	private State state = State.COUNTDOWN;
 	private int timer, round = 1, scoreA, scoreB, missingA, missingB, fightTicks;
+	/** Per fighter (0 = A, 1 = B): where it was last seen alive, and how long a respawn has been pending. */
+	private final Vec3[] lastPos = new Vec3[2];
+	private final int[] respawnWait = new int[2];
+	private int respawnsLeft = 2;
 	private boolean loserDecided, aLost;
 	private net.minecraft.world.item.ItemStack[] kitStacks;
 
@@ -107,6 +111,9 @@ public final class Match {
 		timer = 60;
 		loserDecided = false;
 		missingA = missingB = fightTicks = 0;
+		lastPos[0] = lastPos[1] = null;
+		respawnWait[0] = respawnWait[1] = 0;
+		respawnsLeft = 2;
 		VexBotApi.despawnBot(server, nameB);
 		if (watch) VexBotApi.despawnBot(server, nameA);
 		revive();
@@ -183,6 +190,33 @@ public final class Match {
 		}
 	}
 
+	/** @return true while a dropped bot is being brought back, so the caller skips its loss checks this tick. */
+	private boolean handleBotDrop(int idx, String name, String opponent, ServerPlayer bot, float yaw) {
+		if (bot != null && bot.isAlive() && bot.getHealth() > 0) {
+			lastPos[idx] = bot.position();
+			if (respawnWait[idx] > 0) { // it is back: give it the kit and send it at the opponent again
+				prepare(bot);
+				VexBotApi.hunt(name, opponent);
+				respawnWait[idx] = 0;
+				message(Component.literal("§e" + name + " reconnected."));
+			}
+			return false;
+		}
+		if (respawnWait[idx] > 0) { // waiting for the respawn; give up after five seconds
+			if (++respawnWait[idx] > 100) { respawnWait[idx] = 0; return false; }
+			return true;
+		}
+		if (bot == null && lastPos[idx] != null && respawnsLeft > 0 && !loserDecided) {
+			respawnsLeft--;
+			System.err.println("[pvpchamps] " + name + " dropped off the server mid-round, respawning it (" + respawnsLeft + " left)");
+			VexBotApi.spawnBot(server, name, lastPos[idx], yaw, dimension());
+			respawnWait[idx] = 1;
+			message(Component.literal("§e" + name + " dropped off the server; bringing it back."));
+			return true;
+		}
+		return false;
+	}
+
 	/** A fighter left the server mid-round without dying: tell the player and log it instead of ending silently. */
 	private void vanished(String name) {
 		if (loserDecided) return;
@@ -201,6 +235,9 @@ public final class Match {
 		fightTicks++;
 		ServerPlayer a = watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
+		// A bot that drops off the server mid-round while alive is brought back where it stood, with the kit, up to twice.
+		if (watch && handleBotDrop(0, nameA, nameB, a, -90f)) return;
+		if (handleBotDrop(1, nameB, nameA, b, 90f)) return;
 		// A fighter that is simply gone for a moment is not a loss; wait three seconds before deciding, and say why.
 		if (a == null || a.getHealth() <= 0 || !a.isAlive()) {
 			if (a == null ? ++missingA > 60 : true) {
