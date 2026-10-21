@@ -19,6 +19,7 @@ final class ArenaGuard {
 	private final ServerLevel level;
 	private final int x0, y0, z0, sx, sy, sz;
 	private final BlockState[] saved;
+	private final java.util.Set<java.util.UUID> before = new java.util.HashSet<>(); // entities that were already lying there: not ours to remove
 
 	ArenaGuard(ServerLevel level, Vec3 centre) {
 		this.level = level;
@@ -29,6 +30,7 @@ final class ArenaGuard {
 		sx = sz = RADIUS * 2 + 1;
 		sy = y1 - y0 + 1;
 		saved = new BlockState[sx * sy * sz];
+		for (Entity e : level.getEntities((Entity) null, new AABB(x0, y0, z0, x0 + sx, y0 + sy, z0 + sz), ArenaGuard::leftover)) before.add(e.getUUID());
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 		int i = 0;
 		for (int y = 0; y < sy; y++)
@@ -39,7 +41,7 @@ final class ArenaGuard {
 	/** Puts every changed block back and clears what the fight left lying around. */
 	void restore() {
 		AABB box = new AABB(x0, y0, z0, x0 + sx, y0 + sy, z0 + sz);
-		for (Entity e : level.getEntities((Entity) null, box, ArenaGuard::leftover)) e.discard();
+		for (Entity e : level.getEntities((Entity) null, box, e -> leftover(e) && !before.contains(e.getUUID()))) e.discard();
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 		int i = 0, fixed = 0;
 		for (int y = 0; y < sy; y++)
