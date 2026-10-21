@@ -219,7 +219,7 @@ public final class Match {
 			if (++respawnWait[idx] > 100) { respawnWait[idx] = 0; return false; }
 			return true;
 		}
-		if (bot == null && lastPos[idx] != null && respawnsLeft > 0 && !loserDecided) {
+		if (bot == null && lastPos[idx] != null && !loserDecided) {
 			respawnsLeft--;
 			System.err.println("[pvpchamps] " + name + " dropped off the server mid-round, respawning it (" + respawnsLeft + " left)");
 			VexBotApi.spawnBot(server, name, lastPos[idx], yaw, dimension());
@@ -234,7 +234,7 @@ public final class Match {
 	private void vanished(String name) {
 		if (loserDecided) return;
 		System.err.println("[pvpchamps] " + name + " left the server mid-round (not a death), round " + round + " after " + fightTicks + " ticks");
-		message(Component.literal("§e" + name + " left the game mid-round (not a death), so the round counts as a loss for them."));
+		message(Component.literal("§e" + name + " is out of sight; the round continues until someone dies."));
 	}
 
 	/** Called when a fighter dies, from the death event or from polling. */
@@ -248,21 +248,26 @@ public final class Match {
 		fightTicks++;
 		ServerPlayer a = watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
+		if (watch && (fightTicks == 5 || fightTicks == 25 || fightTicks == 60)) { // heads-only fix: make clients redraw the full bodies
+			for (ServerPlayer p : new ServerPlayer[] {a, b}) {
+				if (p == null) continue;
+				p.setInvisible(false);
+				p.setPose(net.minecraft.world.entity.Pose.STANDING);
+				p.setSwimming(false);
+				teleport(p, p.position(), p.getYRot());
+			}
+		}
 		// A bot that drops off the server mid-round while alive is brought back where it stood, with the kit, up to twice.
 		if (watch && handleBotDrop(0, nameA, nameB, a, -90f)) return;
 		if (handleBotDrop(1, nameB, nameA, b, 90f)) return;
 		// A fighter that is simply gone for a moment is not a loss; wait three seconds before deciding, and say why.
 		if (a == null || a.getHealth() <= 0 || !a.isAlive()) {
-			if (a == null ? ++missingA > 60 : true) {
-				if (a == null) vanished(nameA);
-				fighterDown(nameA);
-			}
+			if (a != null) fighterDown(nameA); // only a real death ends a round, never a fighter that is merely out of sight
+			else if (++missingA == 60) vanished(nameA);
 		}
 		if (b == null || b.getHealth() <= 0 || !b.isAlive()) {
-			if (b == null ? ++missingB > 60 : true) {
-				if (b == null) vanished(nameB);
-				fighterDown(nameB);
-			}
+			if (b != null) fighterDown(nameB);
+			else if (++missingB == 60) vanished(nameB);
 		}
 		if (!loserDecided && fightTicks > 20 * 180) { // three minutes: whoever has more health takes it
 			if (a != null && b != null) { loserDecided = true; aLost = a.getHealth() < b.getHealth(); }
