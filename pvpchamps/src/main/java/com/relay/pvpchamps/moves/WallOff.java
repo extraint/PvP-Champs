@@ -31,7 +31,8 @@ public final class WallOff implements Move {
 		var inv = c.bot.getInventory();
 		for (int i = 0; i < 36; i++) {
 			ItemStack s = inv.getItem(i);
-			if (s.getItem() instanceof BlockItem && s.getItem() != Items.TNT) return i;
+			if (s.getItem() instanceof BlockItem bi && s.getItem() != Items.TNT && !(bi.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock)
+				&& bi.getBlock().defaultBlockState().isCollisionShapeFullBlock(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, net.minecraft.core.BlockPos.ZERO)) return i;
 		}
 		return -1;
 	}

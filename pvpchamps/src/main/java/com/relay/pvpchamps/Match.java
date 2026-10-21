@@ -71,6 +71,9 @@ public final class Match {
 		}
 		vexbot.BotSettings.botDontLeave = true; // settings loaded after startup can flip these back
 		vexbot.BotSettings.botLeaveOnDeath = false;
+		vexbot.BotSettings.shulkerRegear = false; // no placing shulker boxes (they ended up as a wall)
+		vexbot.BotSettings.enderChestRegear = false;
+		vexbot.BotSettings.pearlChasing = false; // two bots chasing each other with pearls overshoot and loop; PearlClose throws one aimed pearl
 		this.changedRespawn = true;
 		command("gamerule immediate_respawn true"); // so the human never sits on a death screen between rounds
 		this.kitStacks = kit.build(server);

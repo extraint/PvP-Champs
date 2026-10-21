@@ -41,14 +41,14 @@ public final class Roster {
 			new Opponent("ImMixed", "All-rounder, balanced", "COMBAT_MASTER", "BALANCED", 90, 1.0,
 				all, join(heal, "pop_punish", "bait_retreat", "mend_reset", "wall_off")),
 			new Opponent("x_Kyran_x", "SMP pressure", "COMBAT_MASTER", "AGGRESSIVE", 88, 1.0,
-				List.of("diamond_smp", "netherite_smp", "cart"), join(press, "pop_punish", "pearl_close", "wall_off", "tnt_minecart")),
+				List.of("diamond_smp", "netherite_smp", "cart"), join(press, "pop_punish", "pearl_close", "wall_off", "cart_bomb", "tnt_minecart")),
 			// Experts
 			new Opponent("Freekee_Fang", "Cart and potion fighter, patient pressure", "EXPERT", "BALANCED", 86, 1.0,
-				List.of("cart", "netherite_op"), join(heal, "pearl_close", "mend_reset", "tnt_minecart")),
+				List.of("cart", "netherite_op"), join(heal, "pearl_close", "mend_reset", "cart_bomb", "tnt_minecart")),
 			new Opponent("ninorc15", "Sword and SMP, plays it tight", "EXPERT", "DEFENSIVE", 85, 1.0,
 				List.of("sword", "diamond_smp", "netherite_smp"), join(heal, "pop_punish", "wall_off", "mend_reset")),
 			new Opponent("mikagoated", "Mace and cart, reads the opponent", "EXPERT", "ADAPTIVE", 83, 1.0,
-				List.of("mace", "spear_mace", "cart"), join(heal, "mace_smash", "pearl_close", "lunge_swap", "tnt_minecart")),
+				List.of("mace", "spear_mace", "cart"), join(heal, "mace_smash", "pearl_close", "lunge_swap", "cart_bomb", "tnt_minecart")),
 			new Opponent("Sweatgod", "Spear mace, never lets up", "EXPERT", "AGGRESSIVE", 82, 1.0,
 				List.of("spear_mace", "mace", "uhc"), join(press, "mace_smash", "pop_punish", "lunge_swap", "pearl_wind")),
 			new Opponent("BLMcheat", "Patient defender", "EXPERT", "DEFENSIVE", 80, 1.0,
@@ -56,7 +56,7 @@ public final class Roster {
 			new Opponent("Sizierung", "Sword fighter, balanced", "EXPERT", "BALANCED", 79, 1.0,
 				List.of("sword", "uhc", "diamond_smp"), join(heal, "pop_punish", "bait_retreat")),
 			new Opponent("JACKS5ON", "Cart and SMP, balanced", "EXPERT", "BALANCED", 78, 1.0,
-				List.of("cart", "diamond_smp", "netherite_smp"), join(heal, "pearl_close", "tnt_minecart")),
+				List.of("cart", "diamond_smp", "netherite_smp"), join(heal, "pearl_close", "cart_bomb", "tnt_minecart")),
 			new Opponent("Ricardoxx_", "Aggressive mace player", "EXPERT", "AGGRESSIVE", 77, 1.0,
 				List.of("mace", "spear_mace", "netherite_smp"), join(press, "mace_smash", "pearl_close", "lunge_swap")),
 			new Opponent("TheobaldTheBird", "Adaptive SMP player", "EXPERT", "ADAPTIVE", 76, 1.0,
@@ -74,9 +74,9 @@ public final class Roster {
 			new Opponent("Alepordio", "Careful SMP player", "HARD", "DEFENSIVE", 71, 0.95,
 				List.of("diamond_smp", "netherite_smp", "uhc"), join(heal, "mend_reset", "wall_off")),
 			new Opponent("Blvckwlf", "Cart and sword", "HARD", "BALANCED", 70, 0.95,
-				List.of("cart", "sword", "diamond_smp"), join(heal, "pearl_close", "tnt_minecart")),
+				List.of("cart", "sword", "diamond_smp"), join(heal, "pearl_close", "cart_bomb", "tnt_minecart")),
 			new Opponent("SpawnPlayer", "Aggressive cart player", "HARD", "AGGRESSIVE", 72, 0.95,
-				List.of("cart", "netherite_op", "mace"), join(press, "pearl_close", "tnt_minecart")),
+				List.of("cart", "netherite_op", "mace"), join(press, "pearl_close", "cart_bomb", "tnt_minecart")),
 			new Opponent("1kiks_", "Defensive SMP", "HARD", "DEFENSIVE", 70, 0.95,
 				List.of("diamond_smp", "netherite_smp"), join(heal, "mend_reset", "wall_off")),
 			new Opponent("MyDogIsConfused", "Safe, careful fighter", "HARD", "SAFE", 68, 0.95,
@@ -92,7 +92,7 @@ public final class Roster {
 	}
 
 	/** Bump when the built-in roster changes: an older roster.json is then replaced (the old one is kept as roster.json.old). */
-	private static final String ROSTER_VERSION = "5";
+	private static final String ROSTER_VERSION = "6";
 
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("roster.json");
