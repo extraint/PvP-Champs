@@ -46,6 +46,7 @@ public final class Layouts {
 		Editing e = EDITING.remove(p.getUUID());
 		if (e == null) return null;
 		if (save) save(p, e.kit());
+		p.getInventory().clearContent(); // KitManager.apply only fills slots, so empty the kit out first
 		vexbot.kit.KitManager.apply(p, e.stash());
 		return e.kit();
 	}

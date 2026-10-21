@@ -214,7 +214,10 @@ public final class Match {
 		revive();
 		Spec.stop(humanRef);
 		humanRef.setGameMode(savedMode);
-		if (!watch && saved.stacks != null) KitManager.apply(humanRef, saved.stacks);
+		if (!watch && saved.stacks != null) {
+			humanRef.getInventory().clearContent(); // KitManager.apply only fills slots, so empty the kit out first
+			KitManager.apply(humanRef, saved.stacks);
+		}
 		if (changedRespawn) command("gamerule immediate_respawn false");
 		if (!cancelled) message(Component.literal("§a=== " + (aWon ? nameA : nameB) + " wins the match " + Math.max(scoreA, scoreB) + "-" + Math.min(scoreA, scoreB) + " ==="));
 		else message(Component.literal("§7Match ended."));
