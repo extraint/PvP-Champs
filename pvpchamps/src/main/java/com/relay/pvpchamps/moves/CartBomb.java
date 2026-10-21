@@ -57,7 +57,7 @@ public final class CartBomb implements Move {
 			}
 			default -> { // it is lit: get clear of the blast
 				c.face(c.targetEye());
-				c.run(-1f, true);
+				c.runBack(true);
 				return t < 30;
 			}
 		}

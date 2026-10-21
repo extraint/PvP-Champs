@@ -33,7 +33,7 @@ public final class BaitRetreat implements Move {
 			return false;
 		}
 		c.face(c.targetEye());
-		c.run(-1f, false);
+		c.runBack(false);
 		c.pack.setStrafing(strafe);
 		return true;
 	}

@@ -76,6 +76,60 @@ public final class Ctx {
 		pack.setSprinting(sprint);
 	}
 
+	/**
+	 * The yaw to run along to get away from {@code from}: straight away if that is open, otherwise the nearest
+	 * direction with no wall in the way and no drop at the end of it. Tries wider angles one side then the other.
+	 */
+	public float openYawAwayFrom(Vec3 from) {
+		Vec3 away = bot.position().subtract(from);
+		float base = (float) Math.toDegrees(Math.atan2(-away.x, away.z));
+		int[] offsets = {0, 25, -25, 50, -50, 80, -80, 110, -110, 145, -145, 180};
+		float best = base;
+		double bestScore = -1;
+		for (int off : offsets) {
+			float yaw = base + off;
+			double rad = Math.toRadians(yaw);
+			Vec3 dir = new Vec3(-Math.sin(rad), 0, Math.cos(rad));
+			double room = openRun(dir, 7.0);
+			// Prefer open room, and among equally open directions the one closest to straight away.
+			double score = room - Math.abs(off) * 0.01;
+			if (room >= 7.0) return yaw;
+			if (score > bestScore) { bestScore = score; best = yaw; }
+		}
+		return best;
+	}
+
+	/** How many blocks (up to max) the bot could run along dir before a wall or a drop of more than 2 blocks. */
+	private double openRun(Vec3 dir, double max) {
+		var level = bot.level();
+		for (double d = 1.0; d <= max; d += 1.0) {
+			Vec3 foot = bot.position().add(dir.scale(d));
+			var lo = new net.minecraft.core.BlockPos((int) Math.floor(foot.x), (int) Math.floor(bot.getY() + 0.1), (int) Math.floor(foot.z));
+			boolean wall = !level.getBlockState(lo).getCollisionShape(level, lo).isEmpty()
+				&& !level.getBlockState(lo.above()).getCollisionShape(level, lo.above()).isEmpty();
+			if (wall) return d - 1.0;
+			boolean ground = false;
+			for (int dy = 0; dy <= 2 && !ground; dy++) {
+				var b = lo.below(dy);
+				ground = !level.getBlockState(b).getCollisionShape(level, b).isEmpty();
+			}
+			if (!ground) return d - 1.0; // a hole or cliff
+		}
+		return max;
+	}
+
+	/** Backpedals from the opponent while facing them; sidesteps instead when a wall or drop is right behind. */
+	public void runBack(boolean sprint) {
+		Vec3 away = bot.position().subtract(target.position()).multiply(1, 0, 1);
+		if (away.lengthSqr() < 1e-4) { run(-1f, sprint); return; }
+		Vec3 dir = away.normalize();
+		if (openRun(dir, 3.0) >= 2.0) { run(-1f, sprint); return; }
+		Vec3 left = new Vec3(dir.z, 0, -dir.x), right = left.scale(-1);
+		boolean goRight = openRun(right, 5.0) >= openRun(left, 5.0);
+		run(0f, sprint);
+		pack.setStrafing(goRight ? -1f : 1f);
+	}
+
 	/** True for mace kits: the bot's own mace logic (wind charge, dive, smash) must run, not a ground melee loop. */
 	public boolean carriesMace() { return count(net.minecraft.world.item.Items.MACE) > 0; }
 

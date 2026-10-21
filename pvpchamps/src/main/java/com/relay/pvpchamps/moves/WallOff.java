@@ -43,7 +43,7 @@ public final class WallOff implements Move {
 		if (placed == 0 && c.dist < 2.5) {
 			// Too close to wall off: back away first so the wall can go between the two of them.
 			c.face(c.targetEye());
-			c.run(-1f, false);
+			c.runBack(false);
 			return t <= 60;
 		}
 		// Aim at the floor one block ahead of the bot, toward the opponent, and place the block there.
@@ -55,7 +55,7 @@ public final class WallOff implements Move {
 			c.useOnce();
 			placed++;
 		}
-		c.run(-1f, false); // back away from the new wall
+		c.runBack(false); // back away from the new wall
 		return placed < 5;
 	}
 

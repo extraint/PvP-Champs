@@ -21,6 +21,7 @@ public final class HealAtFourHearts implements Move {
 
 	private Mode mode;
 	private int ticks, fled;
+	private float fleeYaw;
 
 	@Override public String id() { return "heal_4_hearts"; }
 
@@ -80,9 +81,8 @@ public final class HealAtFourHearts implements Move {
 	/** Sprint-jump straight away from the opponent. Returns false once the gap is wide enough or the time is up. */
 	private boolean flee(Ctx c, double gap, int maxTicks) {
 		if (c.dist >= gap || ++fled > maxTicks) return false;
-		net.minecraft.world.phys.Vec3 away = c.bot.position().subtract(c.target.position());
-		float yaw = (float) Math.toDegrees(Math.atan2(-away.x, away.z));
-		c.pack.look(yaw, 0f);
+		if (fled % 4 == 1) fleeYaw = c.openYawAwayFrom(c.target.position()); // re-check the way out every few ticks
+		c.pack.look(fleeYaw, 0f);
 		c.pack.setForward(1f);
 		c.pack.setSprinting(true);
 		if (c.bot.onGround()) c.jumpOnce(); // bunny hop: jumping keeps the sprint speed up
