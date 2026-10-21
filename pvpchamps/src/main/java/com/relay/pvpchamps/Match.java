@@ -114,7 +114,10 @@ public final class Match {
 		return this;
 	}
 
+	private ArenaGuard arena;
+
 	private void beginRound() {
+		if (arena == null) arena = new ArenaGuard(level, centre); else arena.restore();
 		if (gameKits != null && round - 1 < gameKits.size() && gameKits.get(round - 1) != kit) {
 			kit = gameKits.get(round - 1);
 			kitStacks = kit.build(server);
@@ -287,6 +290,7 @@ public final class Match {
 		if (state == State.DONE) return;
 		state = State.DONE;
 		VexBotApi.despawnBot(server, nameB);
+		if (arena != null) arena.restore();
 		if (watch) VexBotApi.despawnBot(server, nameA);
 		revive();
 		Spec.stop(humanRef);
