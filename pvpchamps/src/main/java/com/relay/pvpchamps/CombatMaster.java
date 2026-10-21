@@ -25,6 +25,12 @@ public final class CombatMaster {
 		BotSettings.usePotions = true;
 		BotSettings.maceTotem = true;
 		BotSettings.useCobwebs = true; // Vexbot's cobweb traps and web drain
+		var t = BotSettings.techniques; // the axe-stun-then-mace-slam combos are off unless a technique toggle is on
+		t.stunSlam = true;
+		t.spearStunSlam = true;
+		t.elytraStunSlam = true;
+		t.maceSwap = true;
+		t.spearMaceSwap = true;
 	}
 
 	public static DifficultyParams params(double accuracy) {
