@@ -25,6 +25,16 @@ public final class CombatMaster {
 		BotSettings.usePotions = true;
 		BotSettings.maceTotem = true;
 		BotSettings.useCobwebs = true; // Vexbot's cobweb traps and web drain
+		BotSettings.jumpResetChance = 100; // jump-reset every hit taken to cut knockback and keep the combo
+		BotSettings.fastShieldCooldown = true;
+		BotSettings.shieldOnMaceDive = true;
+		BotSettings.usePearlCatch = true;
+		BotSettings.useSpearDash = true;
+		BotSettings.useElytraMace = true;
+		BotSettings.useElytraSpear = true;
+		BotSettings.useBows = true;
+		BotSettings.retreat = true;
+		BotSettings.retreatHealthHearts = 4.0; // disengage to heal instead of dying in the trade
 		BotSettings.useWebDrain = true;
 		BotSettings.webDrainChance = 100; // web them whenever the chance comes up
 		BotSettings.webEscape = true;
