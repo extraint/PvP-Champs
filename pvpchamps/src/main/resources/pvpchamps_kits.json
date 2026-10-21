@@ -515,6 +515,11 @@
             "potion": "strong_swiftness"
           }
         ]
+      },
+      {
+        "slot": 12,
+        "item": "cobweb",
+        "count": 64
       }
     ],
     "equipment": {
@@ -768,6 +773,11 @@
         "count": 1,
         "slot": 31,
         "potion": "strong_strength"
+      },
+      {
+        "slot": 32,
+        "item": "cobweb",
+        "count": 64
       }
     ],
     "equipment": {
@@ -1224,6 +1234,11 @@
         "count": 1,
         "slot": 31,
         "potion": "fire_resistance"
+      },
+      {
+        "slot": 32,
+        "item": "cobweb",
+        "count": 64
       }
     ],
     "equipment": {
@@ -1466,6 +1481,11 @@
         "count": 1,
         "slot": 31,
         "potion": "strong_healing"
+      },
+      {
+        "slot": 32,
+        "item": "cobweb",
+        "count": 64
       }
     ],
     "equipment": {

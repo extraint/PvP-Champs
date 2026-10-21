@@ -38,12 +38,19 @@ public final class HealAtFourHearts implements Move {
 		return -1;
 	}
 
+	/** The opponent is moving away from the bot: a good moment to disengage and heal instead of chasing. */
+	private static boolean opponentRunning(Ctx c) {
+		var to = c.target.position().subtract(c.bot.position()).multiply(1, 0, 1);
+		if (to.lengthSqr() < 1e-4) return false;
+		return c.target.getDeltaMovement().multiply(1, 0, 1).dot(to.normalize()) > 0.12 && c.dist > 2.5;
+	}
+
 	@Override
 	public boolean start(Ctx c) {
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (c.bot.isUsingItem()) return MoveEngine.reject(id(), "busy");
 		float hp = c.bot.getHealth();
-		boolean danger = hp <= 8f, safeTopUp = hp <= 12f && c.dist > 5.0;
+		boolean danger = hp <= 8f, safeTopUp = hp <= 12f && (c.dist > 5.0 || opponentRunning(c));
 		if (!danger && !safeTopUp) return MoveEngine.reject(id(), "healthy_hp" + (int) Math.min(hp, 20));
 		if (danger && potionSlot(c) >= 0) mode = Mode.POTION;
 		else if (c.count(Items.GOLDEN_APPLE) > 0) mode = Mode.APPLE;
