@@ -92,6 +92,18 @@ public final class MoveEngine {
 		boolean skip = false;
 		// Healing is checked every tick and beats whatever else is running: waiting for the 4-tick move check
 		// lets Vexbot's own healing act first.
+		// A raised shield is answered at once on Combat Master bots: checked every tick, ahead of everything but healing.
+		if (CombatMaster.is(profile.difficulty()) && (st.current == null || !st.current.id().equals("shield_break"))
+				&& (st.current == null || !st.current.id().equals("heal_4_hearts"))) {
+			for (Move m : st.moves) {
+				if (!m.id().equals("shield_break")) continue;
+				if (m.start(c)) {
+					if (st.current != null) endCurrent(st, c);
+					st.current = m;
+					USED.merge(bot.getGameProfile().name() + ":" + m.id(), 1, Integer::sum);
+				}
+			}
+		}
 		if (st.current == null || !st.current.id().equals("heal_4_hearts")) {
 			Move heal = st.moves.get(0);
 			if (heal.id().equals("heal_4_hearts") && (CombatMaster.is(profile.difficulty()) || profile.moves().contains(heal.id()))

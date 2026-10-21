@@ -2,10 +2,10 @@ package com.relay.pvpchamps.moves;
 
 /**
  * Combat Master melee: circle the opponent, jump and hit on the way down for criticals, and tap shift in the air
- * to tune the arc while strafe-critting. After a hit it keeps on the opponent to chain the next one into a combo.
+ * now and then (about 1 airborne tick in 20) to tune the arc while strafe-critting. After a hit it keeps on the opponent to chain the next one into a combo.
  */
 public final class MasterCircle implements Move {
-	private int left, flip, noCrit, comboLeft;
+	private int left, flip, noCrit, comboLeft, shiftLeft;
 	private float dir;
 
 	@Override public String id() { return "master_circle"; }
@@ -20,6 +20,7 @@ public final class MasterCircle implements Move {
 		flip = 0;
 		noCrit = 0;
 		comboLeft = 0;
+		shiftLeft = 0;
 		dir = c.st.rng.nextBoolean() ? 1f : -1f;
 		return true;
 	}
@@ -43,8 +44,9 @@ public final class MasterCircle implements Move {
 		c.pack.setForward(fwd);
 		c.pack.setSprinting(fwd > 0 && !c.bot.isShiftKeyDown());
 
-		// Shift/unshift in the air while strafe-critting; on the ground stay unshifted.
-		if (!onGround) c.pack.setSneaking(c.st.tick % 4 < 2);
+		// A shift tap in the air is rare: about 1 airborne tick in 20 starts a two-tick shift, then back to unshifted.
+		if (!onGround && shiftLeft == 0 && c.st.rng.nextInt(20) == 0) shiftLeft = 2;
+		if (shiftLeft > 0) { shiftLeft--; c.pack.setSneaking(true); }
 		else c.pack.setSneaking(false);
 
 		// Crit arc: jump when close, hit while falling.
