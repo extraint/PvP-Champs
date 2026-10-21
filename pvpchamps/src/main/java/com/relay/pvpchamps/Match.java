@@ -127,7 +127,7 @@ public final class Match {
 	}
 
 	private void prepare(ServerPlayer p) {
-		KitManager.apply(p, kitStacks);
+		KitManager.apply(p, p.getUUID().equals(humanId) && !watch ? Layouts.apply(p, kit, kitStacks) : kitStacks);
 		p.setGameMode(GameType.SURVIVAL);
 		p.setHealth(p.getMaxHealth());
 		p.getFoodData().setFoodLevel(20);

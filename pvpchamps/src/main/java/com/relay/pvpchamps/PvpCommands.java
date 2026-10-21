@@ -23,6 +23,15 @@ public final class PvpCommands {
 		d.register(Commands.literal("pvpchamps")
 			.then(Commands.literal("roster").executes(c -> roster(c.getSource())))
 			.then(Commands.literal("kits").executes(c -> kits(c.getSource())))
+			.then(Commands.literal("layout")
+				.then(Commands.literal("save")
+					.then(Commands.argument("kit", StringArgumentType.word())
+						.suggests((c, b) -> SharedSuggestionProvider.suggest(Kits.ids(), b))
+						.executes(c -> layout(c, true))))
+				.then(Commands.literal("reset")
+					.then(Commands.argument("kit", StringArgumentType.word())
+						.suggests((c, b) -> SharedSuggestionProvider.suggest(Kits.ids(), b))
+						.executes(c -> layout(c, false)))))
 			.then(Commands.literal("challenge")
 				.then(Commands.argument("opponent", StringArgumentType.word())
 					.suggests((c, b) -> SharedSuggestionProvider.suggest(Roster.all().stream().map(Roster.Opponent::name), b))
@@ -58,6 +67,26 @@ public final class PvpCommands {
 			say(src, o.name() + " - " + o.title() + " [" + o.difficulty() + "/" + o.style() + ", rating " + o.rating() + "] kits: " + o.kits() + " moves: " + o.moves());
 		}
 		return Roster.all().size();
+	}
+
+	/** /pvpchamps layout save|reset <kit>: remember where you put each item, and get the kit back that way. */
+	private static int layout(CommandContext<CommandSourceStack> c, boolean save) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		CommandSourceStack src = c.getSource();
+		ServerPlayer p = src.getPlayerOrException();
+		Kits kit = Kits.byId(StringArgumentType.getString(c, "kit"));
+		if (kit == null) { say(src, "Unknown kit. /pvpchamps kits"); return 0; }
+		try {
+			if (save) {
+				int n = Layouts.save(p, kit);
+				say(src, "Saved your " + kit.label + " layout (" + n + " slots). It applies the next time you get this kit.");
+			} else {
+				say(src, Layouts.reset(p, kit) ? "Reset your " + kit.label + " layout." : "You had no saved " + kit.label + " layout.");
+			}
+			return 1;
+		} catch (java.io.IOException e) {
+			say(src, "Could not " + (save ? "save" : "reset") + " the layout: " + e.getMessage());
+			return 0;
+		}
 	}
 
 	private static int kits(CommandSourceStack src) {

@@ -104,7 +104,7 @@ public enum Kits {
 				b.singles(Items.TOTEM_OF_UNDYING, 2);
 				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
 				b.placePotions(b.instantHealing(20));
-				b.fillPotions(b.nonHealing());
+				b.fillPotions(b.basicPotions());
 				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
 				b.shield();
 			}
@@ -155,11 +155,9 @@ public enum Kits {
 				b.add(b.n(Items.GOLDEN_APPLE, 64));
 				b.singles(Items.TOTEM_OF_UNDYING, 2);
 				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
-				if (mace) {
-					b.add(b.n(Items.FIREWORK_ROCKET, 64));
-				}
-				b.fillPotions(b.nonHealing());
-				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, mace ? Items.ELYTRA : Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
+				if (mace) b.add(b.e(Items.ELYTRA, E.UNBREAKING, 3, E.MENDING, 1)); // worn chestplate stays on; elytra rides in the inventory
+				b.fillPotions(b.basicPotions());
+				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
 				b.shield();
 			}
 		}
@@ -239,6 +237,11 @@ public enum Kits {
 		/** Places each potion once, in the next empty slots. */
 		void placePotions(List<Holder<net.minecraft.world.item.alchemy.Potion>> list) {
 			for (Holder<net.minecraft.world.item.alchemy.Potion> p : list) add(potion(p));
+		}
+
+		/** Strength and Swiftness only: the pool for kits that carry no regeneration or fire resistance. */
+		List<Holder<net.minecraft.world.item.alchemy.Potion>> basicPotions() {
+			return List.of(Potions.STRONG_STRENGTH, Potions.STRONG_SWIFTNESS);
 		}
 
 		/** Fills the empty slots with splash potions, cycling through the list. */
