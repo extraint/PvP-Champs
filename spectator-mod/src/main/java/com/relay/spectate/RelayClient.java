@@ -112,6 +112,7 @@ public final class RelayClient implements ClientModInitializer {
 	// last finished round, for /breakdown
 	private static BreakdownScreen lastBreakdown;
 	private static boolean breakdownShownLast;
+	private static boolean serverDriven; // a server mod drives this session and reports round ends itself
 	private static int breakdownHold; // ticks left to keep the breakdown up against a respawn closing it
 
 	@Override
@@ -192,7 +193,7 @@ public final class RelayClient implements ClientModInitializer {
 		});
 		ClientPlayNetworking.registerGlobalReceiver(RelayNet.AutoSpectate.TYPE, (payload, ctx) -> {
 			Minecraft mc = Minecraft.getInstance();
-			if (payload.a().isEmpty()) { cleanupReplay(); active = false; participant = false; return; } // stop: leave any breakdown up
+			if (payload.a().isEmpty()) { cleanupReplay(); active = false; participant = false; serverDriven = false; return; } // stop: leave any breakdown up
 			// A new round starts: put the previous round's breakdown away.
 			breakdownHold = 0;
 			if (mc.gui.screen() instanceof BreakdownScreen) mc.setScreenAndShow(null);
@@ -200,10 +201,17 @@ public final class RelayClient implements ClientModInitializer {
 			boolean same = active && participant == payload.participant()
 				&& nameA.equalsIgnoreCase(payload.a()) && nameB.equalsIgnoreCase(payload.b());
 			if (!same) resetSession(payload.a(), payload.b(), payload.participant());
+			serverDriven = true; // the server says when rounds end; no guessing from deaths or missing fighters
 			roundLabel = payload.round().isEmpty() ? null : payload.round();
 			eventLabel = payload.event().isEmpty() ? null : payload.event();
 			pickName = payload.pick().isEmpty() ? null : payload.pick();
 			manualKit = payload.kit().isEmpty() ? null : payload.kit();
+		});
+		ClientPlayNetworking.registerGlobalReceiver(RelayNet.RoundEnd.TYPE, (payload, ctx) -> {
+			Minecraft mc = Minecraft.getInstance();
+			if (!active || mc.player == null || mode != Mode.LIVE) return;
+			if (payload.loser().equalsIgnoreCase(nameA)) endRound(mc, true, "was beaten");
+			else if (payload.loser().equalsIgnoreCase(nameB)) endRound(mc, false, "was beaten");
 		});
 		ClientPlayNetworking.registerGlobalReceiver(RelayNet.Summary.TYPE, (payload, ctx) -> {
 			if (DEMO) { System.out.println("[relay_spectator] demo: server answered for " + payload.name() + " " + payload.counts()); return; }
@@ -387,6 +395,7 @@ public final class RelayClient implements ClientModInitializer {
 
 	/** Fresh state for a new session; {@code asParticipant} = the local player is one of the fighters. */
 	private static void resetSession(String a, String b, boolean asParticipant) {
+		serverDriven = false;
 		cleanupReplay();
 		summaries.clear();
 		detectedKit = Kit.NONE;
@@ -503,7 +512,7 @@ public final class RelayClient implements ClientModInitializer {
 		// Servers differ in which of those they do, so any of them counts.
 		Boolean loserIsA = null;
 		String why = "";
-		if (deathCooldown == 0 && seenBoth && !DEMO) { // the demo fakes both fighters with one player, so skip live round-end checks
+		if (deathCooldown == 0 && seenBoth && !DEMO && !serverDriven) { // the demo fakes both fighters with one player, so skip live round-end checks
 			if (pendingDeathIsA != null) { loserIsA = pendingDeathIsA; why = "died"; }
 			else if (pa != null && isOut(pa)) { loserIsA = true; why = "is out"; }
 			else if (pb != null && isOut(pb)) { loserIsA = false; why = "is out"; }

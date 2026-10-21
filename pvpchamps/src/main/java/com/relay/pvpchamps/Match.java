@@ -305,6 +305,7 @@ public final class Match {
 		}
 		if (!loserDecided) return;
 		if (aLost) scoreB++; else scoreA++;
+		Spec.roundEnd(humanRef, aLost ? nameA : nameB); // the breakdown opens only now, never on a client-side guess
 		message(Component.literal("§6" + (aLost ? nameB : nameA) + " wins round " + round + " (" + scoreA + "-" + scoreB + ")"));
 		state = State.BETWEEN;
 		timer = 140;

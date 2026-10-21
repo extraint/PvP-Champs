@@ -24,6 +24,13 @@ public final class RelayServerApi {
 		return send(viewer, new RelayNet.AutoSpectate("", "", "", "", "", "", false));
 	}
 
+	/** Tells the viewer's HUD the round is over and who lost it; only then does the breakdown open. */
+	public static boolean roundEnd(ServerPlayer viewer, String loser) {
+		if (!ServerPlayNetworking.canSend(viewer, RelayNet.RoundEnd.TYPE)) return false;
+		ServerPlayNetworking.send(viewer, new RelayNet.RoundEnd(loser));
+		return true;
+	}
+
 	/** True if this player has the client mod and can be driven. */
 	public static boolean canDrive(ServerPlayer p) {
 		return ServerPlayNetworking.canSend(p, RelayNet.AutoSpectate.TYPE);

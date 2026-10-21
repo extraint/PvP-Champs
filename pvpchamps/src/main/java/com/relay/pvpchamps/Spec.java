@@ -28,6 +28,11 @@ final class Spec {
 		catch (LinkageError e) { warn(e); }
 	}
 
+	static void roundEnd(ServerPlayer p, String loser) {
+		try { com.relay.spectate.RelayServerApi.roundEnd(p, loser); }
+		catch (LinkageError e) { warn(e); }
+	}
+
 	private static void warn(LinkageError e) {
 		if (warned) return;
 		warned = true;

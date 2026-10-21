@@ -62,10 +62,21 @@ public final class RelayNet {
 		public Type<? extends CustomPacketPayload> type() { return TYPE; }
 	}
 
+	/** Server to client: the server decided this round; {@code loser} is the fighter who lost it. */
+	public record RoundEnd(String loser) implements CustomPacketPayload {
+		public static final Type<RoundEnd> TYPE = new Type<>(Identifier.fromNamespaceAndPath("relay_spectator", "round_end"));
+		public static final StreamCodec<RegistryFriendlyByteBuf, RoundEnd> CODEC = StreamCodec.composite(
+			ByteBufCodecs.STRING_UTF8, RoundEnd::loser, RoundEnd::new);
+
+		@Override
+		public Type<? extends CustomPacketPayload> type() { return TYPE; }
+	}
+
 	/** Must run on both sides, before any connection. */
 	public static void registerTypes() {
 		PayloadTypeRegistry.serverboundPlay().register(Request.TYPE, Request.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(Summary.TYPE, Summary.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(AutoSpectate.TYPE, AutoSpectate.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(RoundEnd.TYPE, RoundEnd.CODEC);
 	}
 }
