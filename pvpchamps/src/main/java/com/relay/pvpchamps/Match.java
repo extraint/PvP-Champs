@@ -69,6 +69,8 @@ public final class Match {
 			saved.stacks = new net.minecraft.world.item.ItemStack[41];
 			for (int i = 0; i < 41; i++) saved.stacks[i] = human.getInventory().getItem(i).copy();
 		}
+		vexbot.BotSettings.botDontLeave = true; // settings loaded after startup can flip these back
+		vexbot.BotSettings.botLeaveOnDeath = false;
 		this.changedRespawn = true;
 		command("gamerule immediate_respawn true"); // so the human never sits on a death screen between rounds
 		this.kitStacks = kit.build(server);
