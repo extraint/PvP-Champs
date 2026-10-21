@@ -3,6 +3,8 @@ package com.relay.pvpchamps;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -76,6 +78,7 @@ public enum Kits {
 			case CART -> {
 				b.add(b.e(Items.DIAMOND_SWORD, E.SHARPNESS, 5, E.UNBREAKING, 3));
 				b.add(b.e(Items.DIAMOND_AXE, E.SHARPNESS, 5, E.UNBREAKING, 3));
+				b.add(b.e(Items.CROSSBOW, E.QUICK_CHARGE, 3, E.UNBREAKING, 3, E.MULTISHOT, 1));
 				b.add(b.e(Items.BOW, E.POWER, 5, E.UNBREAKING, 3, E.FLAME, 1));
 				b.singles(Items.TNT_MINECART, 8);
 				b.add(b.n(Items.RAIL, 64));
@@ -87,6 +90,9 @@ public enum Kits {
 				b.add(b.n(Items.OAK_LOG, 64));
 				b.add(b.n(Items.COOKED_BEEF, 64));
 				b.add(b.n(Items.ARROW, 64));
+				b.add(b.n(Items.FLINT_AND_STEEL, 1));
+				b.add(b.shulkerOf(Items.TNT_MINECART, 18)); // two boxes of spare carts to restock from
+				b.add(b.shulkerOf(Items.TNT_MINECART, 18));
 				b.fillPotions(b.nonHealing());
 				b.armor(Items.DIAMOND_BOOTS, Items.DIAMOND_LEGGINGS, Items.DIAMOND_CHESTPLATE, Items.DIAMOND_HELMET, false);
 				b.shieldPlain(E.UNBREAKING, 3);
@@ -118,6 +124,9 @@ public enum Kits {
 				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
 				b.add(b.tippedHarming(64));
 				b.add(b.n(Items.OAK_LOG, 64));
+				for (int i = 0; i < 4; i++) b.add(b.n(Items.WATER_BUCKET, 1));
+				b.add(b.n(Items.COBWEB, 64));
+				b.add(b.n(Items.COBWEB, 64));
 				b.singles(Items.TOTEM_OF_UNDYING, 2);
 				b.placePotions(b.instantHealing(4));
 				b.fillPotions(b.nonHealing());
@@ -136,6 +145,9 @@ public enum Kits {
 				b.add(b.n(Items.EXPERIENCE_BOTTLE, 64));
 				b.add(b.tippedHarming(64));
 				b.add(b.n(Items.OAK_LOG, 64));
+				for (int i = 0; i < 4; i++) b.add(b.n(Items.WATER_BUCKET, 1));
+				b.add(b.n(Items.COBWEB, 64));
+				b.add(b.n(Items.COBWEB, 64));
 				b.singles(Items.TOTEM_OF_UNDYING, 2);
 				b.fillPotions(b.nonHealing());
 				b.armor(Items.NETHERITE_BOOTS, Items.NETHERITE_LEGGINGS, Items.NETHERITE_CHESTPLATE, Items.NETHERITE_HELMET, true);
@@ -200,6 +212,15 @@ public enum Kits {
 		}
 
 		ItemStack n(Item i, int count) { return new ItemStack(i, count); }
+
+		/** A shulker box already holding {@code count} of one item (non-stackable items go one per slot). */
+		ItemStack shulkerOf(Item item, int count) {
+			List<ItemStack> inside = new ArrayList<>();
+			for (int i = 0; i < count; i++) inside.add(new ItemStack(item, 1));
+			ItemStack box = new ItemStack(Items.SHULKER_BOX);
+			box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(inside));
+			return box;
+		}
 
 		/** An item with enchantments given as alternating key, level. */
 		ItemStack e(Item item, Object... pairs) {
