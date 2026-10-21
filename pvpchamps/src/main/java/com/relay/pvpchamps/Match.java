@@ -25,7 +25,9 @@ public final class Match {
 	private ServerPlayer humanRef;            // refreshed every tick: dying and respawning replaces the ServerPlayer object
 	public final boolean watch;
 	public final String nameA, nameB;         // A is the human in play mode
-	public final Kits kit;
+	public Kits kit;
+	/** One kit per game, for series that draft them; null means every game uses {@link #kit}. */
+	private java.util.List<Kits> gameKits;
 	public final int bestOf;
 	private final String roundPrefix, event;
 	private final Consumer<Boolean> onEnd;    // true if A won
@@ -106,7 +108,18 @@ public final class Match {
 
 	// ----------------------------------------------------------------------- round flow
 
+	/** Sets the kit for each game of the series (game 1 should be the kit passed to the constructor). */
+	public Match setGameKits(java.util.List<Kits> kits) {
+		this.gameKits = kits;
+		return this;
+	}
+
 	private void beginRound() {
+		if (gameKits != null && round - 1 < gameKits.size() && gameKits.get(round - 1) != kit) {
+			kit = gameKits.get(round - 1);
+			kitStacks = kit.build(server);
+			message(Component.literal("§eGame " + round + " kit: " + kit.label));
+		}
 		state = State.COUNTDOWN;
 		timer = 60;
 		loserDecided = false;
