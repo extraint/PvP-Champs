@@ -20,7 +20,7 @@ public final class HealAtFourHearts implements Move {
 	private enum Mode { POTION, APPLE }
 
 	private Mode mode;
-	private int ticks;
+	private int ticks, fled;
 
 	@Override public String id() { return "heal_4_hearts"; }
 
@@ -48,13 +48,14 @@ public final class HealAtFourHearts implements Move {
 		else if (c.count(Items.GOLDEN_APPLE) > 0) mode = Mode.APPLE;
 		else return MoveEngine.reject(id(), "nothing_to_heal_with");
 		ticks = 0;
+		fled = 0;
 		MoveEngine.reject(id(), "start_" + mode.name().toLowerCase());
 		return true;
 	}
 
 	@Override
 	public boolean tick(Ctx c) {
-		if (++ticks > 40) return false;
+		if (++ticks > 140) return false;
 		if (mode == Mode.POTION) {
 			int slot = potionSlot(c);
 			if (slot < 0) return false;
@@ -65,16 +66,32 @@ public final class HealAtFourHearts implements Move {
 			// Throw it straight down so it lands on the bot.
 			c.pack.look(c.bot.getYRot(), 90f);
 			if (ticks == 2) c.useOnce();
-			return ticks < 4;
+			if (ticks < 4) return true;
+			c.pack.stop(BotPlayerActionPack.ActionType.USE);
+			return flee(c, 6.0, 25); // the potion is on the floor and working: put distance between them while it ticks
 		}
+		if (c.dist < 7.5 && fled < 60 && flee(c, 7.5, 60)) return true; // get away first, eat once there is room
 		if (!c.hold(Items.GOLDEN_APPLE)) return false;
 		c.pack.stopMovement();
 		c.pack.start(BotPlayerActionPack.ActionType.USE, BotPlayerActionPack.Action.continuous());
 		return c.bot.isUsingItem() && c.bot.getHealth() < 20f;
 	}
 
+	/** Sprint-jump straight away from the opponent. Returns false once the gap is wide enough or the time is up. */
+	private boolean flee(Ctx c, double gap, int maxTicks) {
+		if (c.dist >= gap || ++fled > maxTicks) return false;
+		net.minecraft.world.phys.Vec3 away = c.bot.position().subtract(c.target.position());
+		float yaw = (float) Math.toDegrees(Math.atan2(-away.x, away.z));
+		c.pack.look(yaw, 0f);
+		c.pack.setForward(1f);
+		c.pack.setSprinting(true);
+		if (c.bot.onGround()) c.jumpOnce(); // bunny hop: jumping keeps the sprint speed up
+		return true;
+	}
+
 	@Override
 	public void end(Ctx c) {
+		c.pack.stopMovement();
 		c.pack.stop(BotPlayerActionPack.ActionType.USE);
 		c.restoreSlot();
 		c.st.setCooldown(id(), mode == Mode.POTION ? 12 : 30);
