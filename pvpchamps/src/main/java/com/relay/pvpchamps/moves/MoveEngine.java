@@ -33,7 +33,7 @@ public final class MoveEngine {
 		final List<Move> moves;
 
 		State() {
-			moves = List.of(new HealAtFourHearts(), punish, new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall(), new ShieldBreak(), new ThreeBlockHit());
+			moves = List.of(new HealAtFourHearts(), punish, new MasterCircle(), new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall(), new ShieldBreak(), new ThreeBlockHit());
 		}
 
 		int cooldown(String id) { return Math.max(0, cooldowns.getOrDefault(id, 0) - tick); }
@@ -101,7 +101,7 @@ public final class MoveEngine {
 				USED.merge(bot.getGameProfile().name() + ":" + heal.id(), 1, Integer::sum);
 			}
 		}
-		if (st.current != null && (st.current.id().equals("strafe_pressure") || st.current.id().equals("anti_stall"))) {
+		if (st.current != null && (st.current.id().equals("strafe_pressure") || st.current.id().equals("anti_stall") || st.current.id().equals("master_circle"))) {
 			// Shield breaks and 3-block hits are worth more than a strafe: they take over the bot mid-strafe.
 			for (Move m : st.moves) {
 				if (!(m.id().equals("shield_break") || m.id().equals("three_block_hit"))) continue;
@@ -115,7 +115,7 @@ public final class MoveEngine {
 		} else if (st.tick % 4 == 0) {
 			for (Move m : st.moves) {
 				if (!profile.moves().contains(m.id()) && !(com.relay.pvpchamps.CombatMaster.is(profile.difficulty())
-						&& (m.id().equals("strafe_pressure") || m.id().equals("anti_stall") || m.id().equals("shield_break") || m.id().equals("three_block_hit") || m.id().equals("heal_4_hearts")))) continue;
+						&& (m.id().equals("strafe_pressure") || m.id().equals("anti_stall") || m.id().equals("shield_break") || m.id().equals("three_block_hit") || m.id().equals("heal_4_hearts") || m.id().equals("master_circle")))) continue;
 				diag("try:" + m.id());
 				if (m.start(c)) {
 					st.current = m;
