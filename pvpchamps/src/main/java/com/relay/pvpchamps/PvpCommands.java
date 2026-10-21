@@ -56,6 +56,8 @@ public final class PvpCommands {
 							.executes(c -> watch(c, StringArgumentType.getString(c, "kit")))))))
 			.then(Commands.literal("tournament")
 				.then(Commands.literal("start").executes(c -> tournamentStart(c.getSource())))
+				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
+				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
 			.then(Commands.literal("stop").executes(c -> { MatchManager.stop(); say(c.getSource(), "Stopped."); return 1; }))
 			.then(Commands.literal("moves")
@@ -168,7 +170,25 @@ public final class PvpCommands {
 		return 1;
 	}
 
+	/** /pvpchamps tournament watch: a 16-player double-elimination bracket of bot matches that you just watch. */
+	private static int tournamentWatch(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		ServerPlayer p = src.getPlayerOrException();
+		if (MatchManager.busy() || MatchManager.bracket() != null) { say(src, "Something is already running (/pvpchamps stop)."); return 0; }
+		Bracket b = new Bracket(src.getServer(), p);
+		MatchManager.setBracket(b);
+		b.start();
+		return 1;
+	}
+
+	private static int tournamentSkip(CommandSourceStack src) {
+		Bracket b = MatchManager.bracket();
+		if (b == null) { say(src, "No bracket running. /pvpchamps tournament watch"); return 0; }
+		b.skip();
+		return 1;
+	}
+
 	private static int tournamentStatus(CommandSourceStack src) {
+		if (MatchManager.bracket() != null) { say(src, MatchManager.bracket().status()); return 1; }
 		Tournament t = MatchManager.tournament();
 		say(src, t == null ? "No tournament running. /pvpchamps tournament start" : t.status());
 		return 1;

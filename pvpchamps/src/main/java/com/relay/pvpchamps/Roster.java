@@ -65,6 +65,16 @@ public final class Roster {
 				List.of("uhc", "sword", "diamond_smp"), join(heal, "mend_reset", "wall_off")),
 			new Opponent("C0RZZ", "Adaptive all-rounder", "EXPERT", "ADAPTIVE", 74, 1.0,
 				all, join(heal, "pop_punish", "pearl_close", "bait_retreat")),
+			new Opponent("Ymiau", "Mace player, quick hands", "EXPERT", "AGGRESSIVE", 81, 1.0,
+				List.of("mace", "spear_mace", "sword"), join(press, "pearl_close", "lunge_swap", "pearl_wind")),
+			new Opponent("ZeNain", "Sword and SMP", "EXPERT", "BALANCED", 77, 1.0,
+				List.of("sword", "diamond_smp", "netherite_smp"), join(heal, "pop_punish", "bait_retreat")),
+			new Opponent("ItzTwilightTT", "Adaptive, plays the matchup", "EXPERT", "ADAPTIVE", 73, 1.0,
+				all, join(heal, "pop_punish", "pearl_close")),
+			new Opponent("Alepordio", "Careful SMP player", "HARD", "DEFENSIVE", 71, 0.95,
+				List.of("diamond_smp", "netherite_smp", "uhc"), join(heal, "mend_reset", "wall_off")),
+			new Opponent("Blvckwlf", "Cart and sword", "HARD", "BALANCED", 70, 0.95,
+				List.of("cart", "sword", "diamond_smp"), join(heal, "pearl_close", "tnt_minecart")),
 			new Opponent("SpawnPlayer", "Aggressive cart player", "HARD", "AGGRESSIVE", 72, 0.95,
 				List.of("cart", "netherite_op", "mace"), join(press, "pearl_close", "tnt_minecart")),
 			new Opponent("1kiks_", "Defensive SMP", "HARD", "DEFENSIVE", 70, 0.95,
@@ -82,7 +92,7 @@ public final class Roster {
 	}
 
 	/** Bump when the built-in roster changes: an older roster.json is then replaced (the old one is kept as roster.json.old). */
-	private static final String ROSTER_VERSION = "3";
+	private static final String ROSTER_VERSION = "4";
 
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("roster.json");

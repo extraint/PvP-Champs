@@ -6,6 +6,7 @@ public final class MatchManager {
 
 	private static Match current;
 	private static Tournament tournament;
+	private static Bracket bracket;
 
 	public static boolean busy() { return current != null && !current.isDone(); }
 
@@ -15,9 +16,21 @@ public final class MatchManager {
 
 	public static void setTournament(Tournament t) { tournament = t; }
 
+	public static void setBracket(Bracket b) { bracket = b; }
+
+	public static Bracket bracket() { return bracket; }
+
+	/** Cancels the running match without ending the bracket or tournament around it. */
+	public static void cancelCurrent() {
+		if (current != null) current.cancel();
+		current = null;
+	}
+
 	public static Tournament tournament() { return tournament; }
 
 	public static void stop() {
+		if (bracket != null) bracket.stop();
+		bracket = null;
 		if (current != null) current.cancel();
 		current = null;
 		tournament = null;
@@ -30,6 +43,7 @@ public final class MatchManager {
 		// A tournament starts the next match from inside the end callback, so only clear if nothing replaced it.
 		if (m.isDone() && current == m) current = null;
 		if (tournament != null && tournament.isOver() && current == null) tournament = null;
+		if (bracket != null && bracket.isOver() && current == null) bracket = null;
 	}
 
 	/** The opponent of a bot in the running match, or null. */
