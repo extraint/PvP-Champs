@@ -81,15 +81,23 @@ public final class Roster {
 		return out;
 	}
 
+	/** Bump when the built-in roster changes: an older roster.json is then replaced (the old one is kept as roster.json.old). */
+	private static final String ROSTER_VERSION = "3";
+
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("roster.json");
+		Path versionFile = file.resolveSibling("roster.version");
 		try {
 			Files.createDirectories(file.getParent());
-			if (Files.exists(file)) {
+			boolean current = Files.exists(versionFile) && Files.readString(versionFile).trim().equals(ROSTER_VERSION);
+			if (Files.exists(file) && current) {
 				List<Opponent> read = GSON.fromJson(Files.readString(file), new TypeToken<List<Opponent>>() {}.getType());
 				if (read != null && !read.isEmpty()) roster = read;
 			} else {
+				// First run, or the built-in roster is newer than the saved one: write the built-in roster.
+				if (Files.exists(file)) Files.move(file, file.resolveSibling("roster.json.old"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 				Files.writeString(file, GSON.toJson(roster));
+				Files.writeString(versionFile, ROSTER_VERSION);
 			}
 		} catch (IOException | RuntimeException e) {
 			System.err.println("[pvpchamps] roster.json unreadable, using the built-in roster: " + e);
