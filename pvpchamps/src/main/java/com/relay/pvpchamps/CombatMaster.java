@@ -29,6 +29,8 @@ public final class CombatMaster {
 		t.stunSlam = true;
 		t.spearStunSlam = true;
 		t.elytraStunSlam = true;
+		t.stunSlamVariant = vexbot.settings.TechniqueConfig.StunSlamVariant.OPTIMAL; // the tightest axe-to-mace timing
+		BotSettings.counterStunChance = 100; // stun back whenever they swing at a bot holding a mace
 		t.maceSwap = true;
 		t.spearMaceSwap = true;
 	}
