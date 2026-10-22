@@ -7,6 +7,12 @@ public final class MatchManager {
 	private static Match current;
 	private static Tournament tournament;
 	private static Bracket bracket;
+	/** Where the running tournament or bracket started: every one of its matches is staged here, not wherever the viewer drifted to. */
+	private static net.minecraft.world.phys.Vec3 origin;
+
+	public static net.minecraft.world.phys.Vec3 origin() { return origin; }
+
+	public static void setOrigin(net.minecraft.world.phys.Vec3 at) { origin = at; }
 
 	public static boolean busy() { return current != null && !current.isDone(); }
 
@@ -34,6 +40,7 @@ public final class MatchManager {
 		if (current != null) current.cancel();
 		current = null;
 		tournament = null;
+		origin = null;
 	}
 
 	public static void tick() {
@@ -44,6 +51,7 @@ public final class MatchManager {
 		if (m.isDone() && current == m) current = null;
 		if (tournament != null && tournament.isOver() && current == null) tournament = null;
 		if (bracket != null && bracket.isOver() && current == null) bracket = null;
+		if (tournament == null && bracket == null) origin = null;
 	}
 
 	/** The opponent of a bot in the running match, or null. */

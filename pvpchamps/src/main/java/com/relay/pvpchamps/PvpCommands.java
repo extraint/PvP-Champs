@@ -59,11 +59,20 @@ public final class PvpCommands {
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
 				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
+			.then(Commands.literal("speedup").executes(c -> setRate(c.getSource(), 100)))
+			.then(Commands.literal("slowdown").executes(c -> setRate(c.getSource(), 20)))
 			.then(Commands.literal("stop").executes(c -> { MatchManager.stop(); say(c.getSource(), "Stopped."); return 1; }))
 			.then(Commands.literal("moves")
 				.then(Commands.literal("on").executes(c -> { MoveEngine.setEnabled(true); say(c.getSource(), "Extra moves on."); return 1; }))
 				.then(Commands.literal("off").executes(c -> { MoveEngine.setEnabled(false); say(c.getSource(), "Extra moves off (plain VexBot)."); return 1; }))
 				.then(Commands.literal("stats").executes(c -> { say(c.getSource(), "Moves used so far: " + MoveEngine.usage() + "  diagnostics: " + MoveEngine.DIAG); return 1; }))));
+	}
+
+	/** /pvpchamps speedup (100 ticks per second) and slowdown (back to 20), through the vanilla tick command. */
+	private static int setRate(CommandSourceStack src, int tps) {
+		src.getServer().getCommands().performPrefixedCommand(src.getServer().createCommandSourceStack().withSuppressedOutput(), "tick rate " + tps);
+		say(src, "Game speed set to " + tps + " ticks per second" + (tps > 20 ? " (/pvpchamps slowdown to go back)." : "."));
+		return 1;
 	}
 
 	private static void say(CommandSourceStack src, String text) { src.sendSuccess(() -> Component.literal(text), false); }
@@ -166,6 +175,7 @@ public final class PvpCommands {
 	private static int tournamentStart(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
 		if (MatchManager.busy()) { say(src, "A match is already running (/pvpchamps stop)."); return 0; }
+		MatchManager.setOrigin(p.position());
 		MatchManager.setTournament(new Tournament(src.getServer(), p));
 		return 1;
 	}
@@ -174,6 +184,7 @@ public final class PvpCommands {
 	private static int tournamentWatch(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
 		if (MatchManager.busy() || MatchManager.bracket() != null) { say(src, "Something is already running (/pvpchamps stop)."); return 0; }
+		MatchManager.setOrigin(p.position());
 		Bracket b = new Bracket(src.getServer(), p);
 		MatchManager.setBracket(b);
 		b.start();

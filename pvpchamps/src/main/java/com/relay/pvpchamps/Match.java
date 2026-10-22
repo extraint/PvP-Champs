@@ -63,7 +63,7 @@ public final class Match {
 		this.event = event;
 		this.onEnd = onEnd;
 		this.level = (ServerLevel) human.level();
-		this.centre = human.position();
+		this.centre = MatchManager.origin() != null ? MatchManager.origin() : human.position(); // tournaments stage every match where they began
 		this.savedMode = human.gameMode();
 		if (!watch) {
 			saved.stacks = new net.minecraft.world.item.ItemStack[41];
@@ -84,6 +84,12 @@ public final class Match {
 		message(Component.literal("=== " + roundPrefix + ": " + a + " vs " + b + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
+	}
+
+	/** Waits are written in ticks at the normal 20 per second; at a faster /pvpchamps speedup they stretch so real time stays the same. */
+	private int sc(int ticks) {
+		float rate = server.tickRateManager().tickrate();
+		return Math.round(ticks * Math.max(1f, rate / 20f));
 	}
 
 	public boolean isDone() { return state == State.DONE; }
@@ -129,7 +135,7 @@ public final class Match {
 			message(Component.literal("§eGame " + round + " kit: " + kit.label));
 		}
 		state = State.COUNTDOWN;
-		timer = 60;
+		timer = sc(60);
 		loserDecided = false;
 		missingA = missingB = fightTicks = 0;
 		gearSeen.clear();
@@ -173,7 +179,7 @@ public final class Match {
 		}
 		switch (state) {
 			case COUNTDOWN -> {
-				if (timer == 60 || timer == 40 || timer == 20) message(Component.literal("§e" + (timer / 20)), true);
+				if (timer == sc(60) || timer == sc(40) || timer == sc(20)) message(Component.literal("§e" + Math.round(timer / (float) sc(20))), true);
 				if (--timer <= 0) {
 					if (watch) {
 						VexBotApi.spawnBot(server, nameA, spot(-10), -90f, dimension());
@@ -196,7 +202,7 @@ public final class Match {
 					if (watch) Spec.watch(humanRef, nameA, nameB, kit.label, roundLabel(), event, "");
 					else Spec.play(humanRef, nameA, nameB, kit.label, roundLabel(), event);
 					state = State.FIGHT;
-				} else if (timer > 300) {
+				} else if (timer > sc(300)) {
 					message(Component.literal("§cThe bot did not spawn (is the area loaded and clear?). Match cancelled."));
 					finish(false, true);
 				}
@@ -225,7 +231,7 @@ public final class Match {
 			return false;
 		}
 		if (respawnWait[idx] > 0) { // waiting for the respawn; give up after five seconds
-			if (++respawnWait[idx] > 100) { respawnWait[idx] = 0; return false; }
+			if (++respawnWait[idx] > sc(100)) { respawnWait[idx] = 0; return false; }
 			return true;
 		}
 		if (bot == null && lastPos[idx] != null && !loserDecided) {
@@ -301,7 +307,7 @@ public final class Match {
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
 		if (fightTicks % 5 == 0) { if (watch) auditGear(nameA, a); auditGear(nameB, b); }
 		if (fightTicks % 10 == 1) publishLive(a, b);
-		if (watch && (fightTicks == 5 || fightTicks == 25 || fightTicks == 60)) { // heads-only fix: make clients redraw the full bodies
+		if (watch && (fightTicks == sc(5) || fightTicks == sc(25) || fightTicks == sc(60))) { // heads-only fix: make clients redraw the full bodies
 			for (ServerPlayer p : new ServerPlayer[] {a, b}) {
 				if (p == null) continue;
 				p.setInvisible(false);
@@ -316,11 +322,11 @@ public final class Match {
 		// A fighter that is simply gone for a moment is not a loss; wait three seconds before deciding, and say why.
 		if (a == null || a.getHealth() <= 0 || !a.isAlive()) {
 			if (a != null) fighterDown(nameA); // only a real death ends a round, never a fighter that is merely out of sight
-			else if (++missingA == 60) vanished(nameA);
+			else if (++missingA == sc(60)) vanished(nameA);
 		}
 		if (b == null || b.getHealth() <= 0 || !b.isAlive()) {
 			if (b != null) fighterDown(nameB);
-			else if (++missingB == 60) vanished(nameB);
+			else if (++missingB == sc(60)) vanished(nameB);
 		}
 		if (!loserDecided) return;
 		if (aLost) scoreB++; else scoreA++;
@@ -328,7 +334,7 @@ public final class Match {
 		Spec.roundEnd(humanRef, aLost ? nameA : nameB); // the breakdown opens only now, never on a client-side guess
 		message(Component.literal("§6" + (aLost ? nameB : nameA) + " wins round " + round + " (" + scoreA + "-" + scoreB + ")"));
 		state = State.BETWEEN;
-		timer = 140;
+		timer = sc(140);
 	}
 
 	// ----------------------------------------------------------------------- end
