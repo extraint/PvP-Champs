@@ -33,7 +33,7 @@ public final class MoveEngine {
 		final List<Move> moves;
 
 		State() {
-			moves = List.of(new HealAtFourHearts(), new MaceSmash(), new SpearJab(), punish, new MasterCircle(), new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new CartBomb(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall(), new ShieldBreak(), new ThreeBlockHit());
+			moves = List.of(new HealAtFourHearts(), new PotUp(), new MaceSmash(), new SpearJab(), punish, new MasterCircle(), new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new CartBomb(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall(), new ShieldBreak(), new ThreeBlockHit());
 		}
 
 		int cooldown(String id) { return Math.max(0, cooldowns.getOrDefault(id, 0) - tick); }

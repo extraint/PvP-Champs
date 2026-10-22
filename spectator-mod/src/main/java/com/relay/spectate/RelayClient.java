@@ -228,6 +228,8 @@ public final class RelayClient implements ClientModInitializer {
 	// ------------------------------------------------------------------ HUD accessors
 
 	static boolean hudVisible() { return active; }
+
+	static void breakdownClosedByPlayer() { breakdownHold = 0; }
 	static String nameA() { return nameA; }
 	static String nameB() { return nameB; }
 	static PlayerSkin skinA() { return skinA; }
@@ -476,9 +478,8 @@ public final class RelayClient implements ClientModInitializer {
 		boolean shownNow = mc.gui.screen() instanceof BreakdownScreen;
 		if (breakdownHold > 0) {
 			breakdownHold--;
-			// Only re-open it if a respawn closed it; if the player pressed Esc themself (it was open last tick) leave it shut.
-			if (breakdownShownLast && breakdownHold < 110 && mc.gui.screen() == null) breakdownHold = 0;
-			else if (lastBreakdown != null && mc.gui.screen() == null) mc.setScreenAndShow(lastBreakdown);
+			// A respawn can knock it shut: put it back, unless the player closed it themself (BreakdownScreen.onClose).
+			if (lastBreakdown != null && mc.gui.screen() == null) mc.setScreenAndShow(lastBreakdown);
 		}
 		breakdownShownLast = shownNow;
 		if (DEMO) demoTick(mc);

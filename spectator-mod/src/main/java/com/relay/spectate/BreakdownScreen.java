@@ -204,4 +204,11 @@ public final class BreakdownScreen extends Screen {
 	private static String f1(double v) {
 		return String.format(java.util.Locale.ROOT, "%.1f", v);
 	}
+
+	/** Esc or the close button: the player is done with it, so never bring it back. */
+	@Override
+	public void onClose() {
+		RelayClient.breakdownClosedByPlayer();
+		super.onClose();
+	}
 }
