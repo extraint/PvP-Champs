@@ -50,6 +50,25 @@ public final class CombatMaster {
 		t.elytraStunSlam = true;
 		t.stunSlamVariant = vexbot.settings.TechniqueConfig.StunSlamVariant.OPTIMAL; // the tightest axe-to-mace timing
 		BotSettings.counterStunChance = 100; // stun back whenever they swing at a bot holding a mace
+		t.swordWbSwap = true; // sword and wind burst swaps for Diamond SMP and spear-mace pressure
+		t.breachSwap = true;
+		t.spearReachSwap = true;
+		t.windchargeMace = true;
+		t.wcCrouchBoost = true;
+		t.wcFullCooldownDiscipline = true;
+		t.hotbarShieldTracking = true;
+		t.spearDash = true;
+		t.dashChain = true;
+		t.spearMacing = true;
+		t.wcReset = true;
+		t.wcSelfReset = true;
+		t.wcCancel = true;
+		t.pearlCatch = true;
+		t.shieldDrain = true;
+		t.detapSpearMace = true;
+		t.detapBreach = true;
+		t.spearDoublePop = true;
+		t.groundBackstab = true;
 		t.maceSwap = true;
 		t.spearMaceSwap = true;
 	}
