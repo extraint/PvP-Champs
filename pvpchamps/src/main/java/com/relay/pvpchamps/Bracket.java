@@ -36,6 +36,10 @@ public final class Bracket {
 	private int idx = -1;
 	private boolean stopped, finished;
 	private String champion;
+	private final String[] stepWinner = new String[30];
+	private final String[] stepScore = new String[30];
+	private final List<List<String>> drafts = new ArrayList<>();
+	private List<String> draftLog = new ArrayList<>();
 
 	// results by round
 	private final String[] ur1W = new String[8], ur1L = new String[8], lr1W = new String[4];
@@ -91,11 +95,40 @@ public final class Bracket {
 		next();
 	}
 
+	/** Hands the whole bracket to the website: every series with its players, state, winner, score and kit draft. */
+	private void publish() {
+		List<java.util.Map<String, Object>> out = new ArrayList<>();
+		for (int i = 0; i < steps.size(); i++) {
+			Step st = steps.get(i);
+			String[] p;
+			try { p = st.players().get(); } catch (RuntimeException e) { p = new String[2]; }
+			java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+			m.put("n", i + 1);
+			m.put("label", st.label());
+			m.put("bestOf", st.bestOf());
+			m.put("a", p.length > 0 ? p[0] : null);
+			m.put("b", p.length > 1 ? p[1] : null);
+			m.put("state", stepWinner[i] != null ? "done" : i == idx && !finished ? "live" : "pending");
+			m.put("winner", stepWinner[i]);
+			m.put("score", stepScore[i]);
+			m.put("draft", i < drafts.size() ? drafts.get(i) : List.of());
+			out.add(m);
+		}
+		java.util.Map<String, Object> root = new java.util.LinkedHashMap<>();
+		root.put("event", EVENT);
+		root.put("champion", champion);
+		root.put("finished", finished);
+		root.put("stopped", stopped);
+		root.put("series", out);
+		WebStats.setBracket(root);
+	}
+
 	private void next() {
-		if (stopped) return;
+		if (stopped) { publish(); return; }
 		idx++;
 		if (idx >= steps.size()) {
 			finished = true;
+			publish();
 			broadcast("§6=== " + champion + " wins " + EVENT + " ===");
 			return;
 		}
@@ -103,7 +136,10 @@ public final class Bracket {
 		String[] p = st.players().get();
 		String a = p[0], b = p[1];
 		broadcast("§e" + st.label() + ": " + a + " vs " + b + " (best of " + st.bestOf() + ")");
+		draftLog = new ArrayList<>();
 		List<Kits> games = draft(a, b, st.bestOf());
+		drafts.add(draftLog);
+		publish();
 		String label = EVENT + " · " + st.label();
 		MatchManager.begin(new Match(server, viewer, true, a, b, games.get(0), st.bestOf(), label, EVENT, aWon -> {
 			if (stopped) return;
@@ -114,6 +150,9 @@ public final class Bracket {
 
 	private void resolve(Step st, String a, String b, String winner) {
 		st.record().accept(winner, winner.equals(a) ? b : a);
+		int i = steps.indexOf(st);
+		stepWinner[i] = winner;
+		stepScore[i] = WebStats.lastScoreFor(winner);
 	}
 
 	/** The kits a series drafts from (Netherite OP is not one of the event's kits). */
@@ -209,6 +248,7 @@ public final class Bracket {
 	}
 
 	private void broadcast(String text) {
+		if (text.startsWith("§c") || text.startsWith("§a") || text.startsWith("§7Decider") || text.startsWith("§7Games")) draftLog.add(text.replaceAll("§.", ""));
 		System.out.println("[pvpchamps] " + text.replaceAll("§.", ""));
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) p.sendSystemMessage(Component.literal(text));
 	}

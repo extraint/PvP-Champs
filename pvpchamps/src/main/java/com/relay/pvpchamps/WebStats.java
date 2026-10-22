@@ -52,7 +52,17 @@ public final class WebStats {
 	private static final Deque<Done> HISTORY = new ArrayDeque<>();
 	private static final Map<String, Record> STATS = new ConcurrentHashMap<>();
 	private static HttpServer http;
+	private static volatile Object bracket;
 	private static Path file;
+
+	public static void setBracket(Object b) { bracket = b; }
+
+	/** "2-1" style score of the latest finished match won by this player, or null (a skipped series has none). */
+	public static synchronized String lastScoreFor(String winner) {
+		Done d = HISTORY.peekFirst();
+		return d != null && d.winner.equals(winner) && System.currentTimeMillis() - d.endedAt < 5000 ? d.winnerScore + "-" + d.loserScore : null;
+	}
+
 	private static volatile int boundPort;
 
 	/** The port the site really got, or 0 if it is off. */
@@ -152,6 +162,7 @@ public final class WebStats {
 				String type = "application/json";
 				switch (path) {
 					case "/api/live" -> body = GSON.toJson(new ArrayList<>(LIVE.values())).getBytes(StandardCharsets.UTF_8);
+					case "/api/bracket" -> body = GSON.toJson(bracket == null ? Map.of() : bracket).getBytes(StandardCharsets.UTF_8);
 					case "/api/stats" -> {
 						Map<String, Object> out = new LinkedHashMap<>();
 						out.put("players", new TreeMap<>(STATS));
