@@ -289,6 +289,8 @@ public final class Match {
 		liveInfo.scoreA = scoreA; liveInfo.scoreB = scoreB; liveInfo.bestOf = bestOf;
 		liveInfo.hpA = a == null ? 0 : a.getHealth() + a.getAbsorptionAmount();
 		liveInfo.hpB = b == null ? 0 : b.getHealth() + b.getAbsorptionAmount();
+		liveInfo.gearA = WebStats.gearOf(a);
+		liveInfo.gearB = WebStats.gearOf(b);
 		if (liveInfo.startedAt == 0) liveInfo.startedAt = System.currentTimeMillis();
 		WebStats.live(liveInfo);
 	}

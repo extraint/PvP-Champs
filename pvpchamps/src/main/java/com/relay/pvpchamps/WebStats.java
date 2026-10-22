@@ -32,7 +32,49 @@ public final class WebStats {
 		public String id, a, b, kit, round, state;
 		public int scoreA, scoreB, bestOf;
 		public double hpA, hpB;
+		public Gear gearA, gearB;
 		public long startedAt;
+	}
+
+	/** What one fighter is wearing and carrying right now, for the website. */
+	public static final class Gear {
+		/** head, chest, legs, feet: item id (null if empty) and remaining durability 0-100. */
+		public String[] armor = new String[4];
+		public int[] armorDura = new int[4];
+		public List<String> hotbar = new ArrayList<>();                 // "netherite_sword" or "golden_apple x64", slot order
+		public Map<String, Integer> materials = new TreeMap<>();        // everything carried, totals per item
+		public String offhand;
+	}
+
+	public static Gear gearOf(net.minecraft.server.level.ServerPlayer p) {
+		Gear g = new Gear();
+		if (p == null) return g;
+		net.minecraft.world.entity.EquipmentSlot[] slots = {net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST,
+			net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET};
+		for (int i = 0; i < 4; i++) {
+			var s = p.getItemBySlot(slots[i]);
+			if (s.isEmpty()) continue;
+			g.armor[i] = id(s);
+			g.armorDura[i] = s.getMaxDamage() <= 0 ? 100 : Math.round(100f * (s.getMaxDamage() - s.getDamageValue()) / s.getMaxDamage());
+		}
+		var off = p.getOffhandItem();
+		if (!off.isEmpty()) g.offhand = id(off) + (off.getCount() > 1 ? " x" + off.getCount() : "");
+		for (int i = 0; i < 36; i++) {
+			var s = p.getInventory().getItem(i);
+			if (s.isEmpty()) { if (i < 9) g.hotbar.add(""); continue; }
+			String name = id(s);
+			if (i < 9) g.hotbar.add(s.getCount() > 1 ? name + " x" + s.getCount() : name);
+			g.materials.merge(name, s.getCount(), Integer::sum);
+		}
+		if (!off.isEmpty()) g.materials.merge(id(off), off.getCount(), Integer::sum);
+		return g;
+	}
+
+	private static String id(net.minecraft.world.item.ItemStack s) {
+		String base = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(s.getItem()).getPath();
+		var pc = s.get(net.minecraft.core.component.DataComponents.POTION_CONTENTS);
+		if (pc != null && pc.potion().isPresent()) return base + ":" + pc.potion().get().getRegisteredName().replace("minecraft:", "");
+		return base;
 	}
 
 	public static final class Record {

@@ -49,6 +49,14 @@ th{color:var(--mute);font-weight:600;font-size:12px;text-transform:uppercase;let
 dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:300px;max-width:440px}
 dialog::backdrop{background:rgba(0,0,0,.6)}dialog h3{margin:0 0 4px}dialog ul{padding-left:18px;margin:10px 0}
 dialog button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 14px;cursor:pointer}
+.gear{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.arm{display:flex;gap:6px;margin-bottom:8px}.r .arm{justify-content:flex-end}
+.pc{width:52px}.pc small{display:block;color:var(--mute);font-size:10px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc .d{height:6px;background:var(--line);border-radius:3px;overflow:hidden}.pc .d i{display:block;height:100%}
+.pc em{font-style:normal;font-size:11px;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:4px}.r .chips{justify-content:flex-end}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:12px;white-space:nowrap}
+.chip.hb{border-color:var(--accent)}.gl{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;margin:6px 0 3px}
 .view{display:none}.view.on{display:block}
 @media(max-width:560px){.hide{display:none}}
 </style></head><body>
@@ -68,6 +76,7 @@ const pct=(w,l)=>w+l?Math.round(100*w/(w+l))+'%':'-';
 const head=n=>`<img src="https://mc-heads.net/avatar/${encodeURIComponent(n)}/36" alt="" onerror="this.style.visibility='hidden'">`;
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.view').forEach(e=>e.classList.remove('on'));b.classList.add('on');$('#v-'+b.dataset.v).classList.add('on')});
 
+{const t=location.hash.slice(1);const b=t&&document.querySelector(`nav button[data-v="${t}"]`);if(b)b.click()}
 let SER=[];
 function card(s){
   const sc=(s.score||'').split('-'), done=s.state==='done';
@@ -101,13 +110,22 @@ function detail(n){
   <button onclick="this.closest('dialog').close()">Close</button>`;
   $('#dlg').showModal();
 }
+const nice=id=>{const[b,p]=String(id).split(':');return b.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())+(p?' ('+p.replace(/_/g,' ')+')':'')};
+const cnt=t=>{const m=t.match(/^(.*?) x(\d+)$/);return m?nice(m[1])+' ×'+m[2]:nice(t)};
+const durCol=v=>v>60?'#3ddc97':v>30?'#f5b942':'#ff4d5e';
+const PIECES=['Helmet','Chest','Legs','Boots'];
+function gear(g){ if(!g)return '';
+  const arm=g.armor.map((a,i)=>`<div class="pc" title="${a?esc(nice(a)):'empty'}"><small>${PIECES[i]}</small><div class="d"><i style="width:${a?g.armorDura[i]:0}%;background:${durCol(g.armorDura[i])}"></i></div><em>${a?g.armorDura[i]+'%':'—'}</em></div>`).join('');
+  const hb=(g.hotbar||[]).filter(x=>x).map(x=>`<span class="chip hb">${esc(cnt(x))}</span>`).join('');
+  const mats=Object.entries(g.materials||{}).map(([k,v])=>`<span class="chip">${esc(nice(k))} ×${v}</span>`).join('');
+  return `<div class="gear"><div class="arm">${arm}</div><div class="gl">Hotbar</div><div class="chips">${hb||'<span class="mute">empty</span>'}</div><div class="gl">Materials</div><div class="chips">${mats}</div></div>`}
 const hp=v=>Math.max(0,Math.min(100,v/20*100));
 async function live(){try{
   const l=await (await fetch('/api/live')).json();
   $('#live').innerHTML=l.length?l.map(m=>`<div class="panel"><div style="display:flex;gap:10px;align-items:center"><span class="tag">${esc(m.kit)}</span><span class="mute">${esc(m.round||'')}</span><span style="flex:1"></span><span class="mute">best of ${m.bestOf}</span></div>
-  <div class="vs" style="margin-top:12px"><div><b>${esc(m.a)}</b><div class="bar"><i style="width:${hp(m.hpA)}%;background:var(--accent)"></i></div><div class="mute">${(m.hpA/2).toFixed(1)} hearts</div></div>
+  <div class="vs" style="margin-top:12px"><div><b>${esc(m.a)}</b><div class="bar"><i style="width:${hp(m.hpA)}%;background:var(--accent)"></i></div><div class="mute">${(m.hpA/2).toFixed(1)} hearts</div>${gear(m.gearA)}</div>
   <div class="big">${m.scoreA} – ${m.scoreB}</div>
-  <div class="r"><b>${esc(m.b)}</b><div class="bar"><i style="width:${hp(m.hpB)}%;background:var(--live);margin-left:auto"></i></div><div class="mute">${(m.hpB/2).toFixed(1)} hearts</div></div></div></div>`).join(''):'<div class="empty">No matches right now.</div>';
+  <div class="r"><b>${esc(m.b)}</b><div class="bar"><i style="width:${hp(m.hpB)}%;background:var(--live);margin-left:auto"></i></div><div class="mute">${(m.hpB/2).toFixed(1)} hearts</div>${gear(m.gearB)}</div></div></div>`).join(''):'<div class="empty">No matches right now.</div>';
 }catch(e){}}
 async function bk(){try{bracket(await (await fetch('/api/bracket')).json())}catch(e){}}
 async function stats(){try{
