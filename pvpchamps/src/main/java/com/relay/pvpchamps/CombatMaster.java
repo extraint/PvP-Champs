@@ -21,7 +21,7 @@ public final class CombatMaster {
 	/** Server-wide Vexbot settings that Combat Master relies on; applied when a Combat Master bot is set up. */
 	public static void applySettings() {
 		BotSettings.strafeInCombo = true;
-		BotSettings.offhandTotemHearts = 8.0; // totem in the offhand from 8 hearts (Vexbot's default is 4)
+		BotSettings.offhandTotemHearts = 6.0; // totem in the offhand from 6 hearts (Vexbot's default is 4); higher drops the shield too early
 		BotSettings.usePotions = true;
 		BotSettings.maceTotem = true;
 		BotSettings.useCobwebs = true; // Vexbot's cobweb traps and web drain
@@ -81,11 +81,10 @@ public final class CombatMaster {
 		p.reactionMaxTicks = 0;
 		p.shieldReactionMs = 0;
 		p.shieldReactionJitterMs = 0;
-		p.shieldDisableCharge = 0.0;
 		p.reachFlips = 0;
 		p.stunSlamChance = 100;
-		p.strafeAngle = 30.0; // wider side-steps than PERFECT's 18
-		p.potIntervalSeconds = 0.02;
+		p.strafeAngle = 22.0; // a little wider than PERFECT's 18, not so wide it costs hits
+		p.potIntervalSeconds = Math.min(p.potIntervalSeconds, 0.6); // fast, but not a splash-potion spam that wastes turns
 		return p;
 	}
 }
