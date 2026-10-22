@@ -54,7 +54,7 @@
         "count": 1,
         "slot": 0,
         "enchants": {
-          "sharpness": 1
+          "sharpness": 2
         }
       },
       {
@@ -62,7 +62,7 @@
         "count": 1,
         "slot": 1,
         "enchants": {
-          "sharpness": 1
+          "sharpness": 2
         }
       },
       {
@@ -121,7 +121,7 @@
       },
       {
         "item": "cooked_beef",
-        "count": 32,
+        "count": 5,
         "slot": 11
       },
       {
@@ -140,33 +140,28 @@
         "item": "diamond_helmet",
         "count": 1,
         "enchants": {
-          "unbreaking": 3,
-          "protection": 4
+          "protection": 2
         }
       },
       "feet": {
         "item": "diamond_boots",
         "count": 1,
         "enchants": {
-          "unbreaking": 3,
-          "feather_falling": 4,
-          "protection": 4
+          "protection": 2
         }
       },
       "chest": {
         "item": "diamond_chestplate",
         "count": 1,
         "enchants": {
-          "unbreaking": 3,
-          "protection": 4
+          "protection": 2
         }
       },
       "legs": {
         "item": "diamond_leggings",
         "count": 1,
         "enchants": {
-          "unbreaking": 3,
-          "protection": 4
+          "protection": 2
         }
       },
       "offhand": {
