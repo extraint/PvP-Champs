@@ -280,11 +280,25 @@ public final class Match {
 		}
 	}
 
+	private final WebStats.Live liveInfo = new WebStats.Live();
+
+	private void publishLive(ServerPlayer a, ServerPlayer b) {
+		liveInfo.id = nameA + "|" + nameB;
+		liveInfo.a = nameA; liveInfo.b = nameB;
+		liveInfo.kit = kit.label; liveInfo.round = roundLabel(); liveInfo.state = state.name().toLowerCase();
+		liveInfo.scoreA = scoreA; liveInfo.scoreB = scoreB; liveInfo.bestOf = bestOf;
+		liveInfo.hpA = a == null ? 0 : a.getHealth() + a.getAbsorptionAmount();
+		liveInfo.hpB = b == null ? 0 : b.getHealth() + b.getAbsorptionAmount();
+		if (liveInfo.startedAt == 0) liveInfo.startedAt = System.currentTimeMillis();
+		WebStats.live(liveInfo);
+	}
+
 	private void fightTick() {
 		fightTicks++;
 		ServerPlayer a = watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
 		if (fightTicks % 5 == 0) { if (watch) auditGear(nameA, a); auditGear(nameB, b); }
+		if (fightTicks % 10 == 1) publishLive(a, b);
 		if (watch && (fightTicks == 5 || fightTicks == 25 || fightTicks == 60)) { // heads-only fix: make clients redraw the full bodies
 			for (ServerPlayer p : new ServerPlayer[] {a, b}) {
 				if (p == null) continue;
@@ -308,6 +322,7 @@ public final class Match {
 		}
 		if (!loserDecided) return;
 		if (aLost) scoreB++; else scoreA++;
+		WebStats.round(aLost ? nameB : nameA, aLost ? nameA : nameB, kit.label);
 		Spec.roundEnd(humanRef, aLost ? nameA : nameB); // the breakdown opens only now, never on a client-side guess
 		message(Component.literal("§6" + (aLost ? nameB : nameA) + " wins round " + round + " (" + scoreA + "-" + scoreB + ")"));
 		state = State.BETWEEN;
@@ -321,6 +336,8 @@ public final class Match {
 	private void finish(boolean aWon, boolean cancelled) {
 		if (state == State.DONE) return;
 		state = State.DONE;
+		WebStats.endLive(nameA + "|" + nameB);
+		if (!cancelled) WebStats.match(aWon ? nameA : nameB, aWon ? nameB : nameA, kit.label, roundPrefix, Math.max(scoreA, scoreB), Math.min(scoreA, scoreB));
 		VexBotApi.despawnBot(server, nameB);
 		if (arena != null) arena.restore();
 		if (watch) VexBotApi.despawnBot(server, nameA);

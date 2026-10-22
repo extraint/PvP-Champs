@@ -10,6 +10,8 @@ public final class PvpChamps implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		Roster.load();
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(s -> WebStats.start());
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(s -> WebStats.stop());
 		vexbot.BotSettings.botDontLeave = true; // bots stay on the server instead of dropping out on their own
 		vexbot.BotSettings.botLeaveOnDeath = false;
 		vexbot.BotSettings.shulkerRegear = false; // no placing shulker boxes (they ended up as a wall)

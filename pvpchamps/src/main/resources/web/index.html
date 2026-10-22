@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PvP Champs Live</title>
+<style>
+:root{--bg:#0e1116;--card:#171c24;--line:#262d38;--text:#e8edf4;--mute:#8b96a6;--a:#4aa3ff;--b:#ff6b6b;--ok:#3ddc97}
+@media (prefers-color-scheme:light){:root{--bg:#f4f6f9;--card:#fff;--line:#dde3ea;--text:#18202b;--mute:#667385}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,sans-serif}
+header{padding:20px 16px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+h1{font-size:20px;margin:0}main{max-width:1000px;margin:0 auto;padding:16px}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:28px 0 10px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:10px}.sp{flex:1}.mute{color:var(--mute);font-size:13px}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+.name{font-weight:600}.score{font-size:26px;font-weight:700;text-align:center;min-width:80px}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%}
+.right{text-align:right}table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--mute);font-weight:500;font-size:13px}
+td.n{text-align:right;font-variant-numeric:tabular-nums}.empty{color:var(--mute);padding:12px 0}
+.tag{background:var(--line);border-radius:999px;padding:2px 9px;font-size:12px}
+@media(max-width:560px){.hide{display:none}}
+</style></head><body>
+<header><h1>PvP Champs</h1><span class="mute"><span class="dot"></span>live</span></header>
+<main>
+<h2>Current matches</h2><div id="live"><div class="empty">No matches right now.</div></div>
+<h2>Leaderboard</h2><div class="card" style="padding:4px 6px"><table id="board"><thead><tr>
+<th>#</th><th>Player</th><th class="n">Matches</th><th class="n">Win %</th><th class="n hide">Rounds</th><th class="hide">Best kit</th></tr></thead><tbody></tbody></table></div>
+<h2>Recent matches</h2><div class="card" style="padding:4px 6px"><table id="hist"><tbody></tbody></table></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=(w,l)=>w+l?Math.round(100*w/(w+l))+'%':'-';
+function hp(v){return Math.max(0,Math.min(100,v/20*100))}
+async function live(){
+  try{const l=await (await fetch('/api/live')).json();
+    $('#live').innerHTML=l.length?l.map(m=>`<div class="card"><div class="row"><span class="tag">${esc(m.kit)}</span><span class="mute">${esc(m.round||'')}</span><span class="sp"></span><span class="mute">best of ${m.bestOf} · ${esc(m.state)}</span></div>
+    <div class="vs" style="margin-top:10px"><div><div class="name">${esc(m.a)}</div><div class="bar"><i style="width:${hp(m.hpA)}%;background:var(--a)"></i></div><div class="mute">${(m.hpA/2).toFixed(1)} hearts</div></div>
+    <div class="score">${m.scoreA} – ${m.scoreB}</div>
+    <div class="right"><div class="name">${esc(m.b)}</div><div class="bar"><i style="width:${hp(m.hpB)}%;background:var(--b);margin-left:auto"></i></div><div class="mute">${(m.hpB/2).toFixed(1)} hearts</div></div></div></div>`).join(''):'<div class="empty">No matches right now.</div>';
+  }catch(e){}
+}
+async function stats(){
+  try{const s=await (await fetch('/api/stats')).json();
+    const rows=Object.entries(s.players).map(([n,r])=>{
+      let best='-',bw=-1;for(const[k,v]of Object.entries(r.kits)){const t=v[0]+v[1];const sc=v[0]/(t||1)+t/1000;if(t>=2&&sc>bw){bw=sc;best=k+' '+pct(v[0],v[1])}}
+      return{n,r,best,m:r.matchesWon+r.matchesLost}}).sort((a,b)=>b.r.matchesWon-a.r.matchesWon||b.m-a.m);
+    $('#board tbody').innerHTML=rows.length?rows.map((x,i)=>`<tr><td>${i+1}</td><td><b>${esc(x.n)}</b></td><td class="n">${x.r.matchesWon}-${x.r.matchesLost}</td><td class="n">${pct(x.r.matchesWon,x.r.matchesLost)}</td><td class="n hide">${x.r.roundsWon}-${x.r.roundsLost}</td><td class="hide">${esc(x.best)}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">No finished matches yet.</td></tr>';
+    $('#hist tbody').innerHTML=s.history.length?s.history.map(h=>`<tr><td><b>${esc(h.winner)}</b> beat ${esc(h.loser)}</td><td class="n">${h.winnerScore}–${h.loserScore}</td><td class="hide"><span class="tag">${esc(h.kit)}</span></td><td class="hide mute">${esc(h.event||'')}</td><td class="mute n">${new Date(h.endedAt).toLocaleTimeString()}</td></tr>`).join(''):'<tr><td class="empty">Nothing yet.</td></tr>';
+  }catch(e){}
+}
+live();stats();setInterval(live,2000);setInterval(stats,6000);
+</script></body></html>
