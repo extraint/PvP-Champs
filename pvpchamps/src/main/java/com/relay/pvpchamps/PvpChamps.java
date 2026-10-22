@@ -10,8 +10,11 @@ public final class PvpChamps implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		Roster.load();
-		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTED.register(s -> WebStats.start());
-		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(s -> WebStats.stop());
+		WebStats.start(); // up from game launch to game exit: the page works with or without a world loaded
+		net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			if (WebStats.port() > 0) handler.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+				"§7PvP Champs stats: http://localhost:" + WebStats.port()));
+		});
 		vexbot.BotSettings.botDontLeave = true; // bots stay on the server instead of dropping out on their own
 		vexbot.BotSettings.botLeaveOnDeath = false;
 		vexbot.BotSettings.shulkerRegear = false; // no placing shulker boxes (they ended up as a wall)

@@ -53,6 +53,10 @@ public final class WebStats {
 	private static final Map<String, Record> STATS = new ConcurrentHashMap<>();
 	private static HttpServer http;
 	private static Path file;
+	private static volatile int boundPort;
+
+	/** The port the site really got, or 0 if it is off. */
+	public static int port() { return boundPort; }
 
 	// ------------------------------------------------------------------ reporting (called from the server thread)
 
@@ -124,7 +128,8 @@ public final class WebStats {
 
 	// ------------------------------------------------------------------ the website
 
-	public static void start() {
+	public static synchronized void start() {
+		if (http != null) return; // already up (started when the game launched)
 		Path dir = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps");
 		int port = 8080;
 		try {
@@ -136,7 +141,11 @@ public final class WebStats {
 			JsonObject c = GSON.fromJson(Files.readString(cfg), JsonObject.class);
 			if (c.has("enabled") && !c.get("enabled").getAsBoolean()) return;
 			if (c.has("port")) port = c.get("port").getAsInt();
-			http = HttpServer.create(new InetSocketAddress(port), 0);
+			for (int p = port; http == null && p < port + 10; p++) { // 8080 is often taken by something else: try the next ports
+				try { http = HttpServer.create(new InetSocketAddress(p), 0); boundPort = p; }
+				catch (java.net.BindException e) { System.err.println("[pvpchamps] port " + p + " is busy, trying the next one"); }
+			}
+			if (http == null) throw new IOException("no free port from " + port + " to " + (port + 9));
 			http.createContext("/", ex -> {
 				String path = ex.getRequestURI().getPath();
 				byte[] body;
@@ -168,7 +177,7 @@ public final class WebStats {
 			});
 			http.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(2, r -> { Thread t = new Thread(r, "pvpchamps-web"); t.setDaemon(true); return t; }));
 			http.start();
-			System.out.println("[pvpchamps] stats website on http://localhost:" + port);
+			System.out.println("[pvpchamps] stats website on http://localhost:" + boundPort);
 		} catch (Exception e) {
 			System.err.println("[pvpchamps] stats website could not start: " + e);
 		}
