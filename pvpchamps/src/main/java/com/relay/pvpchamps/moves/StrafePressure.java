@@ -49,6 +49,6 @@ public final class StrafePressure implements Move {
 	public void end(Ctx c) {
 		c.pack.setStrafing(0f);
 		c.pack.stopMovement();
-		c.st.setCooldown(id(), 2);
+		c.st.setCooldown(id(), 14); // hand the fight back to Vexbot's own tuned logic (blocking, combo breaks, knockback) between bursts
 	}
 }

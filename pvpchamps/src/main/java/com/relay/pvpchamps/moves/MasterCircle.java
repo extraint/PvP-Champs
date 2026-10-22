@@ -69,6 +69,6 @@ public final class MasterCircle implements Move {
 		c.pack.setStrafing(0f);
 		c.pack.setSneaking(false);
 		c.pack.stopMovement();
-		c.st.setCooldown(id(), 2);
+		c.st.setCooldown(id(), 14); // hand the fight back to Vexbot's own tuned logic (blocking, combo breaks, knockback) between bursts
 	}
 }
