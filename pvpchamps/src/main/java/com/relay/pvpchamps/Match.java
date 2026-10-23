@@ -303,12 +303,42 @@ public final class Match {
 		WebStats.live(liveInfo);
 	}
 
+	private Vec3 stallA, stallB;
+	private float stallHp;
+	private int stillFor;
+
+	/**
+	 * Stall watchdog: if neither fighter has moved or been hurt for about 15 seconds, the fight has frozen (a bot is
+	 * stuck). Re-issue the hunt; if it is still frozen 15 seconds later, bring the two together and hunt again.
+	 */
+	private void stallWatch(ServerPlayer a, ServerPlayer b) {
+		if (a == null || b == null) return;
+		float hp = a.getHealth() + b.getHealth();
+		boolean moved = stallA == null || a.position().distanceToSqr(stallA) > 0.01 || b.position().distanceToSqr(stallB) > 0.01;
+		if (moved || hp != stallHp) stillFor = 0; else stillFor++;
+		stallA = a.position();
+		stallB = b.position();
+		stallHp = hp;
+		if (stillFor == sc(300)) {
+			System.err.println("[pvpchamps] " + nameA + " vs " + nameB + " stalled for 15s; re-issuing the hunt");
+			VexBotApi.hunt(nameB, nameA);
+			if (watch) VexBotApi.hunt(nameA, nameB);
+		} else if (stillFor == sc(600)) {
+			System.err.println("[pvpchamps] " + nameA + " vs " + nameB + " still stalled; bringing them together");
+			teleport(b, a.position().add(2.5, 0, 0), 90f);
+			VexBotApi.hunt(nameB, nameA);
+			if (watch) VexBotApi.hunt(nameA, nameB);
+			stillFor = 0;
+		}
+	}
+
 	private void fightTick() {
 		fightTicks++;
 		ServerPlayer a = watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
 		if (fightTicks % 5 == 0) { if (watch) auditGear(nameA, a); auditGear(nameB, b); }
 		if (fightTicks % 10 == 1) publishLive(a, b);
+		if (fightTicks > sc(100)) stallWatch(a, b);
 		if (watch && (fightTicks == sc(5) || fightTicks == sc(25) || fightTicks == sc(60))) { // heads-only fix: make clients redraw the full bodies
 			for (ServerPlayer p : new ServerPlayer[] {a, b}) {
 				if (p == null) continue;
