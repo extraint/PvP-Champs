@@ -140,7 +140,7 @@ public final class MoveEngine {
 		} else if (st.tick % 4 == 0) {
 			for (Move m : st.moves) {
 				if (!profile.moves().contains(m.id()) && !(com.relay.pvpchamps.CombatMaster.is(profile.difficulty())
-						&& (m.id().equals("strafe_pressure") || m.id().equals("anti_stall") || m.id().equals("shield_break") || m.id().equals("three_block_hit") || m.id().equals("heal_4_hearts") || m.id().equals("master_circle") || m.id().equals("mace_smash") || m.id().equals("spear_ascent") || m.id().equals("reach_combo")))) continue;
+						&& (m.id().equals("strafe_pressure") || m.id().equals("anti_stall") || m.id().equals("shield_break") || m.id().equals("three_block_hit") || m.id().equals("heal_4_hearts") || m.id().equals("master_circle") || m.id().equals("mace_smash") || m.id().equals("reach_combo")))) continue;
 				diag("try:" + m.id());
 				if (m.start(c)) {
 					st.current = m;
