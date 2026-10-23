@@ -303,28 +303,25 @@ public final class Match {
 		WebStats.live(liveInfo);
 	}
 
-	private Vec3 stallA, stallB;
-	private float stallHp;
+	private float stallHp = -1;
 	private int stillFor;
 
 	/**
-	 * Stall watchdog: if neither fighter has moved or been hurt for about 15 seconds, the fight has frozen (a bot is
-	 * stuck). Re-issue the hunt; if it is still frozen 15 seconds later, bring the two together and hunt again.
+	 * Stall watchdog, judged by damage rather than movement: running circles without landing a hit still counts as
+	 * stalled. If neither fighter has taken damage for 45 seconds, re-issue the hunt; if that does not restart the
+	 * fight within 15 more seconds, bring the two together and hunt again.
 	 */
 	private void stallWatch(ServerPlayer a, ServerPlayer b) {
 		if (a == null || b == null) return;
 		float hp = a.getHealth() + b.getHealth();
-		boolean moved = stallA == null || a.position().distanceToSqr(stallA) > 0.01 || b.position().distanceToSqr(stallB) > 0.01;
-		if (moved || hp != stallHp) stillFor = 0; else stillFor++;
-		stallA = a.position();
-		stallB = b.position();
+		if (stallHp < 0 || hp < stallHp) stillFor = 0; else stillFor++; // health only goes down in a fight, so any drop is a hit
 		stallHp = hp;
-		if (stillFor == sc(300)) {
-			System.err.println("[pvpchamps] " + nameA + " vs " + nameB + " stalled for 15s; re-issuing the hunt");
+		if (stillFor == sc(900)) {
+			System.err.println("[pvpchamps] " + nameA + " vs " + nameB + " no damage for 45s; re-issuing the hunt");
 			VexBotApi.hunt(nameB, nameA);
 			if (watch) VexBotApi.hunt(nameA, nameB);
-		} else if (stillFor == sc(600)) {
-			System.err.println("[pvpchamps] " + nameA + " vs " + nameB + " still stalled; bringing them together");
+		} else if (stillFor == sc(1200)) {
+			System.err.println("[pvpchamps] " + nameA + " vs " + nameB + " still no damage; bringing them together");
 			teleport(b, a.position().add(2.5, 0, 0), 90f);
 			VexBotApi.hunt(nameB, nameA);
 			if (watch) VexBotApi.hunt(nameA, nameB);
