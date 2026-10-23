@@ -253,7 +253,13 @@ public final class WebStats {
 						body = page == null ? "missing page".getBytes(StandardCharsets.UTF_8) : page.readAllBytes();
 					}
 				}
-				default -> { code = 404; type = "text/plain"; body = "not found".getBytes(StandardCharsets.UTF_8); }
+				default -> {
+					// Your own kit renders: drop PNGs in config/pvpchamps/web/kits/ (cart.png, uhc.png, ...) and they are served at /kits/<name>.png
+					java.nio.file.Path img = path.startsWith("/kits/") && path.endsWith(".png") && !path.contains("..")
+						? FabricLoader.getInstance().getConfigDir().resolve("pvpchamps/web" + path) : null;
+					if (img != null && Files.isRegularFile(img)) { type = "image/png"; body = Files.readAllBytes(img); }
+					else { code = 404; type = "text/plain"; body = "not found".getBytes(StandardCharsets.UTF_8); }
+				}
 			}
 			String head = "HTTP/1.1 " + code + (code == 200 ? " OK" : " Not Found") + "\r\nContent-Type: " + type
 				+ "\r\nContent-Length: " + body.length + "\r\nCache-Control: no-store\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n";
