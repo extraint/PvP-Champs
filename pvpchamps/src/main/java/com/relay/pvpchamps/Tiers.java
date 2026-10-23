@@ -24,11 +24,15 @@ public final class Tiers {
 	}
 
 	static {
-		// The headliners: HT1 in everything, a class above the rest of the field.
-		for (String n : new String[] {"Coldified", "ImMixed", "Swight", "BLMcheat", "Freekee_Fang"}) put(n, "*", "HT1");
-		// Event winners (not listed on mctiers): one step under the headliners.
-		put("ItzTwilightTT", "*", "HT2");
-		put("Alepordio", "*", "HT2");
+		// The headliners: their real mctiers strengths, lifted a step or two so they stay a class above the field.
+		put("Coldified", "UHC", "HT1", "SMP", "HT1", "Pot", "HT1", "NethOP", "LT1", "Sword", "LT1", "Mace", "HT2");
+		put("Swight", "Axe", "HT1", "SMP", "HT1", "UHC", "HT1", "NethOP", "HT1", "Mace", "LT1", "Sword", "LT1", "Pot", "LT1");
+		put("ImMixed", "SMP", "HT1", "UHC", "LT1", "Sword", "LT1", "Pot", "LT1", "Mace", "HT2", "NethOP", "HT2");
+		put("BLMcheat", "UHC", "HT1", "SMP", "LT1", "NethOP", "LT1", "Sword", "HT2", "Pot", "HT2", "Mace", "LT2");
+		put("Freekee_Fang", "SMP", "HT1", "UHC", "LT1", "Pot", "LT1", "Axe", "LT1", "Sword", "HT2", "Mace", "HT2", "NethOP", "HT2");
+		// Event winners (not listed on mctiers): around HT2.
+		put("ItzTwilightTT", "Sword", "HT2", "Mace", "HT2", "SMP", "HT2", "UHC", "LT2", "Pot", "LT2", "NethOP", "LT2");
+		put("Alepordio", "SMP", "HT2", "NethOP", "HT2", "UHC", "LT2", "Sword", "LT2", "Pot", "LT2", "Mace", "HT3");
 		// From mctiers.gg profiles.
 		put("C0RZZ", "UHC", "LT1", "Pot", "HT3", "NethOP", "HT3", "SMP", "HT3", "Sword", "LT3", "Mace", "LT4", "Axe", "LT2");
 		put("DarkKnightAragon", "UHC", "HT3", "Pot", "LT3", "NethOP", "LT3", "Mace", "HT4", "SMP", "LT1");
