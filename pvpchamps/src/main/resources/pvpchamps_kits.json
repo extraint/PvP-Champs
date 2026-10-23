@@ -217,13 +217,10 @@
         }
       },
       {
-        "item": "mace",
-        "count": 1,
         "slot": 4,
-        "enchants": {
-          "breach": 4,
-          "unbreaking": 3
-        }
+        "item": "splash_potion",
+        "count": 1,
+        "potion": "strong_strength"
       },
       {
         "item": "wind_charge",
@@ -259,6 +256,11 @@
         "item": "totem_of_undying",
         "count": 1,
         "slot": 11
+      },
+      {
+        "slot": 12,
+        "item": "cooked_beef",
+        "count": 64
       },
       {
         "item": "splash_potion",
@@ -510,6 +512,24 @@
             "potion": "strong_swiftness"
           }
         ]
+      },
+      {
+        "slot": 33,
+        "item": "splash_potion",
+        "count": 1,
+        "potion": "strong_swiftness"
+      },
+      {
+        "slot": 34,
+        "item": "splash_potion",
+        "count": 1,
+        "potion": "strong_strength"
+      },
+      {
+        "slot": 35,
+        "item": "splash_potion",
+        "count": 1,
+        "potion": "strong_swiftness"
       }
     ],
     "equipment": {
