@@ -25,6 +25,7 @@ public final class MoveEngine {
 		final Map<String, Integer> cooldowns = new HashMap<>();
 		Move current, next;
 		int tick;
+		int curTicks; // how long the current move has held the bot
 		int prevSlot = -1;
 		net.minecraft.world.phys.Vec3 lastPos;
 		int stillTicks;
@@ -126,6 +127,12 @@ public final class MoveEngine {
 				if (m.start(c)) { endCurrent(st, c); st.current = m; skip = m.tick(c); if (!skip) endCurrent(st, c); break; }
 			}
 		}
+		if (st.current != null && ++st.curTicks > 240) { // watchdog: no move may hold a bot for more than 12 seconds
+			System.err.println("[pvpchamps] " + bot.getGameProfile().name() + " was stuck in " + st.current.id() + " for " + st.curTicks + " ticks; releasing it");
+			st.setCooldown(st.current.id(), 600);
+			endCurrent(st, c);
+			skip = false;
+		}
 		if (st.current != null) {
 			diag("busy:" + st.current.id());
 			if (st.current.tick(c)) skip = true;
@@ -151,6 +158,7 @@ public final class MoveEngine {
 	private static void endCurrent(State st, Ctx c) {
 		Move m = st.current;
 		st.current = null;
+		st.curTicks = 0;
 		if (m != null) m.end(c);
 		if (st.next != null) { st.current = st.next; st.next = null; }
 	}
