@@ -6,7 +6,7 @@ import vexbot.BotSettings;
 import vexbot.DifficultyParams;
 
 /**
- * MCTiers-style tiers (HT1 best, then LT1, HT2 ... LT5) per player and gamemode, looked up on mctiers.gg in
+ * MCTiers-style tiers (HT1 best, then LT1, HT2 ... LT5, worth 60/45/30/20/10/6/4/3/2/1 points) per player and gamemode, looked up on mctiers.gg in
  * October 2026. A bot's skill in a match comes from its tier in that match's kit, so a player who is HT1 in UHC
  * but LT3 in Mace fights like it. Players with no listing use {@link #DEFAULT}; the five headliners and the two
  * event winners are set by hand.
@@ -61,11 +61,22 @@ public final class Tiers {
 		};
 	}
 
-	/** HT1 = 10, LT1 = 9, HT2 = 8 ... LT5 = 1. */
-	public static int score(String tier) {
-		int n = tier.charAt(2) - '0';
-		return (6 - n) * 2 - (tier.charAt(0) == 'L' ? 1 : 0);
+	private static final String[] ORDER = {"HT1", "LT1", "HT2", "LT2", "HT3", "LT3", "HT4", "LT4", "HT5", "LT5"};
+	private static final int[] POINTS = {60, 45, 30, 20, 10, 6, 4, 3, 2, 1}; // MCTiers points per tier
+
+	/** MCTiers points for a tier: HT1 60, LT1 45, HT2 30, LT2 20, HT3 10, LT3 6, HT4 4, LT4 3, HT5 2, LT5 1. */
+	public static int points(String tier) {
+		for (int i = 0; i < ORDER.length; i++) if (ORDER[i].equals(tier)) return POINTS[i];
+		return 6;
 	}
+
+	private static int idx(String tier) {
+		for (int i = 0; i < ORDER.length; i++) if (ORDER[i].equals(tier)) return i;
+		return 5;
+	}
+
+	/** Higher is better; the points, so comparisons follow the real scale. */
+	public static int score(String tier) { return points(tier); }
 
 	/** This player's tier in this kit: the kit's own gamemode, else a close one a step lower, else the default. */
 	public static String tier(String name, Kits kit) {
@@ -76,38 +87,30 @@ public final class Tiers {
 		if (m.containsKey(ms[0])) return m.get(ms[0]);
 		for (int i = 1; i < ms.length; i++) if (m.containsKey(ms[i])) return step(m.get(ms[i]), 1);
 		String best = null;
-		for (String t : m.values()) if (best == null || score(t) > score(best)) best = t;
+		for (String t : m.values()) if (best == null || points(t) > points(best)) best = t;
 		return best == null ? DEFAULT : step(best, 2); // only known in other modes: assume a bit weaker here
 	}
 
 	private static String step(String tier, int down) {
-		int s = Math.max(1, score(tier) - down);
-		int n = 6 - (s + 1) / 2;
-		return (s % 2 == 0 ? "HT" : "LT") + n;
+		return ORDER[Math.min(ORDER.length - 1, idx(tier) + down)];
 	}
 
-	/** Fighting skill for a tier. HT1 is past Vexbot's PERFECT; LT5 is a little under MEDIUM. */
+	/**
+	 * Fighting skill from the tier's points, on a log scale (1 point is the floor, 60 is a perfect fighter), so
+	 * the gaps match the point gaps: HT1 to LT1 is a small step, HT3 to LT3 a big one.
+	 */
 	public static DifficultyParams params(String tier) {
-		int s = score(tier);
-		BotSettings.Difficulty base = s >= 9 ? BotSettings.Difficulty.PERFECT : s >= 6 ? BotSettings.Difficulty.EXPERT
-			: s >= 3 ? BotSettings.Difficulty.HARD : BotSettings.Difficulty.MEDIUM;
-		DifficultyParams p = DifficultyParams.forPreset(base);
-		int within = switch (base) { case PERFECT -> 10 - s; case EXPERT -> 8 - s; case HARD -> 5 - s; default -> 2 - s; };
-		p.accuracy = Math.max(0.3, p.accuracy - within * 0.04);
-		p.missChance = Math.min(0.4, p.missChance + within * 0.025);
-		p.reactionMinTicks += within / 2;
-		p.reactionMaxTicks += within;
-		p.shieldReactionMs += within * 40;
-		if (s == 10) { // HT1: nothing left to chance
-			p.missChance = 0;
-			p.accuracy = 1.0;
-			p.clutchAccuracy = 1.0;
-			p.reactionMinTicks = 0;
-			p.reactionMaxTicks = 0;
-			p.shieldReactionMs = 0;
-			p.shieldReactionJitterMs = 0;
-			p.stunSlamChance = 100;
-		}
+		double x = Math.log(Math.max(1, points(tier))) / Math.log(60); // 0..1
+		DifficultyParams p = DifficultyParams.forPreset(BotSettings.Difficulty.PERFECT);
+		p.accuracy = 0.45 + 0.55 * x;
+		p.clutchAccuracy = Math.min(1.0, 0.55 + 0.45 * x);
+		p.missChance = 0.32 * (1 - x);
+		p.reactionMinTicks = (int) Math.round(5 * (1 - x));
+		p.reactionMaxTicks = (int) Math.round(11 * (1 - x));
+		p.shieldReactionMs = (int) Math.round(650 * (1 - x));
+		p.shieldReactionJitterMs = (int) Math.round(120 * (1 - x));
+		p.stunSlamChance = (int) Math.round(35 + 65 * x);
+		if (x >= 1.0) { p.missChance = 0; p.accuracy = 1.0; p.clutchAccuracy = 1.0; p.shieldReactionJitterMs = 0; }
 		return p;
 	}
 }
