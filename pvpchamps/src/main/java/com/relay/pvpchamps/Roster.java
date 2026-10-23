@@ -34,16 +34,16 @@ public final class Roster {
 		List<String> heal = List.of("heal_4_hearts");
 		return new ArrayList<>(List.of(
 			// Combat Masters
-			new Opponent("Coldified", "Champion, adapts to whoever he faces", "COMBAT_MASTER", "ADAPTIVE", 95, 1.0,
+			new Opponent("Coldified", "Champion, adapts to whoever he faces", "PERFECT", "ADAPTIVE", 99, 1.0,
 				all, join(heal, "pop_punish", "pearl_close", "bait_retreat", "lunge_swap", "pearl_wind", "wall_off", "mend_reset", "pot_up")),
-			new Opponent("Swight", "Spear & Mace specialist, relentless", "COMBAT_MASTER", "AGGRESSIVE", 92, 1.0,
+			new Opponent("Swight", "Spear & Mace specialist, relentless", "PERFECT", "AGGRESSIVE", 98, 1.0,
 				List.of("spear_mace", "mace"), join(press, "mace_smash", "spear_jab", "pop_punish", "pearl_close", "bait_retreat", "lunge_swap", "pearl_wind")),
-			new Opponent("ImMixed", "All-rounder, balanced", "COMBAT_MASTER", "BALANCED", 90, 1.0,
+			new Opponent("ImMixed", "All-rounder, balanced", "PERFECT", "BALANCED", 98, 1.0,
 				all, join(heal, "pop_punish", "bait_retreat", "mend_reset", "wall_off", "pot_up", "pearl_close")),
 			new Opponent("x_Kyran_x", "SMP pressure", "COMBAT_MASTER", "AGGRESSIVE", 88, 1.0,
 				List.of("diamond_smp", "netherite_smp", "cart"), join(press, "pot_up", "pop_punish", "pearl_close", "wall_off", "cart_bomb", "tnt_minecart", "mend_reset")),
 			// Experts
-			new Opponent("Freekee_Fang", "Cart and potion fighter, patient pressure", "EXPERT", "BALANCED", 86, 1.0,
+			new Opponent("Freekee_Fang", "Cart and potion fighter, patient pressure", "PERFECT", "BALANCED", 97, 1.0,
 				List.of("cart", "netherite_op"), join(heal, "pearl_close", "mend_reset", "cart_bomb", "tnt_minecart")),
 			new Opponent("ninorc15", "Sword and SMP, plays it tight", "EXPERT", "DEFENSIVE", 85, 1.0,
 				List.of("sword", "diamond_smp", "netherite_smp"), join(heal, "pot_up", "pop_punish", "wall_off", "mend_reset", "pearl_close")),
@@ -51,7 +51,7 @@ public final class Roster {
 				List.of("mace", "spear_mace", "cart"), join(heal, "mace_smash", "pearl_close", "lunge_swap", "cart_bomb", "tnt_minecart")),
 			new Opponent("Sweatgod", "Spear mace, never lets up", "EXPERT", "AGGRESSIVE", 82, 1.0,
 				List.of("spear_mace", "mace", "uhc"), join(press, "mace_smash", "spear_jab", "pop_punish", "lunge_swap", "pearl_wind")),
-			new Opponent("BLMcheat", "Patient defender", "EXPERT", "DEFENSIVE", 80, 1.0,
+			new Opponent("BLMcheat", "Patient defender", "PERFECT", "DEFENSIVE", 97, 1.0,
 				List.of("diamond_smp", "netherite_smp"), join(heal, "pot_up", "mend_reset", "bait_retreat", "wall_off", "pearl_close")),
 			new Opponent("Sizierung", "Sword fighter, balanced", "EXPERT", "BALANCED", 79, 1.0,
 				List.of("sword", "uhc", "diamond_smp"), join(heal, "pot_up", "pop_punish", "bait_retreat", "mend_reset", "wall_off", "pearl_close")),
@@ -92,7 +92,7 @@ public final class Roster {
 	}
 
 	/** Bump when the built-in roster changes: an older roster.json is then replaced (the old one is kept as roster.json.old). */
-	private static final String ROSTER_VERSION = "12";
+	private static final String ROSTER_VERSION = "13";
 
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("roster.json");
