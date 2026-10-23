@@ -110,6 +110,11 @@ public final class Tiers {
 		p.shieldReactionMs = (int) Math.round(650 * (1 - x));
 		p.shieldReactionJitterMs = (int) Math.round(120 * (1 - x));
 		p.stunSlamChance = (int) Math.round(35 + 65 * x);
+		if (x >= 0.8) { // LT1 and up react instantly, to hits and to shields
+			p.reactionMinTicks = 0;
+			p.reactionMaxTicks = 0;
+			p.shieldReactionMs = 0;
+		}
 		if (x >= 1.0) { p.missChance = 0; p.accuracy = 1.0; p.clutchAccuracy = 1.0; p.shieldReactionJitterMs = 0; }
 		return p;
 	}

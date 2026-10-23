@@ -43,6 +43,7 @@ public final class MaceSmash implements Move {
 		if (inRange && c.bot.fallDistance >= 1.5) {
 			c.attackOnce();
 			MoveEngine.reject(id(), "smash_swing");
+			c.st.forceMove(new MaceFollowUp()); // react the same tick: no pause before the follow-up
 			return false;
 		}
 		return true;
@@ -52,6 +53,6 @@ public final class MaceSmash implements Move {
 	public void end(Ctx c) {
 		c.pack.stopMovement();
 		c.restoreSlot();
-		c.st.setCooldown(id(), 40);
+		c.st.setCooldown(id(), 12);
 	}
 }
