@@ -50,7 +50,7 @@ public final class HealAtFourHearts implements Move {
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (c.bot.isUsingItem()) return MoveEngine.reject(id(), "busy");
 		float hp = c.bot.getHealth();
-		boolean danger = hp <= 8f, safeTopUp = hp <= 12f && (c.dist > 5.0 || opponentRunning(c));
+		boolean danger = hp <= 10f, safeTopUp = hp <= 14f && (c.dist > 4.0 || opponentRunning(c)); // heal earlier: 5 hearts is danger, 7 is a safe top-up
 		if (!danger && !safeTopUp) return MoveEngine.reject(id(), "healthy_hp" + (int) Math.min(hp, 20));
 		if (danger && potionSlot(c) >= 0) mode = Mode.POTION;
 		else if (c.count(Items.GOLDEN_APPLE) > 0) mode = Mode.APPLE;
@@ -101,6 +101,6 @@ public final class HealAtFourHearts implements Move {
 		c.pack.stopMovement();
 		c.pack.stop(BotPlayerActionPack.ActionType.USE);
 		c.restoreSlot();
-		c.st.setCooldown(id(), mode == Mode.POTION ? 12 : 30);
+		c.st.setCooldown(id(), mode == Mode.POTION ? 6 : 12); // shorter gaps: a second drink in a fight is often what keeps a bot alive
 	}
 }
