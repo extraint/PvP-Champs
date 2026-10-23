@@ -106,7 +106,9 @@ tr.pl{cursor:pointer}tr.pl:hover td{background:rgba(255,159,28,.06)}
 .kc .gn{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#140b02;color:#ffcf6a;font:700 11px var(--head);padding:2px 8px;letter-spacing:.08em;white-space:nowrap}
 .ksbar{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin:16px -18px 0;padding:10px 18px;background:linear-gradient(90deg,rgba(0,0,0,.75),rgba(0,0,0,.45));position:relative;font:italic 700 26px var(--head);letter-spacing:.05em;text-transform:uppercase;color:#fff}
 .ksbar .vsx{color:#ffcf6a;font-size:20px}.ksbar .rt{text-align:right}
-.ksbar img{width:30px;height:30px;vertical-align:middle;margin:0 10px;image-rendering:pixelated}
+.ksbar .pl{display:flex;align-items:center;gap:14px}.ksbar .pl.rt{justify-content:flex-end}.ksbar{padding:8px 18px}
+.ksbar img.pf{width:58px;height:58px;image-rendering:pixelated;border:3px solid #ffcf6a;background:#140b02;box-shadow:0 0 0 2px #000,0 6px 14px rgba(0,0,0,.5)}
+.ksbar .pl span{font-size:30px}
 .ksround{background:#000;color:#fff;font:italic 700 15px var(--head);letter-spacing:.1em;text-transform:uppercase;padding:6px 18px;margin:0 -18px;position:relative}
 @media(max-width:820px){.kcards{grid-template-columns:repeat(4,1fr)}.kc .ic,.kc .ic img{width:64px;height:64px}.ks h4{font-size:30px}.ksbar{font-size:18px}}
 
@@ -196,6 +198,7 @@ function slot(id,count,extra){
   return `<div class="slot ${pot?'pot':''}" title="${esc(nice(id))}${count>1?' ×'+count:''}"${st}><img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(short)}" onerror="nx(this)" alt="">${count>1?`<b>${count}</b>`:''}</div>`}
 const KITS=[['Cart','tnt_minecart','rail'],['UHC','golden_apple'],['Spear & Mace','netherite_spear','mace'],['Mace','mace','wind_charge'],['Sword','diamond_sword','diamond_sword'],['Diamond SMP','diamond_sword','diamond_axe'],['Netherite SMP','netherite_sword','netherite_axe']];
 function bigIcon(id){const c=cands(id);return `<img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(id.replace(/_/g,' '))}" onerror="nx(this)" alt="">`}
+const headBig=n=>`<img class="pf" src="https://mc-heads.net/avatar/${encodeURIComponent(n)}/128" alt="" onerror="this.style.visibility='hidden'">`;
 function kitSelection(sr){
   if(!sr||!sr.draft||!sr.draft.length)return '';
   const st={};let g=0;
@@ -211,7 +214,7 @@ function kitSelection(sr){
     return `<div class="kc ${cls}">${x.g?`<span class="gn">GAME ${x.g}</span>`:''}${icons}<div class="kn">${esc(k)}</div><div class="kw">${who}</div></div>`}).join('');
   const round=String(sr.label||'').replace(/ \(.*/,'');
   return `<div class="ks"><div class="logo2">PVP<br><b>CHAMPS</b></div><h4>Kit Selection</h4><div class="kcards">${cards}</div>
-  <div class="ksbar"><div>${head(sr.a)}${esc(sr.a||'TBD')}</div><div class="vsx">VS</div><div class="rt">${esc(sr.b||'TBD')}${head(sr.b)}</div></div>
+  <div class="ksbar"><div class="pl">${headBig(sr.a)}<span>${esc(sr.a||'TBD')}</span></div><div class="vsx">VS</div><div class="pl rt"><span>${esc(sr.b||'TBD')}</span>${headBig(sr.b)}</div></div>
   <div class="ksround">${esc(round)} · Best of ${sr.bestOf}</div></div>`}
 function parse(t){const m=String(t).match(/^(.*?) x(\d+)$/);return m?[m[1],+m[2]]:[t,1]}
 const durCol=v=>v>60?'#3ddc97':v>30?'#ff9f1c':'#ff4d5e';
