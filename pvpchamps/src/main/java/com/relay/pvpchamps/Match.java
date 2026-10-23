@@ -134,6 +134,8 @@ public final class Match {
 			kitStacks = kit.build(server);
 			message(Component.literal("§eGame " + round + " kit: " + kit.label));
 		}
+		Roster.applyTier(nameB, kit);
+		if (watch) Roster.applyTier(nameA, kit);
 		state = State.COUNTDOWN;
 		timer = sc(60);
 		loserDecided = false;

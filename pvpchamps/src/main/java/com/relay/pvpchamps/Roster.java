@@ -135,6 +135,20 @@ public final class Roster {
 		p.shieldReactionMs += gap * 6;
 	}
 
+	/** Sets this bot's skill from its tier in the kit being played (see {@link Tiers}); its style and moves stay. */
+	public static void applyTier(String name, Kits kit) {
+		Opponent o = byName(name);
+		if (o == null) return;
+		try {
+			DifficultyParams p = Tiers.params(Tiers.tier(name, kit));
+			if (CombatMaster.is(o.difficulty())) CombatMaster.applySettings();
+			else CombatMaster.enableStunSlam();
+			BotSettings.botDifficulties.put(o.name(), p);
+		} catch (RuntimeException e) {
+			System.err.println("[pvpchamps] could not apply the tier for " + name + ": " + e);
+		}
+	}
+
 	/** Pushes the opponent's difficulty and style into VexBot so the bot of that name fights like them. */
 	public static void applyProfile(Opponent o) {
 		try {

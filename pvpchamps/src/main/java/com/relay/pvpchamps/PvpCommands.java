@@ -59,6 +59,15 @@ public final class PvpCommands {
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
 				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
+			.then(Commands.literal("tiers").executes(c -> {
+				StringBuilder sb = new StringBuilder("Tiers by kit (HT1 best, LT5 lowest):");
+				for (Roster.Opponent o : Roster.all()) {
+					sb.append("\n").append(o.name()).append(": ");
+					for (Kits k : Kits.values()) sb.append(k.label).append(" ").append(Tiers.tier(o.name(), k)).append("  ");
+				}
+				say(c.getSource(), sb.toString());
+				return 1;
+			}))
 			.then(Commands.literal("speedup").executes(c -> setRate(c.getSource(), 100)))
 			.then(Commands.literal("slowdown").executes(c -> setRate(c.getSource(), 20)))
 			.then(Commands.literal("stop").executes(c -> { MatchManager.stop(); say(c.getSource(), "Stopped."); return 1; }))
