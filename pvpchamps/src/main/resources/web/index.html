@@ -122,7 +122,7 @@ html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .kc .ic.full{width:100%;height:150px;display:flex;justify-content:center;align-items:flex-end;position:relative}
 .kc .ic.full img.fb{position:static;width:auto;height:150px;filter:drop-shadow(3px 4px 0 rgba(0,0,0,.45))}
-.kc .badge2{position:absolute;right:4px;bottom:0}.kc .badge2 .slot{width:34px;height:34px;background:rgba(10,6,2,.75);border:2px solid #ffcf6a}.kc .badge2 .slot img{width:24px;height:24px}
+.kc .badge2{position:absolute;right:2px;top:46%}.kc .badge2 .slot{width:44px;height:44px;background:rgba(10,6,2,.75);border:2px solid #ffcf6a}.kc .badge2 .slot img{width:34px;height:34px}
 .kc.ban .ic.full img.fb{filter:grayscale(1) brightness(.5)}
 .view{display:none}.view.on{display:block}
 @media(max-width:560px){.hide{display:none}}
@@ -204,7 +204,8 @@ const KITS=[['Cart','tnt_minecart','rail'],['UHC','golden_apple'],['Spear & Mace
 function bigIcon(id){const c=cands(id);return `<img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(id.replace(/_/g,' '))}" onerror="nx(this)" alt="">`}
 const headBig=n=>`<img class="pf" src="https://mc-heads.net/avatar/${encodeURIComponent(n)}/128" alt="" onerror="this.style.visibility='hidden'">`;
 const KITPLAYER={'Cart':'Freekee_Fang','UHC':'BLMcheat','Spear & Mace':'Swight','Mace':'mikagoated','Sword':'Coldified','Diamond SMP':'ImMixed','Netherite SMP':'Alepordio'};
-const kitBody=(k,ic)=>`<div class="ic full"><img class="fb" src="https://mc-heads.net/body/${encodeURIComponent(KITPLAYER[k]||'Steve')}/200" alt="" onerror="this.style.visibility='hidden'"><div class="badge2">${slot(ic[0],1)}</div></div>`;
+const KITPOSE={'Cart':'sit','UHC':'sneak','Spear & Mace':'point','Mace':'jump','Sword':'punch','Diamond SMP':'flex','Netherite SMP':'salute'};
+const kitBody=(k,ic)=>`<div class="ic full"><img class="fb" src="https://skinrender.dev/render/${encodeURIComponent(KITPLAYER[k]||'Steve')}/body?size=320&pose=${KITPOSE[k]||'default'}" alt="" onerror="this.onerror=null;this.src='https://mc-heads.net/body/${encodeURIComponent(KITPLAYER[k]||'Steve')}/200'"><div class="badge2">${slot(ic[0],1)}</div></div>`;
 function kitSelection(sr){
   if(!sr||!sr.draft||!sr.draft.length)return '';
   const st={};let g=0;
