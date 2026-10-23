@@ -121,6 +121,20 @@ public final class Roster {
 		return null;
 	}
 
+	/**
+	 * Rating decides how sharp a bot is inside its tier, so the 86 Expert really fights better than the 73 one
+	 * (they used to share one preset and fight identically). Below 90, each rating point costs a little aim,
+	 * adds a little miss chance and slows reactions; Combat Masters (88+) are left at their tuned values.
+	 */
+	static void rateScale(DifficultyParams p, int rating) {
+		int gap = Math.max(0, 90 - rating); // 0 for the very best, about 26 for the weakest
+		p.accuracy = Math.max(0.5, p.accuracy * (1.0 - gap * 0.008));
+		p.missChance = Math.min(0.35, p.missChance + gap * 0.004);
+		p.reactionMinTicks += gap / 6;
+		p.reactionMaxTicks += gap / 4;
+		p.shieldReactionMs += gap * 6;
+	}
+
 	/** Pushes the opponent's difficulty and style into VexBot so the bot of that name fights like them. */
 	public static void applyProfile(Opponent o) {
 		try {
@@ -132,6 +146,7 @@ public final class Roster {
 				p = DifficultyParams.forPreset(BotSettings.Difficulty.valueOf(o.difficulty().toUpperCase()));
 				p.accuracy = Math.min(1.0, p.accuracy * o.accuracy());
 				p.stunSlamChance = Math.max(p.stunSlamChance, 80);
+				rateScale(p, o.rating());
 				CombatMaster.enableStunSlam();
 			}
 			BotSettings.botDifficulties.put(o.name(), p);

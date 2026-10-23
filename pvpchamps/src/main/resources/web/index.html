@@ -86,24 +86,29 @@ tr.pl{cursor:pointer}tr.pl:hover td{background:rgba(255,159,28,.06)}
 .kitrow{display:grid;grid-template-columns:110px 1fr 60px;gap:8px;align-items:center;margin:4px 0;font-size:13px}
 .kitrow .pbar{margin:0}
 
-.ks{background:linear-gradient(180deg,#2a1807,#3b2108 55%,#1d1106);border:1px solid #6b3f10;padding:14px 14px 0;margin-bottom:14px;position:relative;overflow:hidden}
-.ks:before{content:"";position:absolute;inset:0;background:radial-gradient(600px 220px at 85% -40px,rgba(255,159,28,.45),transparent);pointer-events:none}
-.ks h4{margin:0 0 10px;font:italic 700 26px var(--head);letter-spacing:.06em;text-transform:uppercase;text-shadow:2px 2px 0 #000;position:relative}
-.kcards{display:grid;grid-template-columns:repeat(7,minmax(70px,1fr));gap:8px;position:relative}
-.kc{background:linear-gradient(180deg,rgba(255,159,28,.28),rgba(255,159,28,.08));border:1px solid rgba(255,159,28,.55);text-align:center;padding:10px 4px 6px;position:relative;transition:.15s}
-.kc .ic{display:flex;justify-content:center;gap:2px;height:44px;align-items:center}
-.kc .ic .slot{width:42px;height:42px;background:transparent;border:0}.kc .ic .slot img{width:34px;height:34px}
-.kc .kn{font:700 12px var(--head);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
-.kc .kw{font:600 10px var(--head);letter-spacing:.06em;color:var(--mute);min-height:13px;text-transform:uppercase}
-.kc.ban{filter:grayscale(1) brightness(.55);border-color:#444}
-.kc.ban:after{content:"✕";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 48px var(--head);color:#ff3b4e;filter:none;text-shadow:0 0 12px #000}
-.kc.pick{background:linear-gradient(180deg,rgba(255,159,28,.75),rgba(255,159,28,.25));border-color:#ffd08a;box-shadow:0 0 16px rgba(255,159,28,.5)}
-.kc.dec{border-color:#fff;box-shadow:0 0 16px rgba(255,255,255,.3)}
-.kc .gn{position:absolute;top:-1px;left:-1px;background:#ff9f1c;color:#1a0f00;font:700 11px var(--head);padding:1px 6px;letter-spacing:.06em}
-.ksbar{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin:12px -14px 0;padding:8px 14px;background:rgba(0,0,0,.55);position:relative;font:700 18px var(--head);letter-spacing:.06em;text-transform:uppercase}
-.ksbar .vsx{color:var(--gold);font-size:13px}.ksbar .rt{text-align:right}.ksbar .rl{position:absolute;left:14px;bottom:-1px;font-size:10px;color:var(--mute);display:none}
-.ksbar img{width:22px;height:22px;vertical-align:middle;margin:0 6px;image-rendering:pixelated}
-@media(max-width:640px){.kcards{grid-template-columns:repeat(4,1fr)}}
+.ks{background:linear-gradient(115deg,#1a0d02 0%,#5a3108 38%,#c36a10 72%,#f0a030 100%);padding:18px 18px 0;margin-bottom:14px;position:relative;overflow:hidden;border:1px solid #7a4511}
+.ks:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.03) 0 2px,transparent 2px 9px);pointer-events:none}
+.ks h4{margin:0 0 14px;font:italic 700 40px/1 var(--head);letter-spacing:.04em;text-transform:uppercase;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.6);position:relative}
+.ks .logo2{position:absolute;right:18px;top:14px;font-family:var(--px);font-size:9px;line-height:1.5;text-align:right;color:#fff;text-shadow:2px 2px 0 #000}.ks .logo2 b{color:#ffcf6a}
+.kcards{display:grid;grid-template-columns:repeat(7,minmax(84px,1fr));gap:10px;position:relative}
+.kc{position:relative;aspect-ratio:3/4.4;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,rgba(255,214,140,.55),rgba(240,150,40,.35) 55%,rgba(120,60,10,.55));border:2px solid rgba(255,225,170,.75);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),0 6px 14px rgba(0,0,0,.35)}
+.kc .ic{position:relative;width:96px;height:96px;flex:none}
+.kc .ic img{position:absolute;inset:0;width:96px;height:96px;image-rendering:pixelated;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.45))}
+.kc .ic.two img:first-child{transform:rotate(0deg)}.kc .ic.two img:last-child{transform:scaleX(-1)}
+.kc .ic .tile{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 14px var(--head);color:#fff}
+.kc .kn{font:italic 700 17px var(--head);letter-spacing:.05em;text-transform:uppercase;margin-top:10px;color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.55);text-align:center;line-height:1.05}
+.kc .kw{font:600 11px var(--head);letter-spacing:.08em;color:#fff3dd;min-height:14px;text-transform:uppercase;margin-top:3px;opacity:.9}
+.kc.ban{background:linear-gradient(180deg,#4a3a2a,#2a2016);border-color:#6b5a48}.kc.ban .ic,.kc.ban .kn{filter:grayscale(1) brightness(.55)}.kc.ban .kw{color:#ff6b78;opacity:1}
+.kc.ban:after{content:"";position:absolute;left:12%;right:12%;top:8%;height:62%;background:linear-gradient(45deg,transparent 46%,#ff3b4e 46%,#ff3b4e 54%,transparent 54%),linear-gradient(-45deg,transparent 46%,#ff3b4e 46%,#ff3b4e 54%,transparent 54%);filter:none}
+.kc.pick{background:linear-gradient(180deg,#ffe2a6,#ffad3a 55%,#c86a10);border-color:#fff;box-shadow:0 0 22px rgba(255,190,80,.75),inset 0 0 0 1px rgba(0,0,0,.25)}
+.kc.dec{border-color:#fff;box-shadow:0 0 0 2px #fff,0 0 22px rgba(255,255,255,.45)}
+.kc .gn{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#140b02;color:#ffcf6a;font:700 11px var(--head);padding:2px 8px;letter-spacing:.08em;white-space:nowrap}
+.ksbar{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin:16px -18px 0;padding:10px 18px;background:linear-gradient(90deg,rgba(0,0,0,.75),rgba(0,0,0,.45));position:relative;font:italic 700 26px var(--head);letter-spacing:.05em;text-transform:uppercase;color:#fff}
+.ksbar .vsx{color:#ffcf6a;font-size:20px}.ksbar .rt{text-align:right}
+.ksbar img{width:30px;height:30px;vertical-align:middle;margin:0 10px;image-rendering:pixelated}
+.ksround{background:#000;color:#fff;font:italic 700 15px var(--head);letter-spacing:.1em;text-transform:uppercase;padding:6px 18px;margin:0 -18px;position:relative}
+@media(max-width:820px){.kcards{grid-template-columns:repeat(4,1fr)}.kc .ic,.kc .ic img{width:64px;height:64px}.ks h4{font-size:30px}.ksbar{font-size:18px}}
 .view{display:none}.view.on{display:block}
 @media(max-width:560px){.hide{display:none}}
 </style></head><body>
@@ -180,22 +185,25 @@ function slot(id,count,extra){
   const st=pot&&POTCOL[pot]?` style="--pc:${POTCOL[pot]}"`:'';
   const short=String(id).split(':')[0].replace(/_/g,' ').slice(0,10);
   return `<div class="slot ${pot?'pot':''}" title="${esc(nice(id))}${count>1?' ×'+count:''}"${st}><img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(short)}" onerror="nx(this)" alt="">${count>1?`<b>${count}</b>`:''}</div>`}
-const KITS=[['Sword','netherite_sword'],['UHC','golden_apple'],['Spear & Mace','netherite_spear+mace'],['Mace','mace'],['Cart','tnt_minecart'],['Diamond SMP','diamond_chestplate'],['Netherite SMP','netherite_chestplate']];
+const KITS=[['Cart','tnt_minecart','rail'],['UHC','golden_apple'],['Spear & Mace','netherite_spear','mace'],['Mace','mace','wind_charge'],['Sword','diamond_sword','diamond_sword'],['Diamond SMP','diamond_sword','diamond_axe'],['Netherite SMP','netherite_sword','netherite_axe']];
+function bigIcon(id){const c=cands(id);return `<img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(id.replace(/_/g,' '))}" onerror="nx(this)" alt="">`}
 function kitSelection(sr){
   if(!sr||!sr.draft||!sr.draft.length)return '';
-  const st={};let g=0;const bo5=sr.draft.some(l=>l.startsWith('Games:'));
+  const st={};let g=0;
   for(const l of sr.draft){let m;
     if(m=l.match(/^(.*) bans (.*)$/))st[m[2]]={t:'ban',by:m[1]};
     else if(m=l.match(/^(.*) picks (.*)$/))st[m[2]]={t:'pick',by:m[1],g:++g};
     else if(m=l.match(/^Decider: (.*)$/))st[m[1]]={t:'dec',g:3};
     else if(m=l.match(/^Games: (.*)$/))m[1].split(', ').forEach((k,i)=>st[k]={t:'pick',by:'',g:i+1});}
-  const cards=KITS.map(([k,ic])=>{const x=st[k]||{};
-    const icons=ic.split('+').map(i=>slot(i,1)).join('');
+  const cards=KITS.map(([k,...ic])=>{const x=st[k]||{};
+    const icons=`<div class="ic ${ic.length>1?'two':''}">${ic.map(bigIcon).join('')}</div>`;
     const cls=x.t==='ban'?'ban':x.t==='pick'?'pick':x.t==='dec'?'dec':'';
-    const who=x.t==='ban'?'banned · '+esc(x.by):x.t==='pick'?esc(x.by||'game'):x.t==='dec'?'decider':'';
-    return `<div class="kc ${cls}">${x.g?`<span class="gn">GAME ${x.g}</span>`:''}<div class="ic">${icons}</div><div class="kn">${esc(k)}</div><div class="kw">${who}</div></div>`}).join('');
-  return `<div class="ks"><h4>Kit Selection</h4><div class="kcards">${cards}</div>
-  <div class="ksbar"><div>${head(sr.a)}${esc(sr.a||'TBD')}</div><div class="vsx">VS</div><div class="rt">${esc(sr.b||'TBD')}${head(sr.b)}</div></div></div>`}
+    const who=x.t==='ban'?'ban · '+esc(x.by):x.t==='pick'?esc(x.by||''):x.t==='dec'?'decider':'';
+    return `<div class="kc ${cls}">${x.g?`<span class="gn">GAME ${x.g}</span>`:''}${icons}<div class="kn">${esc(k)}</div><div class="kw">${who}</div></div>`}).join('');
+  const round=String(sr.label||'').replace(/ \(.*/,'');
+  return `<div class="ks"><div class="logo2">PVP<br><b>CHAMPS</b></div><h4>Kit Selection</h4><div class="kcards">${cards}</div>
+  <div class="ksbar"><div>${head(sr.a)}${esc(sr.a||'TBD')}</div><div class="vsx">VS</div><div class="rt">${esc(sr.b||'TBD')}${head(sr.b)}</div></div>
+  <div class="ksround">${esc(round)} · Best of ${sr.bestOf}</div></div>`}
 function parse(t){const m=String(t).match(/^(.*?) x(\d+)$/);return m?[m[1],+m[2]]:[t,1]}
 const durCol=v=>v>60?'#3ddc97':v>30?'#ff9f1c':'#ff4d5e';
 const PIECES=['Helmet','Chest','Legs','Boots'];
