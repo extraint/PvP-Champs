@@ -109,6 +109,15 @@ tr.pl{cursor:pointer}tr.pl:hover td{background:rgba(255,159,28,.06)}
 .ksbar img{width:30px;height:30px;vertical-align:middle;margin:0 10px;image-rendering:pixelated}
 .ksround{background:#000;color:#fff;font:italic 700 15px var(--head);letter-spacing:.1em;text-transform:uppercase;padding:6px 18px;margin:0 -18px;position:relative}
 @media(max-width:820px){.kcards{grid-template-columns:repeat(4,1fr)}.kc .ic,.kc .ic img{width:64px;height:64px}.ks h4{font-size:30px}.ksbar{font-size:18px}}
+
+.dur i{transition:width .45s ease,background .45s ease}
+.hearts span{transition:color .25s ease}
+.fade{animation:fin .35s ease both}@keyframes fin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.view.on{animation:fin .25s ease both}
+.m{transition:border-color .15s,transform .15s,box-shadow .2s}.m:hover{transform:translateY(-1px)}
+.big.sc{transition:color .2s}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .view{display:none}.view.on{display:block}
 @media(max-width:560px){.hide{display:none}}
 </style></head><body>
@@ -220,14 +229,52 @@ function gear(g){ if(!g)return '';
 const body=n=>`<img class="body" src="https://mc-heads.net/body/${encodeURIComponent(n)}/120" alt="" onerror="this.style.visibility='hidden'">`;
 const hpw=v=>Math.max(0,Math.min(100,v/20*100));
 function fighter(n,hp,g,right){return `<div class="${right?'r':''}"><div class="fh">${body(n)}<div><div class="nm">${esc(n)}</div>${hearts(hp)}</div></div>${gear(g)}</div>`}
-async function live(){try{
-  const l=await (await fetch('/api/live')).json();conn(true);
-  $('#live').innerHTML=l.length?l.map(m=>{const sr=((window.BK&&window.BK.series)||[]).find(x=>x.state==='live'&&x.a===m.a&&x.b===m.b);return `${kitSelection(sr)}<div class="panel"><div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span class="tag">${esc(m.kit)}</span><span class="mute">${esc(m.round||'')}</span><span style="flex:1"></span><span class="mute">best of ${m.bestOf}</span></div>
-  <div class="vs" style="align-items:start">${fighter(m.a,m.hpA,m.gearA,false)}<div class="big" style="padding-top:20px">${m.scoreA} – ${m.scoreB}</div>${fighter(m.b,m.hpB,m.gearB,true)}</div></div>`}).join(''):'<div class="empty">No matches right now.</div>';
-  window.LIVEN=l.length;sum();
+function setH(el,html){if(!el)return;if(el._h!==html){el._h=html;el.innerHTML=html}}
+function setT(el,t){if(el&&el._t!==t){el._t=t;el.textContent=t}}
+function fighterSkeleton(right){
+  return `<div class="${right?'r':''}"><div class="fh"><div class="bodyw"></div><div><div class="nm"></div><div class="hearts-w"></div></div></div>
+  <div class="armrow"></div><div class="gl">Hotbar</div><div class="slots hb"></div><div class="gl">Materials</div><div class="slots mat"></div></div>`}
+function armorSkeleton(){return [0,1,2,3].map(i=>`<div class="arm1" data-i="${i}"><div class="aslot"></div><div class="dur"><i></i></div><em></em></div>`).join('')+`<div class="arm1 offh"><div class="oslot"></div><div class="dur" style="visibility:hidden"></div><em>Offhand</em></div>`}
+function updFighter(box,name,hp,g){
+  setT(box.querySelector('.nm'),name);
+  const bw=box.querySelector('.bodyw'); if(bw._n!==name){bw._n=name;bw.innerHTML=body(name)}
+  setH(box.querySelector('.hearts-w'),hearts(hp));
+  const ar=box.querySelector('.armrow'); if(!ar._init){ar._init=1;ar.innerHTML=armorSkeleton()}
+  if(!g)return;
+  g.armor.forEach((a,i)=>{const e=ar.querySelector(`.arm1[data-i="${i}"]`);if(!e)return;
+    setH(e.querySelector('.aslot'),slot(a,1)); e.title=PIECES[i]+(a?': '+nice(a)+' '+g.armorDura[i]+'%':'');
+    const bar=e.querySelector('.dur i'); bar.style.width=(a?g.armorDura[i]:0)+'%'; bar.style.background=durCol(g.armorDura[i]);
+    setT(e.querySelector('em'),a?g.armorDura[i]+'%':'—')});
+  const off=g.offhand?parse(g.offhand):null; setH(ar.querySelector('.oslot'),slot(off?off[0]:null,off?off[1]:1));
+  setH(box.querySelector('.hb'),(g.hotbar||[]).map(x=>{if(!x)return slot(null);const[n,c]=parse(x);return slot(n,c)}).join(''));
+  setH(box.querySelector('.mat'),Object.entries(g.materials||{}).sort((a,b)=>b[1]-a[1]).map(([k,v])=>slot(k,v)).join(''));
+}
+let LASTLIVE='';
+async function live(){if(document.hidden)return;try{
+  const txt=await (await fetch('/api/live',{cache:'no-store'})).text();conn(true);
+  if(txt===LASTLIVE)return; LASTLIVE=txt;
+  const l=JSON.parse(txt), root=$('#live'); window.LIVEN=l.length;
+  const keep=new Set();
+  for(const m of l){
+    const id='m-'+m.id.replace(/\W/g,'_'); keep.add(id);
+    let el=document.getElementById(id);
+    if(!el){el=document.createElement('div');el.id=id;el.className='match fade';
+      el.innerHTML=`<div class="ksw"></div><div class="panel"><div class="mh" style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span class="tag"></span><span class="mute rd"></span><span style="flex:1"></span><span class="mute bo"></span></div>
+      <div class="vs" style="align-items:start">${fighterSkeleton(false)}<div class="big sc" style="padding-top:20px"></div>${fighterSkeleton(true)}</div></div>`;
+      const empty=root.querySelector('.empty'); if(empty)empty.remove(); root.appendChild(el)}
+    const sr=((window.BK&&window.BK.series)||[]).find(x=>x.state==='live'&&x.a===m.a&&x.b===m.b);
+    setH(el.querySelector('.ksw'),kitSelection(sr));
+    setT(el.querySelector('.tag'),m.kit); setT(el.querySelector('.rd'),m.round||''); setT(el.querySelector('.bo'),'best of '+m.bestOf);
+    setT(el.querySelector('.sc'),m.scoreA+' – '+m.scoreB);
+    const [fa,fb]=el.querySelectorAll('.vs>div:not(.big)');
+    updFighter(fa,m.a,m.hpA,m.gearA); updFighter(fb,m.b,m.hpB,m.gearB);
+  }
+  root.querySelectorAll('.match').forEach(e=>{if(!keep.has(e.id))e.remove()});
+  if(!l.length&&!root.querySelector('.empty'))root.innerHTML='<div class="empty">No matches right now.</div>';
+  sum();
 }catch(e){conn(false)}}
 function conn(ok){const c=$('#conn');if(!c)return;c.classList.toggle('off',!ok);c.lastElementChild.textContent=ok?'live':'reconnecting…'}
-async function bk(){try{bracket(await (await fetch('/api/bracket')).json());conn(true)}catch(e){conn(false)}}
+let LASTBK='';async function bk(){if(document.hidden)return;try{const t=await (await fetch('/api/bracket',{cache:'no-store'})).text();conn(true);if(t===LASTBK)return;LASTBK=t;bracket(JSON.parse(t))}catch(e){conn(false)}}
 function sum(){
   const s=(window.BK&&window.BK.series)||[], done=s.filter(x=>x.state==='done').length, ST=window.ST;
   const players=ST?Object.keys(ST.players).length:0, matches=ST?ST.history.length:0;
@@ -241,12 +288,12 @@ function profile(n){
   $('#dlg').innerHTML=`<h3>${esc(n)}</h3><div class="mute">${r.matchesWon}-${r.matchesLost} matches · ${pct(r.matchesWon,r.matchesLost)} · rounds ${r.roundsWon}-${r.roundsLost}</div>
   <div style="margin-top:12px">${kits.length?kits.map(([k,v])=>`<div class="kitrow"><span>${esc(k)}</span><div class="pbar"><i style="width:${v[0]+v[1]?100*v[0]/(v[0]+v[1]):0}%"></i></div><span class="mute">${v[0]}-${v[1]}</span></div>`).join(''):'<div class="mute">No rounds yet.</div>'}</div>
   <p style="margin-top:14px"><button onclick="this.closest('dialog').close()">Close</button></p>`;$('#dlg').showModal()}
-async function stats(){try{
-  const s=await (await fetch('/api/stats')).json();window.ST=s;sum();
+let LASTST='';async function stats(){if(document.hidden)return;try{
+  const t=await (await fetch('/api/stats',{cache:'no-store'})).text();if(t===LASTST)return;LASTST=t;const s=JSON.parse(t);window.ST=s;sum();
   const rows=Object.entries(s.players).map(([n,r])=>{let best='-',bw=-1;for(const[k,v]of Object.entries(r.kits)){const t=v[0]+v[1],sc=v[0]/(t||1)+t/1000;if(t>=2&&sc>bw){bw=sc;best=k+' '+pct(v[0],v[1])}}return{n,r,best,m:r.matchesWon+r.matchesLost}}).sort((a,b)=>b.r.matchesWon-a.r.matchesWon||b.m-a.m);
   $('#board tbody').innerHTML=rows.length?rows.map((x,i)=>`<tr class="pl" data-n="${esc(x.n)}"><td>${i+1}</td><td style="display:flex;gap:8px;align-items:center"><span style="width:20px">${head(x.n)}</span><b>${esc(x.n)}</b></td><td class="n">${x.r.matchesWon}-${x.r.matchesLost}</td><td class="n">${pct(x.r.matchesWon,x.r.matchesLost)}</td><td class="n hide">${x.r.roundsWon}-${x.r.roundsLost}</td><td class="hide">${esc(x.best)}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">No finished matches yet.</td></tr>';
   document.querySelectorAll('tr.pl').forEach(t=>t.onclick=()=>profile(t.dataset.n));
   $('#hist tbody').innerHTML=s.history.length?s.history.map(h=>`<tr><td style="display:flex;gap:8px;align-items:center"><span style="width:20px">${head(h.winner)}</span><b>${esc(h.winner)}</b>&nbsp;beat ${esc(h.loser)}</td><td class="n">${h.winnerScore}–${h.loserScore}</td><td class="hide"><span class="tag">${esc(h.kit)}</span></td><td class="hide mute">${esc(h.event||'')}</td><td class="mute n">${new Date(h.endedAt).toLocaleTimeString()}</td></tr>`).join(''):'<tr><td class="empty">Nothing yet.</td></tr>';
 }catch(e){}}
-bk();live();stats();setInterval(bk,3000);setInterval(live,2000);setInterval(stats,6000);
+bk();live();stats();setInterval(bk,1000);setInterval(live,400);setInterval(stats,3000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){bk();live();stats()}});
 </script></body></html>

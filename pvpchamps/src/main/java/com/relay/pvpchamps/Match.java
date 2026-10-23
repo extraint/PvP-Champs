@@ -335,7 +335,7 @@ public final class Match {
 		ServerPlayer a = watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
 		if (fightTicks % 5 == 0) { if (watch) auditGear(nameA, a); auditGear(nameB, b); }
-		if (fightTicks % 10 == 1) publishLive(a, b);
+		if (fightTicks % Math.max(2, sc(4)) == 1) publishLive(a, b); // about every 0.2 s of real time
 		if (fightTicks > sc(100)) stallWatch(a, b);
 		if (watch && (fightTicks == sc(5) || fightTicks == sc(25) || fightTicks == sc(60))) { // heads-only fix: make clients redraw the full bodies
 			for (ServerPlayer p : new ServerPlayer[] {a, b}) {
