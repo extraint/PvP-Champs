@@ -1732,7 +1732,8 @@
           "mending": 1,
           "unbreaking": 3,
           "feather_falling": 4,
-          "protection": 4
+          "protection": 4,
+          "depth_strider": 3
         }
       },
       "chest": {
@@ -1977,7 +1978,8 @@
           "mending": 1,
           "unbreaking": 3,
           "feather_falling": 4,
-          "protection": 4
+          "protection": 4,
+          "depth_strider": 3
         }
       },
       "chest": {
