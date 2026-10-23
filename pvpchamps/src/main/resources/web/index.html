@@ -91,7 +91,7 @@ tr.pl{cursor:pointer}tr.pl:hover td{background:rgba(255,159,28,.06)}
 .ks h4{margin:0 0 14px;font:italic 700 40px/1 var(--head);letter-spacing:.04em;text-transform:uppercase;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.6);position:relative}
 .ks .logo2{position:absolute;right:18px;top:14px;font-family:var(--px);font-size:9px;line-height:1.5;text-align:right;color:#fff;text-shadow:2px 2px 0 #000}.ks .logo2 b{color:#ffcf6a}
 .kcards{display:grid;grid-template-columns:repeat(7,minmax(84px,1fr));gap:10px;position:relative}
-.kc{position:relative;aspect-ratio:3/4.4;display:flex;flex-direction:column;align-items:center;justify-content:center;
+.kc{position:relative;min-height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:linear-gradient(180deg,rgba(255,214,140,.55),rgba(240,150,40,.35) 55%,rgba(120,60,10,.55));border:2px solid rgba(255,225,170,.75);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),0 6px 14px rgba(0,0,0,.35)}
 .kc .ic{position:relative;width:96px;height:96px;flex:none}
 .kc .ic img{position:absolute;inset:0;width:96px;height:96px;image-rendering:pixelated;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.45))}
@@ -120,6 +120,10 @@ tr.pl{cursor:pointer}tr.pl:hover td{background:rgba(255,159,28,.06)}
 .big.sc{transition:color .2s}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.kc .ic.full{width:100%;height:150px;display:flex;justify-content:center;align-items:flex-end;position:relative}
+.kc .ic.full img.fb{position:static;width:auto;height:150px;filter:drop-shadow(3px 4px 0 rgba(0,0,0,.45))}
+.kc .badge2{position:absolute;right:4px;bottom:0}.kc .badge2 .slot{width:34px;height:34px;background:rgba(10,6,2,.75);border:2px solid #ffcf6a}.kc .badge2 .slot img{width:24px;height:24px}
+.kc.ban .ic.full img.fb{filter:grayscale(1) brightness(.5)}
 .view{display:none}.view.on{display:block}
 @media(max-width:560px){.hide{display:none}}
 </style></head><body>
@@ -199,6 +203,8 @@ function slot(id,count,extra){
 const KITS=[['Cart','tnt_minecart','rail'],['UHC','golden_apple'],['Spear & Mace','netherite_spear','mace'],['Mace','mace','wind_charge'],['Sword','diamond_sword','diamond_sword'],['Diamond SMP','diamond_sword','diamond_axe'],['Netherite SMP','netherite_sword','netherite_axe']];
 function bigIcon(id){const c=cands(id);return `<img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(id.replace(/_/g,' '))}" onerror="nx(this)" alt="">`}
 const headBig=n=>`<img class="pf" src="https://mc-heads.net/avatar/${encodeURIComponent(n)}/128" alt="" onerror="this.style.visibility='hidden'">`;
+const KITPLAYER={'Cart':'Freekee_Fang','UHC':'BLMcheat','Spear & Mace':'Swight','Mace':'mikagoated','Sword':'Coldified','Diamond SMP':'ImMixed','Netherite SMP':'Alepordio'};
+const kitBody=(k,ic)=>`<div class="ic full"><img class="fb" src="https://mc-heads.net/body/${encodeURIComponent(KITPLAYER[k]||'Steve')}/200" alt="" onerror="this.style.visibility='hidden'"><div class="badge2">${slot(ic[0],1)}</div></div>`;
 function kitSelection(sr){
   if(!sr||!sr.draft||!sr.draft.length)return '';
   const st={};let g=0;
@@ -208,7 +214,7 @@ function kitSelection(sr){
     else if(m=l.match(/^Decider: (.*)$/))st[m[1]]={t:'dec',g:3};
     else if(m=l.match(/^Games: (.*)$/))m[1].split(', ').forEach((k,i)=>st[k]={t:'pick',by:'',g:i+1});}
   const cards=KITS.map(([k,...ic])=>{const x=st[k]||{};
-    const icons=`<div class="ic ${ic.length>1?'two':''}">${ic.map(bigIcon).join('')}</div>`;
+    const icons=kitBody(k,ic);
     const cls=x.t==='ban'?'ban':x.t==='pick'?'pick':x.t==='dec'?'dec':'';
     const who=x.t==='ban'?'ban · '+esc(x.by):x.t==='pick'?esc(x.by||''):x.t==='dec'?'decider':'';
     return `<div class="kc ${cls}">${x.g?`<span class="gn">GAME ${x.g}</span>`:''}${icons}<div class="kn">${esc(k)}</div><div class="kw">${who}</div></div>`}).join('');
