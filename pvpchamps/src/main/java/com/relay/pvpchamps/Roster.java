@@ -144,6 +144,7 @@ public final class Roster {
 			if (CombatMaster.is(o.difficulty())) CombatMaster.applySettings();
 			else CombatMaster.enableStunSlam();
 			BotSettings.botDifficulties.put(o.name(), p);
+			System.err.println("[pvpchamps] tier " + o.name() + " " + kit.label + " = " + Tiers.tier(name, kit) + " (" + Tiers.points(Tiers.tier(name, kit)) + " pts, accuracy " + String.format("%.2f", p.accuracy) + ", miss " + String.format("%.2f", p.missChance) + ")");
 		} catch (RuntimeException e) {
 			System.err.println("[pvpchamps] could not apply the tier for " + name + ": " + e);
 		}

@@ -147,6 +147,7 @@ public final class Match {
 		VexBotApi.despawnBot(server, nameB);
 		if (watch) VexBotApi.despawnBot(server, nameA);
 		revive();
+		System.err.println("[pvpchamps] round " + round + " begins: " + nameA + " vs " + nameB + " in " + kit.label + " (bots are respawned for it)");
 		if (watch) {
 			humanRef.setGameMode(GameType.SPECTATOR);
 			teleport(humanRef, centre.add(0, 7, 0), 0f);
