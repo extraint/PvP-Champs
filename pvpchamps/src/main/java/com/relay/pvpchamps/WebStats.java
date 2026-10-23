@@ -257,7 +257,12 @@ public final class WebStats {
 					// Your own kit renders: drop PNGs in config/pvpchamps/web/kits/ (cart.png, uhc.png, ...) and they are served at /kits/<name>.png
 					java.nio.file.Path img = path.startsWith("/kits/") && path.endsWith(".png") && !path.contains("..")
 						? FabricLoader.getInstance().getConfigDir().resolve("pvpchamps/web" + path) : null;
+					byte[] bundled = null;
+					if (img != null && !Files.isRegularFile(img)) {
+						try (InputStream r = WebStats.class.getResourceAsStream("/web" + path)) { if (r != null) bundled = r.readAllBytes(); }
+					}
 					if (img != null && Files.isRegularFile(img)) { type = "image/png"; body = Files.readAllBytes(img); }
+					else if (bundled != null) { type = "image/png"; body = bundled; }
 					else { code = 404; type = "text/plain"; body = "not found".getBytes(StandardCharsets.UTF_8); }
 				}
 			}
