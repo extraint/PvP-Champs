@@ -816,7 +816,7 @@
   "cart": {
     "slots": [
       {
-        "item": "diamond_sword",
+        "item": "netherite_sword",
         "count": 1,
         "slot": 0,
         "enchants": {
@@ -825,7 +825,7 @@
         }
       },
       {
-        "item": "diamond_axe",
+        "item": "netherite_axe",
         "count": 1,
         "slot": 1,
         "enchants": {
@@ -1260,8 +1260,8 @@
         "count": 1,
         "enchants": {
           "unbreaking": 3,
-          "protection": 4,
-          "mending": 1
+          "mending": 1,
+          "blast_protection": 4
         }
       },
       "offhand": {
