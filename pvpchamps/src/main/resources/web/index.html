@@ -58,13 +58,40 @@ dialog button{background:var(--card);color:var(--text);border:1px solid var(--li
 .chips{display:flex;flex-wrap:wrap;gap:4px}.r .chips{justify-content:flex-end}
 .chip{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:1px 7px;font-size:12px;white-space:nowrap}
 .chip.hb{border-color:var(--gold)}.gl{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;margin:6px 0 3px}
+
+.slot{position:relative;width:38px;height:38px;background:#1a1d27;border:2px solid #0a0b10;border-top-color:#05060a;border-left-color:#05060a;border-right-color:#2a2f3f;border-bottom-color:#2a2f3f;display:flex;align-items:center;justify-content:center;flex:none}
+.slot img{width:26px;height:26px;image-rendering:pixelated}
+.slot b{position:absolute;right:1px;bottom:-1px;font:700 11px/1 var(--head);color:#fff;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000;letter-spacing:.02em}
+.slot.empty{opacity:.45}.slot .tile{font:700 9px/1 var(--head);color:var(--mute);text-transform:uppercase;text-align:center;word-break:break-all;padding:2px}
+.slot.pot{box-shadow:inset 0 0 0 2px var(--pc,transparent)}
+.slots{display:flex;flex-wrap:wrap;gap:3px}.r .slots{justify-content:flex-end}
+.armrow{display:flex;gap:6px;align-items:flex-end;margin:12px 0 4px}.r .armrow{justify-content:flex-end}
+.arm1{width:42px;text-align:center}.arm1 .slot{margin:0 auto 3px}
+.dur{height:5px;background:#05060a;border:1px solid #2a2f3f}.dur i{display:block;height:100%}
+.arm1 em{font:600 11px var(--head);font-style:normal;color:var(--mute)}
+.fh{display:flex;gap:12px;align-items:center}.r .fh{flex-direction:row-reverse;text-align:right}
+.fh img.body{height:84px;image-rendering:pixelated;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+.fh .nm{font:700 22px var(--head);text-transform:uppercase;letter-spacing:.04em}
+.hearts{display:flex;gap:1px;font-size:15px;line-height:1}.r .hearts{justify-content:flex-end}
+.hearts span{color:#3a2026}.hearts .f{color:#ff3b4e}.hearts .h{background:linear-gradient(90deg,#ff3b4e 50%,#3a2026 50%);-webkit-background-clip:text;background-clip:text;color:transparent}.hearts .g{color:#ffc83d}
+.gl{font:600 11px var(--head);color:var(--gold);text-transform:uppercase;letter-spacing:.14em;margin:10px 0 4px}
+.pill{display:inline-flex;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:3px 10px;font-size:12px;color:var(--mute)}
+.pill i{width:8px;height:8px;border-radius:50%;background:#3ddc97;display:inline-block}.pill.off i{background:var(--live)}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}.stat{background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--gold);padding:8px 14px;min-width:110px}
+.stat b{display:block;font:700 24px var(--head);color:var(--gold)}.stat span{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.08em}
+.next{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}.nx{background:var(--panel);border:1px solid var(--line);padding:6px 10px;font-size:13px;display:flex;gap:6px;align-items:center}
+.nx img{width:18px;height:18px}.nx .vs2{color:var(--mute);font-size:11px}
+.pbar{height:6px;background:var(--line);margin:3px 0 8px}.pbar i{display:block;height:100%;background:var(--gold)}
+tr.pl{cursor:pointer}tr.pl:hover td{background:rgba(255,200,61,.06)}
+.kitrow{display:grid;grid-template-columns:110px 1fr 60px;gap:8px;align-items:center;margin:4px 0;font-size:13px}
+.kitrow .pbar{margin:0}
 .view{display:none}.view.on{display:block}
 @media(max-width:560px){.hide{display:none}}
 </style></head><body>
-<header><div class="top"><div class="logo">PVP <b>CHAMPS</b> II</div><div class="sub" id="sub">Double elimination · 16 players</div>
+<header><div class="top"><div class="logo">PVP <b>CHAMPS</b> II</div><span class="pill" id="conn"><i></i><span>connecting</span></span><div class="sub" id="sub">Double elimination · 16 players</div>
 <nav><button data-v="bracket" class="on">Bracket</button><button data-v="live">Live</button><button data-v="board">Leaderboard</button><button data-v="results">Results</button></nav></div></header>
 <main>
-<div class="view on" id="v-bracket"><div id="bk"></div></div>
+<div class="view on" id="v-bracket"><div class="stats" id="sumstats"></div><div id="nextup"></div><div id="bk"></div></div>
 <div class="view" id="v-live"><div id="live"></div></div>
 <div class="view" id="v-board"><div class="panel"><table id="board"><thead><tr><th>#</th><th>Player</th><th class="n">Matches</th><th class="n">Win %</th><th class="n hide">Rounds</th><th class="hide">Best kit</th></tr></thead><tbody></tbody></table></div></div>
 <div class="view" id="v-results"><div class="panel"><table id="hist"><tbody></tbody></table></div></div>
@@ -90,7 +117,7 @@ function card(s){
 }
 function col(title,list){return `<div class="col"><div class="colh"><span>${title}</span><span>Bo${list[0]?.bestOf||3}</span></div><div class="ms">${list.map(card).join('')}</div></div>`}
 function bracket(d){
-  const s=d.series||[]; SER=s;
+  const s=d.series||[]; SER=s; window.BK=d; sum(); nextUp(s);
   if(!s.length){$('#bk').innerHTML='<div class="empty">No tournament running yet.<br>In the game, run <b>/pvpchamps tournament start</b> and the bracket fills in here live.</div>';return}
   const by=p=>s.filter(x=>x.label.startsWith(p));
   const up=[['Round 1','Upper Round 1'],['Round 2','Upper Round 2'],['Round 3','Upper Round 3'],['Upper Final','Upper Final']];
@@ -111,29 +138,72 @@ function detail(n){
   <button onclick="this.closest('dialog').close()">Close</button>`;
   $('#dlg').showModal();
 }
+const VER=['1.21.11','1.21.4'];
+const OVR={crossbow:'items/crossbow_standby',cobweb:'blocks/cobweb',oak_planks:'blocks/oak_planks',rail:'blocks/rail',shulker_box:'blocks/shulker_box',
+  potion:'items/splash_potion',lingering_potion:'items/lingering_potion',tnt_minecart:'items/tnt_minecart'};
+const POTCOL={strength:'#932423',strong_strength:'#932423',swiftness:'#7cafc6',long_swiftness:'#7cafc6',strong_swiftness:'#7cafc6',healing:'#f82423',strong_healing:'#f82423',
+  fire_resistance:'#e49a3a',long_fire_resistance:'#e49a3a',regeneration:'#cd5cab',long_regeneration:'#cd5cab',strong_regeneration:'#cd5cab',slow_falling:'#f7f8e0',water_breathing:'#2e5299',night_vision:'#1f1fa1'};
+const iconBase='https://cdn.jsdelivr.net/gh/PrismarineJS/minecraft-assets@master/data/';
+function cands(id){
+  const base=String(id).split(':')[0];
+  if(base==='shield')return["data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><path d='M2 1h12v9l-2 3-4 2-4-2-2-3z' fill='%23473625'/><path d='M3 2h10v8l-2 2-3 2-3-2-2-2z' fill='%23865a34'/><path d='M3 2h5v12l-3-2-2-2z' fill='%23a97748'/><path d='M7 2h2v12H7z' fill='%23d5d8dd'/><path d='M3 6h10v2H3z' fill='%23d5d8dd'/></svg>"];
+  const paths=OVR[base]?[OVR[base]]:['items/'+base,'blocks/'+base];
+  if(OVR[base]){paths.push('items/'+base,'blocks/'+base)}
+  const out=[];for(const v of VER)for(const p of paths)out.push(iconBase+v+'/'+p+'.png');return out}
+function nx(img){const l=(img.dataset.c||'').split('|').filter(Boolean);const i=+img.dataset.i||0;
+  if(i<l.length){img.dataset.i=i+1;img.src=l[i]}else{const t=document.createElement('div');t.className='tile';t.textContent=img.dataset.n;img.replaceWith(t)}}
+window.nx=nx;
 const nice=id=>{const[b,p]=String(id).split(':');return b.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())+(p?' ('+p.replace(/_/g,' ')+')':'')};
-const cnt=t=>{const m=t.match(/^(.*?) x(\d+)$/);return m?nice(m[1])+' ×'+m[2]:nice(t)};
-const durCol=v=>v>60?'#3ddc97':v>30?'#f5b942':'#ff4d5e';
+function slot(id,count,extra){
+  if(!id)return '<div class="slot empty"></div>';
+  const pot=String(id).includes(':')?String(id).split(':')[1]:'';
+  const c=cands(id);
+  const st=pot&&POTCOL[pot]?` style="--pc:${POTCOL[pot]}"`:'';
+  const short=String(id).split(':')[0].replace(/_/g,' ').slice(0,10);
+  return `<div class="slot ${pot?'pot':''}" title="${esc(nice(id))}${count>1?' ×'+count:''}"${st}><img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(short)}" onerror="nx(this)" alt="">${count>1?`<b>${count}</b>`:''}</div>`}
+function parse(t){const m=String(t).match(/^(.*?) x(\d+)$/);return m?[m[1],+m[2]]:[t,1]}
+const durCol=v=>v>60?'#3ddc97':v>30?'#ffc83d':'#ff4d5e';
 const PIECES=['Helmet','Chest','Legs','Boots'];
+function hearts(v){let h='';for(let i=0;i<10;i++){const left=v-i*2;const c=left>=2?'f':left>=1?'h':'';h+=`<span class="${c}">♥</span>`}
+  if(v>20)h+=`<span class="g">+${Math.round((v-20)/2)}</span>`;return `<div class="hearts" title="${(v/2).toFixed(1)} hearts">${h}</div>`}
 function gear(g){ if(!g)return '';
-  const arm=g.armor.map((a,i)=>`<div class="pc" title="${a?esc(nice(a)):'empty'}"><small>${PIECES[i]}</small><div class="d"><i style="width:${a?g.armorDura[i]:0}%;background:${durCol(g.armorDura[i])}"></i></div><em>${a?g.armorDura[i]+'%':'—'}</em></div>`).join('');
-  const hb=(g.hotbar||[]).filter(x=>x).map(x=>`<span class="chip hb">${esc(cnt(x))}</span>`).join('');
-  const mats=Object.entries(g.materials||{}).map(([k,v])=>`<span class="chip">${esc(nice(k))} ×${v}</span>`).join('');
-  return `<div class="gear"><div class="arm">${arm}</div><div class="gl">Hotbar</div><div class="chips">${hb||'<span class="mute">empty</span>'}</div><div class="gl">Materials</div><div class="chips">${mats}</div></div>`}
-const hp=v=>Math.max(0,Math.min(100,v/20*100));
+  const arm=g.armor.map((a,i)=>`<div class="arm1" title="${PIECES[i]}${a?': '+esc(nice(a))+' '+g.armorDura[i]+'%':''}">${slot(a,1)}<div class="dur"><i style="width:${a?g.armorDura[i]:0}%;background:${durCol(g.armorDura[i])}"></i></div><em>${a?g.armorDura[i]+'%':'—'}</em></div>`).join('');
+  const off=g.offhand?parse(g.offhand):null;
+  const hb=(g.hotbar||[]).map(x=>{if(!x)return slot(null);const[n,c]=parse(x);return slot(n,c)}).join('');
+  const mats=Object.entries(g.materials||{}).sort((a,b)=>b[1]-a[1]).map(([k,v])=>slot(k,v)).join('');
+  return `<div class="armrow">${arm}<div class="arm1" title="Offhand">${slot(off?off[0]:null,off?off[1]:1)}<div class="dur" style="visibility:hidden"></div><em>Offhand</em></div></div>
+  <div class="gl">Hotbar</div><div class="slots">${hb}</div>
+  <div class="gl">Materials</div><div class="slots">${mats}</div>`}
+const body=n=>`<img class="body" src="https://mc-heads.net/body/${encodeURIComponent(n)}/120" alt="" onerror="this.style.visibility='hidden'">`;
+const hpw=v=>Math.max(0,Math.min(100,v/20*100));
+function fighter(n,hp,g,right){return `<div class="${right?'r':''}"><div class="fh">${body(n)}<div><div class="nm">${esc(n)}</div>${hearts(hp)}</div></div>${gear(g)}</div>`}
 async function live(){try{
-  const l=await (await fetch('/api/live')).json();
-  $('#live').innerHTML=l.length?l.map(m=>`<div class="panel"><div style="display:flex;gap:10px;align-items:center"><span class="tag">${esc(m.kit)}</span><span class="mute">${esc(m.round||'')}</span><span style="flex:1"></span><span class="mute">best of ${m.bestOf}</span></div>
-  <div class="vs" style="margin-top:12px"><div><b>${esc(m.a)}</b><div class="bar"><i style="width:${hp(m.hpA)}%;background:#4aa3ff"></i></div><div class="mute">${(m.hpA/2).toFixed(1)} hearts</div>${gear(m.gearA)}</div>
-  <div class="big">${m.scoreA} – ${m.scoreB}</div>
-  <div class="r"><b>${esc(m.b)}</b><div class="bar"><i style="width:${hp(m.hpB)}%;background:var(--live);margin-left:auto"></i></div><div class="mute">${(m.hpB/2).toFixed(1)} hearts</div>${gear(m.gearB)}</div></div></div>`).join(''):'<div class="empty">No matches right now.</div>';
-}catch(e){}}
-async function bk(){try{bracket(await (await fetch('/api/bracket')).json())}catch(e){}}
+  const l=await (await fetch('/api/live')).json();conn(true);
+  $('#live').innerHTML=l.length?l.map(m=>`<div class="panel"><div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span class="tag">${esc(m.kit)}</span><span class="mute">${esc(m.round||'')}</span><span style="flex:1"></span><span class="mute">best of ${m.bestOf}</span></div>
+  <div class="vs" style="align-items:start">${fighter(m.a,m.hpA,m.gearA,false)}<div class="big" style="padding-top:20px">${m.scoreA} – ${m.scoreB}</div>${fighter(m.b,m.hpB,m.gearB,true)}</div></div>`).join(''):'<div class="empty">No matches right now.</div>';
+  window.LIVEN=l.length;sum();
+}catch(e){conn(false)}}
+function conn(ok){const c=$('#conn');if(!c)return;c.classList.toggle('off',!ok);c.lastElementChild.textContent=ok?'live':'reconnecting…'}
+async function bk(){try{bracket(await (await fetch('/api/bracket')).json());conn(true)}catch(e){conn(false)}}
+function sum(){
+  const s=(window.BK&&window.BK.series)||[], done=s.filter(x=>x.state==='done').length, ST=window.ST;
+  const players=ST?Object.keys(ST.players).length:0, matches=ST?ST.history.length:0;
+  $('#sumstats').innerHTML=[['Live now',window.LIVEN||0],['Series played',s.length?done+'/'+s.length:'—'],['Players tracked',players],['Matches logged',matches]].map(([k,v])=>`<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('')}
+function nextUp(s){
+  const nx=s.filter(x=>x.state==='pending'&&x.a&&x.b).slice(0,4);
+  $('#nextup').innerHTML=nx.length?`<div class="sec">Up next<i></i></div><div class="next">${nx.map(x=>`<div class="nx">${head(x.a)}${esc(x.a)}<span class="vs2">vs</span>${head(x.b)}${esc(x.b)}<span class="mute">· ${esc(x.label.replace(/ \(.*/,''))}</span></div>`).join('')}</div>`:''}
+function profile(n){
+  const r=window.ST&&window.ST.players[n];if(!r)return;
+  const kits=Object.entries(r.kits).sort((a,b)=>(b[1][0]+b[1][1])-(a[1][0]+a[1][1]));
+  $('#dlg').innerHTML=`<h3>${esc(n)}</h3><div class="mute">${r.matchesWon}-${r.matchesLost} matches · ${pct(r.matchesWon,r.matchesLost)} · rounds ${r.roundsWon}-${r.roundsLost}</div>
+  <div style="margin-top:12px">${kits.length?kits.map(([k,v])=>`<div class="kitrow"><span>${esc(k)}</span><div class="pbar"><i style="width:${v[0]+v[1]?100*v[0]/(v[0]+v[1]):0}%"></i></div><span class="mute">${v[0]}-${v[1]}</span></div>`).join(''):'<div class="mute">No rounds yet.</div>'}</div>
+  <p style="margin-top:14px"><button onclick="this.closest('dialog').close()">Close</button></p>`;$('#dlg').showModal()}
 async function stats(){try{
-  const s=await (await fetch('/api/stats')).json();
+  const s=await (await fetch('/api/stats')).json();window.ST=s;sum();
   const rows=Object.entries(s.players).map(([n,r])=>{let best='-',bw=-1;for(const[k,v]of Object.entries(r.kits)){const t=v[0]+v[1],sc=v[0]/(t||1)+t/1000;if(t>=2&&sc>bw){bw=sc;best=k+' '+pct(v[0],v[1])}}return{n,r,best,m:r.matchesWon+r.matchesLost}}).sort((a,b)=>b.r.matchesWon-a.r.matchesWon||b.m-a.m);
-  $('#board tbody').innerHTML=rows.length?rows.map((x,i)=>`<tr><td>${i+1}</td><td style="display:flex;gap:8px;align-items:center"><span style="width:20px">${head(x.n)}</span><b>${esc(x.n)}</b></td><td class="n">${x.r.matchesWon}-${x.r.matchesLost}</td><td class="n">${pct(x.r.matchesWon,x.r.matchesLost)}</td><td class="n hide">${x.r.roundsWon}-${x.r.roundsLost}</td><td class="hide">${esc(x.best)}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">No finished matches yet.</td></tr>';
-  $('#hist tbody').innerHTML=s.history.length?s.history.map(h=>`<tr><td><b>${esc(h.winner)}</b> beat ${esc(h.loser)}</td><td class="n">${h.winnerScore}–${h.loserScore}</td><td class="hide"><span class="tag">${esc(h.kit)}</span></td><td class="hide mute">${esc(h.event||'')}</td><td class="mute n">${new Date(h.endedAt).toLocaleTimeString()}</td></tr>`).join(''):'<tr><td class="empty">Nothing yet.</td></tr>';
+  $('#board tbody').innerHTML=rows.length?rows.map((x,i)=>`<tr class="pl" data-n="${esc(x.n)}"><td>${i+1}</td><td style="display:flex;gap:8px;align-items:center"><span style="width:20px">${head(x.n)}</span><b>${esc(x.n)}</b></td><td class="n">${x.r.matchesWon}-${x.r.matchesLost}</td><td class="n">${pct(x.r.matchesWon,x.r.matchesLost)}</td><td class="n hide">${x.r.roundsWon}-${x.r.roundsLost}</td><td class="hide">${esc(x.best)}</td></tr>`).join(''):'<tr><td colspan="6" class="empty">No finished matches yet.</td></tr>';
+  document.querySelectorAll('tr.pl').forEach(t=>t.onclick=()=>profile(t.dataset.n));
+  $('#hist tbody').innerHTML=s.history.length?s.history.map(h=>`<tr><td style="display:flex;gap:8px;align-items:center"><span style="width:20px">${head(h.winner)}</span><b>${esc(h.winner)}</b>&nbsp;beat ${esc(h.loser)}</td><td class="n">${h.winnerScore}–${h.loserScore}</td><td class="hide"><span class="tag">${esc(h.kit)}</span></td><td class="hide mute">${esc(h.event||'')}</td><td class="mute n">${new Date(h.endedAt).toLocaleTimeString()}</td></tr>`).join(''):'<tr><td class="empty">Nothing yet.</td></tr>';
 }catch(e){}}
 bk();live();stats();setInterval(bk,3000);setInterval(live,2000);setInterval(stats,6000);
 </script></body></html>
