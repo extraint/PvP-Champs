@@ -71,7 +71,7 @@ public final class Roster {
 				List.of("sword", "diamond_smp", "netherite_smp"), join(heal, "pot_up", "pop_punish", "bait_retreat", "mend_reset", "wall_off", "pearl_close")),
 			new Opponent("ItzTwilightTT", "PvP Champs winner, plays the matchup", "EXPERT", "ADAPTIVE", 96, 1.0,
 				all, join(heal, "pop_punish", "pearl_close", "pot_up", "mend_reset", "wall_off")),
-			new Opponent("Alepordio", "Careful SMP player", "HARD", "DEFENSIVE", 71, 0.95,
+			new Opponent("Alepordio", "PvP Champs winner, careful SMP player", "EXPERT", "DEFENSIVE", 95, 1.0,
 				List.of("diamond_smp", "netherite_smp", "uhc"), join(heal, "pot_up", "mend_reset", "wall_off", "pearl_close")),
 			new Opponent("Blvckwlf", "Cart and sword", "HARD", "BALANCED", 70, 0.95,
 				List.of("cart", "sword", "diamond_smp"), join(heal, "pot_up", "pearl_close", "cart_bomb", "tnt_minecart", "mend_reset", "wall_off")),
@@ -92,7 +92,7 @@ public final class Roster {
 	}
 
 	/** Bump when the built-in roster changes: an older roster.json is then replaced (the old one is kept as roster.json.old). */
-	private static final String ROSTER_VERSION = "11";
+	private static final String ROSTER_VERSION = "12";
 
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("roster.json");
