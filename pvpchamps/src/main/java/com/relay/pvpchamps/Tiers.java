@@ -59,7 +59,7 @@ public final class Tiers {
 			case MACE, SPEAR_MACE -> new String[] {"Mace", "Axe"};
 			case NETHERITE_OP -> new String[] {"NethOP", "Pot"};
 			case DIAMOND_SMP -> new String[] {"SMP", "Pot"};
-			case NETHERITE_SMP -> new String[] {"NethSMP", "NethOP", "SMP"};
+			case NETHERITE_SMP -> new String[] {"NethSMP", "SMP", "NethOP"}; // an SMP kit: the SMP tier counts in full, not a step down
 			case CART -> new String[] {"Pot", "SMP"};
 		};
 	}
