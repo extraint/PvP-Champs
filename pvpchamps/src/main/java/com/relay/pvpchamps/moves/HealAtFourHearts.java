@@ -90,6 +90,7 @@ public final class HealAtFourHearts implements Move {
 
 	/** Sprint-jump straight away from the opponent. Returns false once the gap is wide enough or the time is up. */
 	private boolean flee(Ctx c, double gap, int maxTicks) {
+		if (fled == 0 && c.dist <= 3.2 && c.bot.getAttackStrengthScale(0.5f) >= 0.9f) c.attackOnce(); // fly-out: land one hit, then get flung away
 		if (c.dist >= gap || ++fled > maxTicks) return false;
 		if (fled % 4 == 1) fleeYaw = c.openYawAwayFrom(c.target.position()); // re-check the way out every few ticks
 		c.pack.look(fleeYaw, 0f);
