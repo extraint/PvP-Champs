@@ -43,7 +43,10 @@ public final class Tiers {
 		put("Sizierung", "Axe", "HT3", "Sword", "HT3", "UHC", "LT3", "Pot", "LT3", "SMP", "LT3", "NethOP", "LT3", "Mace", "HT4");
 		put("Sweatgod", "UHC", "LT2", "Pot", "HT3", "NethOP", "HT3", "Sword", "LT3", "Axe", "LT3", "SMP", "HT4");
 		put("ZeNain", "Pot", "HT3", "UHC", "HT4");
-		put("mikagoated", "Axe", "HT3", "Pot", "HT3");
+		put("mikagoated", "Axe", "HT3", "Pot", "HT3", "UHC", "HT1", "Mace", "LT3", "Sword", "LT3", "SMP", "LT3", "NethOP", "LT3");
+		put("Ymiau", "UHC", "HT1", "Mace", "LT3", "Axe", "LT3", "Sword", "LT3", "SMP", "LT3", "NethOP", "LT3", "Pot", "LT3");
+		put("TheobaldTheBird", "*", "LT2");
+		put("SpawnPlayer", "SMP", "LT1", "NethSMP", "LT1", "UHC", "LT3", "Sword", "LT3", "Mace", "LT3", "Axe", "LT3", "NethOP", "LT3", "Pot", "LT3");
 		put("ninorc15", "SMP", "HT3", "UHC", "HT3", "Axe", "HT3", "Sword", "LT2", "Pot", "LT2", "Mace", "LT2", "NethOP", "LT2");
 		put("x_Kyran_x", "Pot", "HT3", "SMP", "HT3", "Mace", "LT3", "UHC", "LT3");
 	}
@@ -56,7 +59,7 @@ public final class Tiers {
 			case MACE, SPEAR_MACE -> new String[] {"Mace", "Axe"};
 			case NETHERITE_OP -> new String[] {"NethOP", "Pot"};
 			case DIAMOND_SMP -> new String[] {"SMP", "Pot"};
-			case NETHERITE_SMP -> new String[] {"NethOP", "SMP"};
+			case NETHERITE_SMP -> new String[] {"NethSMP", "NethOP", "SMP"};
 			case CART -> new String[] {"Pot", "SMP"};
 		};
 	}
