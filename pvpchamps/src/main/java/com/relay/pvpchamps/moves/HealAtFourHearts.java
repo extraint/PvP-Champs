@@ -50,7 +50,10 @@ public final class HealAtFourHearts implements Move {
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (c.bot.isUsingItem()) return MoveEngine.reject(id(), "busy");
 		float hp = c.bot.getHealth();
-		boolean danger = hp <= 10f, safeTopUp = hp <= 14f && (c.dist > 4.0 || opponentRunning(c)); // heal earlier: 5 hearts is danger, 7 is a safe top-up
+		double skill = ReachCombo.skillOf(c);      // 0..1 from the bot's tier in this kit
+		float dangerHp = (float) (8 + 4 * skill);    // HT1 heals at 6 hearts, a weak tier at 4
+		float topUpHp = (float) (12 + 4 * skill);    // and tops up from 8 hearts instead of 6
+		boolean danger = hp <= dangerHp, safeTopUp = hp <= topUpHp && (c.dist > 4.0 - 1.5 * skill || opponentRunning(c)); // heal earlier: 5 hearts is danger, 7 is a safe top-up
 		if (!danger && !safeTopUp) return MoveEngine.reject(id(), "healthy_hp" + (int) Math.min(hp, 20));
 		if (danger && potionSlot(c) >= 0) mode = Mode.POTION;
 		else if (c.count(Items.GOLDEN_APPLE) > 0) mode = Mode.APPLE;
