@@ -110,6 +110,24 @@ public final class Tiers {
 		p.shieldReactionMs = (int) Math.round(650 * (1 - x));
 		p.shieldReactionJitterMs = (int) Math.round(120 * (1 - x));
 		p.stunSlamChance = (int) Math.round(35 + 65 * x);
+		// Every other skill also fades with the tier: HT1 keeps all of PERFECT's, lower tiers drift toward MEDIUM's slower pots
+		// and webs, looser crit timing, wider strafes, reach mistakes and weaker mace dives. Without this a weak tier was
+		// PERFECT in everything but aim, and the top tiers had almost nothing over them.
+		DifficultyParams weak = DifficultyParams.forPreset(BotSettings.Difficulty.MEDIUM);
+		double g = Math.min(1.0, Math.pow(Math.max(0.0, 1 - x), 0.65));
+		p.strafeAngle = lerp(p.strafeAngle, weak.strafeAngle, g);
+		p.critThreshold = lerp(p.critThreshold, weak.critThreshold, g);
+		p.potIntervalSeconds = lerp(p.potIntervalSeconds, weak.potIntervalSeconds, g);
+		p.webDrainDelaySeconds = lerp(p.webDrainDelaySeconds, weak.webDrainDelaySeconds, g);
+		p.webEscapeDelaySeconds = lerp(p.webEscapeDelaySeconds, weak.webEscapeDelaySeconds, g);
+		p.shieldDisableCharge = lerp(p.shieldDisableCharge, weak.shieldDisableCharge, g);
+		p.reachFlips = (int) Math.round(lerp(p.reachFlips, weak.reachFlips, g));
+		p.anchorIntervalTicks = (int) Math.round(lerp(p.anchorIntervalTicks, weak.anchorIntervalTicks, g));
+		p.cartSkipChance = (int) Math.round(lerp(p.cartSkipChance, weak.cartSkipChance, g));
+		p.cartCooldownTicks = (int) Math.round(lerp(p.cartCooldownTicks, weak.cartCooldownTicks, g));
+		p.crystalCooldownTicks = (int) Math.round(lerp(p.crystalCooldownTicks, weak.crystalCooldownTicks, g));
+		p.anchorCooldownTicks = (int) Math.round(lerp(p.anchorCooldownTicks, weak.anchorCooldownTicks, g));
+		p.elytraMaceLevel = (int) Math.round(lerp(p.elytraMaceLevel, weak.elytraMaceLevel, g));
 		if (x >= 0.8) { // LT1 and up react instantly, to hits and to shields
 			p.reactionMinTicks = 0;
 			p.reactionMaxTicks = 0;
@@ -118,4 +136,6 @@ public final class Tiers {
 		if (x >= 1.0) { p.missChance = 0; p.accuracy = 1.0; p.clutchAccuracy = 1.0; p.shieldReactionJitterMs = 0; }
 		return p;
 	}
+
+	private static double lerp(double from, double to, double t) { return from + (to - from) * t; }
 }
