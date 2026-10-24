@@ -206,7 +206,7 @@ const headBig=n=>`<img class="pf" src="https://mc-heads.net/avatar/${encodeURICo
 const KITPLAYER={'Cart':'Freekee_Fang','UHC':'BLMcheat','Spear & Mace':'Swight','Mace':'mikagoated','Sword':'Coldified','Diamond SMP':'ImMixed','Netherite SMP':'Alepordio'};
 const KITPOSE={'Cart':'sit','UHC':'sneak','Spear & Mace':'point','Mace':'jump','Sword':'punch','Diamond SMP':'flex','Netherite SMP':'salute'};
 const KSLUG={'Cart':'cart','UHC':'uhc','Spear & Mace':'spear_mace','Mace':'mace','Sword':'sword','Diamond SMP':'diamond_smp','Netherite SMP':'netherite_smp'};
-const kitBody=(k,ic)=>`<div class="ic full"><img class="fb custom" data-k="${KSLUG[k]}" src="/kits/${KSLUG[k]}.png" onerror="if(!this.dataset.f){this.dataset.f=1;this.classList.remove('custom');this.src=this.dataset.fb}" data-fb="https://skinrender.dev/render/${encodeURIComponent(KITPLAYER[k]||'Steve')}/body?size=320&pose=${KITPOSE[k]||'default'}" alt=""><div class="badge2">${slot(ic[0],1)}</div></div>`;
+const kitBody=(k,ic)=>k==='Cart'?`<div class="ic two" style="margin:70px 0 0;width:130px;height:130px">${bigIcon('tnt_minecart')}${bigIcon('rail')}</div>`:`<div class="ic full"><img class="fb custom" data-k="${KSLUG[k]}" src="/kits/${KSLUG[k]}.png" onerror="if(!this.dataset.f){this.dataset.f=1;this.classList.remove('custom');this.src=this.dataset.fb}" data-fb="https://skinrender.dev/render/${encodeURIComponent(KITPLAYER[k]||'Steve')}/body?size=320&pose=${KITPOSE[k]||'default'}" alt=""><div class="badge2">${slot(ic[0],1)}</div></div>`;
 function kitSelection(sr){
   if(!sr||!sr.draft||!sr.draft.length)return '';
   const st={};let g=0;
