@@ -39,7 +39,7 @@ public final class Roster {
 			new Opponent("Swight", "Spear & Mace specialist, relentless", "PERFECT", "AGGRESSIVE", 98, 1.0,
 				List.of("spear_mace", "mace"), join(press, "spear_ascent", "reach_combo", "mace_smash", "spear_jab", "pop_punish", "pearl_close", "bait_retreat", "lunge_swap", "pearl_wind")),
 			new Opponent("ImMixed", "All-rounder, balanced", "PERFECT", "BALANCED", 98, 1.0,
-				all, join(heal, "axe_opener", "spear_ascent", "reach_combo", "pop_punish", "bait_retreat", "mend_reset", "wall_off", "pot_up", "pearl_close")),
+				all, join(heal, "axe_opener", "stun_slam", "mace_smash", "spear_ascent", "reach_combo", "pop_punish", "bait_retreat", "mend_reset", "wall_off", "pot_up", "pearl_close")),
 			new Opponent("x_Kyran_x", "SMP pressure", "COMBAT_MASTER", "AGGRESSIVE", 88, 1.0,
 				List.of("diamond_smp", "netherite_smp", "cart"), join(press, "axe_opener", "reach_combo", "pot_up", "pop_punish", "pearl_close", "wall_off", "cart_bomb", "tnt_minecart", "mend_reset")),
 			// Experts
@@ -92,7 +92,7 @@ public final class Roster {
 	}
 
 	/** Bump when the built-in roster changes: an older roster.json is then replaced (the old one is kept as roster.json.old). */
-	private static final String ROSTER_VERSION = "17";
+	private static final String ROSTER_VERSION = "18";
 
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("roster.json");

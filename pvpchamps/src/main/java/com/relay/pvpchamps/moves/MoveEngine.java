@@ -34,7 +34,7 @@ public final class MoveEngine {
 		final List<Move> moves;
 
 		State() {
-			moves = List.of(new HealAtFourHearts(), new AxeOpener(), new PotUp(), new HealPunish(), new MaceSmash(), new SpearAscent(), new ReachCombo(), new SpearJab(), punish, new MasterCircle(), new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new CartBomb(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall(), new ShieldBreak(), new ThreeBlockHit());
+			moves = List.of(new HealAtFourHearts(), new AxeOpener(), new StunSlam(), new PotUp(), new HealPunish(), new SpearSpam(), new MaceSmash(), new SpearAscent(), new ReachCombo(), new SpearJab(), punish, new MasterCircle(), new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new CartBomb(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall(), new ShieldBreak(), new ThreeBlockHit());
 		}
 
 		int cooldown(String id) { return Math.max(0, cooldowns.getOrDefault(id, 0) - tick); }
@@ -139,7 +139,7 @@ public final class MoveEngine {
 			else endCurrent(st, c);
 		} else if (st.tick % 4 == 0) {
 			for (Move m : st.moves) {
-				if (!m.id().equals("heal_punish") && !profile.moves().contains(m.id()) && !(com.relay.pvpchamps.CombatMaster.is(profile.difficulty())
+				if (!m.id().equals("heal_punish") && !m.id().equals("spear_spam") && !m.id().equals("lunge_swap") && !profile.moves().contains(m.id()) && !(com.relay.pvpchamps.CombatMaster.is(profile.difficulty())
 						&& (m.id().equals("strafe_pressure") || m.id().equals("anti_stall") || m.id().equals("shield_break") || m.id().equals("three_block_hit") || m.id().equals("heal_4_hearts") || m.id().equals("master_circle") || m.id().equals("mace_smash") || m.id().equals("reach_combo")))) continue;
 				diag("try:" + m.id());
 				if (m.start(c)) {

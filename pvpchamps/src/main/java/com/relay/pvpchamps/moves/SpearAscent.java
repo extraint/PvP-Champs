@@ -48,7 +48,7 @@ public final class SpearAscent implements Move {
 			}
 			case AIR -> {
 				if (c.bot.onGround() && t > 8) return false;                       // came down without arriving
-				if (horizontal(c) <= 5 && above >= 3.5) return false;             // above them: the mace dive takes it from here
+				if (horizontal(c) <= 4.5 && above >= 3.0) { c.hold(Items.MACE); return false; }             // above them: the mace dive takes it from here
 				c.face(c.target.position().add(0, 1.0, 0));
 				c.run(1f, true);
 				if (lungeCd > 0) lungeCd--;
@@ -61,9 +61,9 @@ public final class SpearAscent implements Move {
 						return true;
 					}
 				}
-				if (lungeCd == 0 && horizontal(c) > 6 && (c.hold(Items.NETHERITE_SPEAR) || c.hold(Items.DIAMOND_SPEAR))) {
+				if (lungeCd == 0 && horizontal(c) > 3.5 && (c.hold(Items.NETHERITE_SPEAR) || c.hold(Items.DIAMOND_SPEAR))) {
 					c.attackOnce();                                                 // the lunge carries it toward them
-					lungeCd = 14;
+					lungeCd = 7;                                                    // lunge again and again off the one wind charge
 				}
 			}
 		}
