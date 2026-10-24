@@ -54,6 +54,13 @@ public final class PvpCommands {
 						.then(Commands.argument("kit", StringArgumentType.word())
 							.suggests((c, b) -> SharedSuggestionProvider.suggest(Kits.ids(), b))
 							.executes(c -> watch(c, StringArgumentType.getString(c, "kit")))))))
+			.then(Commands.literal("bots")
+				.then(Commands.literal("clear").executes(c -> {
+					java.util.List<String> names = new java.util.ArrayList<>(vexbot.api.VexBotApi.listBots());
+					for (String n : names) vexbot.api.VexBotApi.despawnBot(c.getSource().getServer(), n);
+					say(c.getSource(), "Removed " + names.size() + " bot(s).");
+					return 1;
+				})))
 			.then(Commands.literal("tournament")
 				.then(Commands.literal("start").executes(c -> tournamentStart(c.getSource())))
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
@@ -201,7 +208,7 @@ public final class PvpCommands {
 	private static int tournamentStart(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
 		if (MatchManager.busy()) { say(src, "A match is already running (/pvpchamps stop)."); return 0; }
-		MatchManager.setOrigin(p.position());
+		MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
 		MatchManager.setTournament(new Tournament(src.getServer(), p));
 		return 1;
 	}
@@ -210,7 +217,7 @@ public final class PvpCommands {
 	private static int tournamentWatch(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
 		if (MatchManager.busy() || MatchManager.bracket() != null) { say(src, "Something is already running (/pvpchamps stop)."); return 0; }
-		MatchManager.setOrigin(p.position());
+		MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
 		Bracket b = new Bracket(src.getServer(), p);
 		MatchManager.setBracket(b);
 		b.start();
