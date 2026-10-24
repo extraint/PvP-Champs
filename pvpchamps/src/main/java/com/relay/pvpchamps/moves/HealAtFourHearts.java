@@ -54,9 +54,16 @@ public final class HealAtFourHearts implements Move {
 		float dangerHp = (float) (8 + 4 * skill);    // HT1 heals at 6 hearts, a weak tier at 4
 		float topUpHp = (float) (12 + 4 * skill);    // and tops up from 8 hearts instead of 6
 		boolean danger = hp <= dangerHp, safeTopUp = hp <= topUpHp && (c.dist > 4.0 - 1.5 * skill || opponentRunning(c)); // heal earlier: 5 hearts is danger, 7 is a safe top-up
+		// After a totem pop the bot has Regeneration II for 45 seconds: let it heal on its own and keep the pressure, and only
+		// step in with a potion if it is really low.
+		if (c.bot.hasEffect(net.minecraft.world.effect.MobEffects.REGENERATION) && hp > 6f) return MoveEngine.reject(id(), "regen_active");
 		if (!danger && !safeTopUp) return MoveEngine.reject(id(), "healthy_hp" + (int) Math.min(hp, 20));
 		if (danger && potionSlot(c) >= 0) mode = Mode.POTION;
-		else if (c.count(Items.GOLDEN_APPLE) > 0) mode = Mode.APPLE;
+		else if (c.count(Items.GOLDEN_APPLE) > 0) {
+			// Never gap with the opponent on top of you unless it is the last resort: they get free hits while you eat.
+			if (c.dist < 3.0 && hp > 6f && !opponentRunning(c)) return MoveEngine.reject(id(), "opponent_near_no_gap");
+			mode = Mode.APPLE;
+		}
 		else return MoveEngine.reject(id(), "nothing_to_heal_with");
 		ticks = 0;
 		fled = 0;
