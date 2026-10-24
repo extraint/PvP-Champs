@@ -160,6 +160,7 @@ public final class Match {
 
 	private Vec3 spot(double dx) {
 		double x = centre.x + dx, z = centre.z;
+		if (centre.equals(Arena.spot())) return new Vec3(x, centre.y, z); // inside the arena: stand on the mud, not the roof
 		int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, (int) Math.floor(x), (int) Math.floor(z));
 		return new Vec3(x, Math.max(y, centre.y - 2), z);
 	}

@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 public final class Arena {
 	private Arena() {}
 
-	public static final int FLOOR_R = 30, STANDS_R = 44, WALL_R = 50, BARRIER_R = 56, HEIGHT = 70;
+	public static final int FLOOR_R = 40, STANDS_R = 54, WALL_R = 62, BARRIER_R = 68, HEIGHT = 70;
 	private static BlockPos centre;      // the floor's top surface, middle of the arena
 	private static ArenaGuard guard;
 
@@ -116,6 +116,10 @@ public final class Arena {
 					}
 					set(level, p.set(x, wallTop, z), dpol);
 					solidTo = wallTop;
+					if (inner) { // invisible fence over the wall: the fight stays on the mud circle
+						for (int y = wallTop + 1; y <= cy + HEIGHT - 1; y++) set(level, p.set(x, y, z), barrier);
+						solidTo = cy + HEIGHT - 1;
+					}
 				} else if (d <= STANDS_R + 0.5) { // wooden seating rising from the wall top, stone aisles with planters
 					int k = (int) Math.floor(d - FLOOR_R - 2.5);
 					int h = wallTop + 1 + k;
@@ -244,7 +248,7 @@ public final class Arena {
 			'O', b("orange_wool"), 'o', b("raw_copper_block"), 'h', b("honeycomb_block"), 'K', b("black_wool"),
 			'B', b("polished_deepslate"), 'D', b("black_wool"), 'W', b("smooth_quartz"), 'S', b("light_gray_wool"));
 		int w = rows.get(0).length(), h = rows.size();
-		int z = cz - 34, x0 = cx - w / 2, bottom = cy + 15;
+		int z = cz - 48, x0 = cx - w / 2, bottom = cy + 15;
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 		// truss posts from the seats up to the sign
 		BlockState post = b("polished_blackstone_bricks"), rail = b("polished_blackstone_wall");
