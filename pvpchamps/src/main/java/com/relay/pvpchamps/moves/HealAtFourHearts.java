@@ -51,9 +51,9 @@ public final class HealAtFourHearts implements Move {
 		if (c.bot.isUsingItem()) return MoveEngine.reject(id(), "busy");
 		float hp = c.bot.getHealth();
 		double skill = ReachCombo.skillOf(c);      // 0..1 from the bot's tier in this kit
-		float dangerHp = (float) (8 + 4 * skill);    // HT1 heals at 6 hearts, a weak tier at 4
-		float topUpHp = (float) (12 + 4 * skill);    // and tops up from 8 hearts instead of 6
-		boolean danger = hp <= dangerHp, safeTopUp = hp <= topUpHp && (c.dist > 4.0 - 1.5 * skill || opponentRunning(c)); // heal earlier: 5 hearts is danger, 7 is a safe top-up
+		float dangerHp = (float) (6 + 2 * skill);    // a real emergency: 3 to 4 hearts, not the first scratch
+		float topUpHp = (float) (10 + 4 * skill);    // top-ups wait for a safe window (see below), 5 to 7 hearts
+		boolean danger = hp <= dangerHp, safeTopUp = hp <= topUpHp && (c.dist > 7.0 || opponentRunning(c)); // heal earlier: 5 hearts is danger, 7 is a safe top-up
 		// After a totem pop the bot has Regeneration II for 45 seconds: let it heal on its own and keep the pressure, and only
 		// step in with a potion if it is really low.
 		if (c.bot.hasEffect(net.minecraft.world.effect.MobEffects.REGENERATION) && hp > 6f) return MoveEngine.reject(id(), "regen_active");
@@ -86,9 +86,9 @@ public final class HealAtFourHearts implements Move {
 			if (ticks == 2) c.useOnce();
 			if (ticks < 4) return true;
 			c.pack.stop(BotPlayerActionPack.ActionType.USE);
-			return flee(c, 6.0, 25); // the potion is on the floor and working: put distance between them while it ticks
+			return flee(c, 4.5, 8); // the potion works where it landed: a short hop out of reach, not a chase
 		}
-		if (c.dist < 7.5 && fled < 60 && flee(c, 7.5, 60)) return true; // get away first, eat once there is room
+		if (c.dist < 4.0 && c.hp() > 6f && fled < 20 && flee(c, 5.0, 20)) return true; // a short break from point-blank range, then eat where it stands
 		if (!c.hold(Items.GOLDEN_APPLE)) return false;
 		c.pack.stopMovement();
 		c.pack.start(BotPlayerActionPack.ActionType.USE, BotPlayerActionPack.Action.continuous());
