@@ -19,11 +19,40 @@ public final class PearlOut implements Move {
 		if (o == null) return MoveEngine.reject(id(), "no_origin");
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (c.bot.getY() > o.y - 2.5) return MoveEngine.reject(id(), "not_in_hole");
-		if (!c.bot.onGround() || c.bot.isUsingItem()) return MoveEngine.reject(id(), "busy");
+		if (!c.bot.onGround()) return MoveEngine.reject(id(), "busy"); // a raised shield counts as using an item, so that is not a reason to stay in the hole
 		if (c.find(Items.ENDER_PEARL) < 0) return MoveEngine.reject(id(), "no_pearl");
 		t = 0;
 		MoveEngine.reject(id(), "start");
 		return true;
+	}
+
+	private float yaw, pitch;
+
+	/**
+	 * Flies a pearl through the hole's blocks for each throw angle and direction (speed 1.5, gravity 0.03, drag 0.99) and
+	 * keeps the shallowest throw that comes down on the floor and not on the wall of the hole.
+	 */
+	private void pickThrow(Ctx c, float baseYaw, double floorY) {
+		var level = c.bot.level();
+		float[] yawOffsets = {0f, 40f, -40f, 80f, -80f, 120f, -120f, 160f, 180f};
+		for (float pit = -40f; pit >= -89f; pit -= 3f) {
+			for (float off : yawOffsets) {
+				double ry = Math.toRadians(baseYaw + off), rp = Math.toRadians(pit);
+				double vx = -Math.sin(ry) * Math.cos(rp) * 1.5, vy = -Math.sin(rp) * 1.5, vz = Math.cos(ry) * Math.cos(rp) * 1.5;
+				double x = c.bot.getX(), y = c.bot.getEyeY(), z = c.bot.getZ();
+				for (int i = 0; i < 140; i++) {
+					x += vx; y += vy; z += vz;
+					vx *= 0.99; vy = vy * 0.99 - 0.03; vz *= 0.99;
+					var bp = net.minecraft.core.BlockPos.containing(x, y, z);
+					if (!level.getBlockState(bp).getCollisionShape(level, bp).isEmpty()) {
+						if (y >= floorY - 0.9 && vy < 0) { yaw = baseYaw + off; pitch = pit; return; } // lands on the floor
+						break; // hit the side of the hole
+					}
+				}
+			}
+		}
+		yaw = baseYaw;
+		pitch = -86f; // nothing clears: nearly straight up, the best chance there is
 	}
 
 	@Override
@@ -31,13 +60,13 @@ public final class PearlOut implements Move {
 		Vec3 o = MatchManager.origin();
 		if (o == null || ++t > 30) return false;
 		if (!c.hold(Items.ENDER_PEARL)) return false;
-		Vec3 to = c.target.position().subtract(c.bot.position()).multiply(1, 0, 1);
-		if (to.lengthSqr() < 1.0) to = o.subtract(c.bot.position()).multiply(1, 0, 1);
-		Vec3 dir = to.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : to.normalize();
-		// Throw out past the rim, as far as the hole is deep (plus a margin), and a little high: the pearl arcs down onto the floor.
-		double depth = Math.max(0, o.y - c.bot.getY());
-		double reach = Math.max(5.0, Math.min(16.0, depth + 3.0));
-		c.face(c.bot.position().add(dir.scale(reach)).with(net.minecraft.core.Direction.Axis.Y, o.y + 3.0));
+		if (t == 1) {
+			Vec3 to = c.target.position().subtract(c.bot.position()).multiply(1, 0, 1);
+			if (to.lengthSqr() < 1.0) to = o.subtract(c.bot.position()).multiply(1, 0, 1);
+			Vec3 dir = to.lengthSqr() < 1e-4 ? new Vec3(1, 0, 0) : to.normalize();
+			pickThrow(c, (float) Math.toDegrees(Math.atan2(-dir.x, dir.z)), o.y);
+		}
+		c.pack.look(yaw, pitch);
 		if (t == 3) c.useOnce();
 		return t < 14;
 	}
