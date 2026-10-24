@@ -138,4 +138,31 @@ public final class Tiers {
 	}
 
 	private static double lerp(double from, double to, double t) { return from + (to - from) * t; }
+
+	// ------------------------------------------------------------------ per-bot Vexbot settings
+
+	private static final Map<String, Double> SKILL = new HashMap<>();
+
+	/** 0 (a tier-5 player) to 1 (HT1), the same scale the params use. */
+	public static double skillOf(String tier) { return Math.min(1.0, Math.log(Math.max(1, points(tier))) / Math.log(60)); }
+
+	/** Remembers a bot's skill in the match it is about to play, for {@link #applyBotSettings}. */
+	public static void setSkill(String botName, String tier) { SKILL.put(botName, skillOf(tier)); }
+
+	/**
+	 * Vexbot keeps jump reset, counter-stun, web drain, strafe-in-combo and the totem and retreat hearts as server-wide
+	 * statics, so a Combat Master's settings used to make every bot in the match a Combat Master too. The move engine's
+	 * hook runs at the head of each bot's own tick, so this sets them for the bot that is about to act, scaled by tier.
+	 */
+	public static void applyBotSettings(String botName) {
+		Double x = SKILL.get(botName);
+		if (x == null) return;
+		double t = Math.max(0.0, Math.min(1.0, (x - 0.35) / 0.6)); // HT3 and below fade out, HT2 and up are at or near full
+		BotSettings.jumpResetChance = (int) Math.round(100 * t);
+		BotSettings.counterStunChance = (int) Math.round(100 * t);
+		BotSettings.webDrainChance = (int) Math.round(100 * t);
+		BotSettings.strafeInCombo = x >= 0.7;
+		BotSettings.offhandTotemHearts = 4.0 + 2.0 * t;
+		BotSettings.retreatHealthHearts = 2.5 + 1.5 * t;
+	}
 }

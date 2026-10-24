@@ -75,6 +75,7 @@ public final class MoveEngine {
 		Roster.Opponent profile = Roster.byName(bot.getGameProfile().name());
 		if (profile == null) { diag("not_in_roster"); return false; }
 		diag("roster_bot");
+		com.relay.pvpchamps.Tiers.applyBotSettings(bot.getGameProfile().name()); // per-bot jump reset, counter-stun, webs by tier
 		State st = STATES.computeIfAbsent(bot.getGameProfile().name(), k -> new State());
 		st.tick++;
 		net.minecraft.world.phys.Vec3 here = bot.position();
