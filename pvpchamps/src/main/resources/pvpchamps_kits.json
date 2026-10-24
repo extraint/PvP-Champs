@@ -1837,9 +1837,16 @@
         "slot": 7
       },
       {
-        "item": "ender_pearl",
-        "count": 16,
-        "slot": 8
+        "item": "netherite_sword",
+        "count": 1,
+        "slot": 8,
+        "enchants": {
+          "sharpness": 5,
+          "sweeping_edge": 3,
+          "fire_aspect": 2,
+          "unbreaking": 3,
+          "mending": 1
+        }
       },
       {
         "item": "ender_pearl",
@@ -1936,8 +1943,8 @@
         }
       },
       {
-        "item": "totem_of_undying",
-        "count": 1,
+        "item": "ender_pearl",
+        "count": 16,
         "slot": 22
       },
       {
@@ -2031,21 +2038,21 @@
         "item": "netherite_leggings",
         "count": 1,
         "enchants": {
-          "protection": 4,
           "unbreaking": 3,
           "mending": 1,
-          "swift_sneak": 3
+          "swift_sneak": 3,
+          "blast_protection": 4
         }
       },
       "feet": {
         "item": "netherite_boots",
         "count": 1,
         "enchants": {
-          "protection": 4,
           "unbreaking": 3,
           "mending": 1,
           "feather_falling": 4,
-          "depth_strider": 3
+          "depth_strider": 3,
+          "blast_protection": 4
         }
       },
       "offhand": {
