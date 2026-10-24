@@ -16,6 +16,7 @@ public final class SpearJab implements Move {
 	public boolean start(Ctx c) {
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (c.find(Items.NETHERITE_SPEAR) < 0) return MoveEngine.reject(id(), "no_spear");
+		if (c.carriesMace() && c.count(Items.WIND_CHARGE) >= 2) return MoveEngine.reject(id(), "play_air"); // launch instead of jabbing on the ground
 		if (!c.bot.onGround() || c.bot.isUsingItem()) return MoveEngine.reject(id(), "busy");
 		if (c.dist < 3.5 || c.dist > 9) return MoveEngine.reject(id(), "range");
 		if (c.target.getY() > c.bot.getY() + 1.5) return MoveEngine.reject(id(), "target_above");

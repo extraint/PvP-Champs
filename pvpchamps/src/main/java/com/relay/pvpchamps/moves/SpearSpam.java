@@ -22,6 +22,8 @@ public final class SpearSpam implements Move {
 		if (c.dist > 4.6 || c.dist < 0.6) return MoveEngine.reject(id(), "range");
 		if (c.target.getY() > c.bot.getY() + 1.5) return MoveEngine.reject(id(), "target_above");
 		if (c.hp() <= 8f) return MoveEngine.reject(id(), "low_hp"); // heal first
+		// With wind charges to spare the fight belongs in the air: spam on the ground only at point-blank range.
+		if (c.carriesMace() && c.count(Items.WIND_CHARGE) >= 2 && c.dist > 2.5) return MoveEngine.reject(id(), "play_air");
 		t = 0;
 		flip = 0;
 		dir = c.st.rng.nextBoolean() ? 1f : -1f;
@@ -30,7 +32,7 @@ public final class SpearSpam implements Move {
 
 	@Override
 	public boolean tick(Ctx c) {
-		if (++t > 60 || !c.target.isAlive() || c.dist > 6.5 || c.hp() <= 8f) return false;
+		if (++t > 20 || !c.target.isAlive() || c.dist > 6.5 || c.hp() <= 8f) return false;
 		if (!c.bot.onGround() && t > 2) return false;          // knocked up or launched: the air moves take it
 		if (!(c.hold(Items.NETHERITE_SPEAR) || c.hold(Items.DIAMOND_SPEAR))) return false;
 		c.face(c.target.getEyePosition().subtract(0, 0.4, 0));
@@ -46,6 +48,6 @@ public final class SpearSpam implements Move {
 		c.pack.setStrafing(0f);
 		c.pack.stopMovement();
 		c.restoreSlot();
-		c.st.setCooldown(id(), 6);
+		c.st.setCooldown(id(), 60);
 	}
 }

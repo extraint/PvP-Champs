@@ -21,7 +21,7 @@ public final class SpearAscent implements Move {
 		if (!c.carriesMace()) return MoveEngine.reject(id(), "no_mace");
 		if (c.count(Items.WIND_CHARGE) < 2) return MoveEngine.reject(id(), "no_wind_charges");
 		if (c.find(Items.NETHERITE_SPEAR) < 0 && c.find(Items.DIAMOND_SPEAR) < 0) return MoveEngine.reject(id(), "no_spear");
-		if (c.dist < 12 || c.dist > 48) return MoveEngine.reject(id(), "range");
+		if (c.dist < 5 || c.dist > 48) return MoveEngine.reject(id(), "range");
 		if (!c.bot.onGround() || c.bot.isUsingItem()) return MoveEngine.reject(id(), "busy");
 		if (c.target.getY() > c.bot.getY() + 3) return MoveEngine.reject(id(), "target_above");
 		phase = Phase.LAUNCH;
@@ -74,6 +74,6 @@ public final class SpearAscent implements Move {
 	public void end(Ctx c) {
 		c.pack.stopMovement();
 		c.restoreSlot();
-		c.st.setCooldown(id(), 200);
+		c.st.setCooldown(id(), 80);
 	}
 }
