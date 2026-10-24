@@ -128,7 +128,7 @@ public final class Match {
 	private ArenaGuard arena;
 
 	private void beginRound() {
-		if (arena == null) arena = new ArenaGuard(level, centre); else arena.restore();
+		if (arena == null) { arena = Arena.guard(level); if (arena == null) arena = new ArenaGuard(level, centre); } else arena.restore();
 		if (gameKits != null && round - 1 < gameKits.size() && gameKits.get(round - 1) != kit) {
 			kit = gameKits.get(round - 1);
 			kitStacks = kit.build(server);

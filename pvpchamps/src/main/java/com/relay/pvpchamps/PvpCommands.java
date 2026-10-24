@@ -59,6 +59,23 @@ public final class PvpCommands {
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
 				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
+			.then(Commands.literal("arena")
+				.then(Commands.literal("build").executes(c -> {
+					ServerPlayer p = c.getSource().getPlayerOrException();
+					say(c.getSource(), "Building the PvP Champs arena here. This takes a few seconds...");
+					Arena.build((net.minecraft.server.level.ServerLevel) p.level(), p.blockPosition());
+					p.teleportTo(p.getX(), p.getY() + 0.5, p.getZ());
+					say(c.getSource(), "Arena built. Every match is staged inside it, and the 500 x 500 area around it resets after each round.");
+					return 1;
+				}))
+				.then(Commands.literal("tp").executes(c -> {
+					ServerPlayer p = c.getSource().getPlayerOrException();
+					var spot = Arena.spot();
+					if (spot == null) { say(c.getSource(), "No arena yet: /pvpchamps arena build"); return 0; }
+					p.teleportTo(spot.x, spot.y + 1, spot.z);
+					return 1;
+				}))
+				.then(Commands.literal("clear").executes(c -> { Arena.forget(); say(c.getSource(), "Arena forgotten (the blocks stay). Matches go back to staging where you start them."); return 1; })))
 			.then(Commands.literal("tiers").executes(c -> {
 				StringBuilder sb = new StringBuilder("Tiers by kit (HT1 best, LT5 lowest):");
 				for (Roster.Opponent o : Roster.all()) {

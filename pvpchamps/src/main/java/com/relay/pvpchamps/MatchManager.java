@@ -10,7 +10,7 @@ public final class MatchManager {
 	/** Where the running tournament or bracket started: every one of its matches is staged here, not wherever the viewer drifted to. */
 	private static net.minecraft.world.phys.Vec3 origin;
 
-	public static net.minecraft.world.phys.Vec3 origin() { return origin; }
+	public static net.minecraft.world.phys.Vec3 origin() { return origin != null ? origin : Arena.spot(); }
 
 	public static void setOrigin(net.minecraft.world.phys.Vec3 at) { origin = at; }
 
