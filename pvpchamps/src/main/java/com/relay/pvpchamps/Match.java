@@ -45,6 +45,7 @@ public final class Match {
 	private int respawnsLeft = 2;
 	private boolean loserDecided, aLost;
 	private net.minecraft.world.item.ItemStack[] kitStacks;
+	private int holeA, holeB; // ticks each fighter has spent well below the arena floor
 
 	/** Tiny holder so the saved inventory can be null until captured. */
 	private static final class ItemStack41 { net.minecraft.world.item.ItemStack[] stacks; }
@@ -347,6 +348,8 @@ public final class Match {
 				teleport(p, p.position(), p.getYRot());
 			}
 		}
+		if (fightTicks % 4 == 0) { restockPlaced(a); restockPlaced(b); } // a placed shulker vanishes and restocks the kit
+		trackHoles(a, b);
 		// A bot that drops off the server mid-round while alive is brought back where it stood, with the kit, up to twice.
 		if (watch && handleBotDrop(0, nameA, nameB, a, -90f)) return;
 		if (handleBotDrop(1, nameB, nameA, b, 90f)) return;
@@ -366,6 +369,51 @@ public final class Match {
 		message(Component.literal("§6" + (aLost ? nameB : nameA) + " wins round " + round + " (" + scoreA + "-" + scoreB + ")"));
 		state = State.BETWEEN;
 		timer = sc(140);
+	}
+
+	// ----------------------------------------------------------------------- shulker restock and holes
+
+	/** A shulker box placed next to a fighter disappears and restocks the kit (not anchors, totems or the shulker itself). */
+	private void restockPlaced(ServerPlayer p) {
+		if (p == null || !p.isAlive()) return;
+		net.minecraft.core.BlockPos at = p.blockPosition();
+		for (int dx = -4; dx <= 4; dx++)
+			for (int dz = -4; dz <= 4; dz++)
+				for (int dy = -2; dy <= 3; dy++) {
+					net.minecraft.core.BlockPos pos = at.offset(dx, dy, dz);
+					if (level.getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock) {
+						level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 18);
+						restock(p);
+						return;
+					}
+				}
+	}
+
+	private void restock(ServerPlayer p) {
+		net.minecraft.world.item.ItemStack[] want = p.getUUID().equals(humanId) && !watch ? Layouts.apply(p, kit, kitStacks) : kitStacks;
+		for (int i = 0; i < want.length; i++) {
+			net.minecraft.world.item.ItemStack w = want[i];
+			if (w.isEmpty()) continue;
+			var item = w.getItem();
+			if (item == net.minecraft.world.item.Items.RESPAWN_ANCHOR || item == net.minecraft.world.item.Items.TOTEM_OF_UNDYING
+				|| (item instanceof net.minecraft.world.item.BlockItem bi && bi.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock)) continue;
+			p.getInventory().setItem(i, w.copy());
+		}
+		p.inventoryMenu.broadcastChanges();
+		p.sendSystemMessage(Component.literal("§aRestocked."), true);
+	}
+
+	/** Stuck in a hole for 15 seconds: reset the arena and put both fighters back on the floor. */
+	private void trackHoles(ServerPlayer a, ServerPlayer b) {
+		double floor = centre.y - 3.0;
+		holeA = a != null && a.getY() < floor ? holeA + 1 : 0;
+		holeB = b != null && b.getY() < floor ? holeB + 1 : 0;
+		if (holeA < sc(300) && holeB < sc(300)) return;
+		if (arena != null) arena.restore();
+		if (a != null) teleport(a, spot(-10), -90f);
+		if (b != null) teleport(b, spot(10), 90f);
+		holeA = holeB = 0;
+		message(Component.literal("§eStuck in a hole too long: the arena was reset and both fighters are back on the floor."));
 	}
 
 	// ----------------------------------------------------------------------- end

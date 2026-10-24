@@ -200,12 +200,12 @@ function slot(id,count,extra){
   const st=pot&&POTCOL[pot]?` style="--pc:${POTCOL[pot]}"`:'';
   const short=String(id).split(':')[0].replace(/_/g,' ').slice(0,10);
   return `<div class="slot ${pot?'pot':''}" title="${esc(nice(id))}${count>1?' ×'+count:''}"${st}><img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(short)}" onerror="nx(this)" alt="">${count>1?`<b>${count}</b>`:''}</div>`}
-const KITS=[['Cart','tnt_minecart','rail'],['UHC','golden_apple'],['Spear & Mace','netherite_spear','mace'],['Mace','mace','wind_charge'],['Sword','diamond_sword','diamond_sword'],['Diamond SMP','diamond_sword','diamond_axe'],['Netherite SMP','netherite_sword','netherite_axe']];
+const KITS=[['Cart','tnt_minecart','rail'],['UHC','golden_apple'],['Spear & Mace','netherite_spear','mace'],['Crystal','end_crystal','respawn_anchor'],['Sword','diamond_sword','diamond_sword'],['Diamond SMP','diamond_sword','diamond_axe'],['Netherite SMP','netherite_sword','netherite_axe']];
 function bigIcon(id){const c=cands(id);return `<img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(id.replace(/_/g,' '))}" onerror="nx(this)" alt="">`}
 const headBig=n=>`<img class="pf" src="https://mc-heads.net/avatar/${encodeURIComponent(n)}/128" alt="" onerror="this.style.visibility='hidden'">`;
-const KITPLAYER={'Cart':'Freekee_Fang','UHC':'BLMcheat','Spear & Mace':'Swight','Mace':'mikagoated','Sword':'Coldified','Diamond SMP':'ImMixed','Netherite SMP':'Alepordio'};
-const KITPOSE={'Cart':'sit','UHC':'sneak','Spear & Mace':'point','Mace':'jump','Sword':'punch','Diamond SMP':'flex','Netherite SMP':'salute'};
-const KSLUG={'Cart':'cart','UHC':'uhc','Spear & Mace':'spear_mace','Mace':'mace','Sword':'sword','Diamond SMP':'diamond_smp','Netherite SMP':'netherite_smp'};
+const KITPLAYER={'Cart':'Freekee_Fang','UHC':'BLMcheat','Spear & Mace':'Swight','Crystal':'mikagoated','Sword':'Coldified','Diamond SMP':'ImMixed','Netherite SMP':'Alepordio'};
+const KITPOSE={'Cart':'sit','UHC':'sneak','Spear & Mace':'point','Crystal':'jump','Sword':'punch','Diamond SMP':'flex','Netherite SMP':'salute'};
+const KSLUG={'Cart':'cart','UHC':'uhc','Spear & Mace':'spear_mace','Crystal':'crystal','Sword':'sword','Diamond SMP':'diamond_smp','Netherite SMP':'netherite_smp'};
 const kitBody=(k,ic)=>`<div class="ic ${ic.length>1?'two':''}">${ic.map(bigIcon).join('')}</div>`;
 function kitSelection(sr){
   if(!sr||!sr.draft||!sr.draft.length)return '';

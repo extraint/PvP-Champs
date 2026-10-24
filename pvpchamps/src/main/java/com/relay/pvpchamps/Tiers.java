@@ -56,7 +56,8 @@ public final class Tiers {
 		return switch (kit) {
 			case SWORD -> new String[] {"Sword"};
 			case UHC -> new String[] {"UHC"};
-			case MACE, SPEAR_MACE -> new String[] {"Mace", "Axe"};
+			case SPEAR_MACE -> new String[] {"Mace", "Axe"};
+			case CRYSTAL -> new String[] {"Crystal", "NethOP", "Pot"};
 			case NETHERITE_OP -> new String[] {"NethOP", "Pot"};
 			case DIAMOND_SMP -> new String[] {"SMP", "Pot"};
 			case NETHERITE_SMP -> new String[] {"SMP", "NethOP"}; // an SMP kit: the SMP tier counts in full (only the first mode is exact)

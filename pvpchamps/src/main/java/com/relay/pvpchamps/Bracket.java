@@ -156,7 +156,7 @@ public final class Bracket {
 	}
 
 	/** The kits a series drafts from (Netherite OP is not one of the event's kits). */
-	private static final List<Kits> POOL = List.of(Kits.SWORD, Kits.UHC, Kits.SPEAR_MACE, Kits.MACE, Kits.CART,
+	private static final List<Kits> POOL = List.of(Kits.SWORD, Kits.UHC, Kits.SPEAR_MACE, Kits.CRYSTAL, Kits.CART,
 		Kits.DIAMOND_SMP, Kits.NETHERITE_SMP);
 
 	/**

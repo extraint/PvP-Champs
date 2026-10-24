@@ -19,6 +19,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.component.ItemContainerContents;
@@ -34,7 +36,7 @@ public enum Kits {
 	SWORD("sword", "Sword"),
 	UHC("uhc", "UHC"),
 	SPEAR_MACE("spear_mace", "Spear & Mace"),
-	MACE("mace", "Mace"),
+	CRYSTAL("crystal", "Crystal"),
 	CART("cart", "Cart"),
 	NETHERITE_OP("netherite_op", "Netherite OP"),
 	DIAMOND_SMP("diamond_smp", "Diamond SMP"),
@@ -98,9 +100,20 @@ public enum Kits {
 				.getOrThrow(ResourceKey.create(Registries.POTION, Identifier.withDefaultNamespace(o.get("potion").getAsString())));
 			s = PotionContents.createItemStack(item, potion);
 			s.setCount(count);
+		} else if (o.has("effects")) { // custom effects, e.g. a tipped arrow that gives 30 seconds (the arrow shows 1/8 of the ticks given)
+			java.util.List<MobEffectInstance> list = new ArrayList<>();
+			for (JsonElement ee : o.getAsJsonArray("effects")) {
+				JsonObject eo = ee.getAsJsonObject();
+				Holder<MobEffect> h = server.registryAccess().lookupOrThrow(Registries.MOB_EFFECT)
+					.getOrThrow(ResourceKey.create(Registries.MOB_EFFECT, Identifier.withDefaultNamespace(eo.get("id").getAsString())));
+				list.add(new MobEffectInstance(h, eo.get("ticks").getAsInt(), eo.has("amplifier") ? eo.get("amplifier").getAsInt() : 0));
+			}
+			s = new ItemStack(item, count);
+			s.set(DataComponents.POTION_CONTENTS, new PotionContents(java.util.Optional.empty(), java.util.Optional.empty(), list, java.util.Optional.empty()));
 		} else {
 			s = new ItemStack(item, count);
 		}
+		if (o.has("name")) s.set(DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal(o.get("name").getAsString()));
 		if (o.has("enchants")) {
 			for (var en : o.getAsJsonObject("enchants").entrySet()) {
 				Holder<Enchantment> h = server.registryAccess().lookupOrThrow(Registries.ENCHANTMENT)

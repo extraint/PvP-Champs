@@ -585,259 +585,6 @@
       }
     }
   },
-  "mace": {
-    "slots": [
-      {
-        "item": "netherite_sword",
-        "count": 1,
-        "slot": 0,
-        "enchants": {
-          "sharpness": 5,
-          "knockback": 1,
-          "unbreaking": 3,
-          "sweeping_edge": 3
-        }
-      },
-      {
-        "item": "netherite_axe",
-        "count": 1,
-        "slot": 1,
-        "enchants": {
-          "sharpness": 5,
-          "unbreaking": 3
-        }
-      },
-      {
-        "item": "mace",
-        "count": 1,
-        "slot": 2,
-        "enchants": {
-          "wind_burst": 1,
-          "unbreaking": 3,
-          "density": 5
-        }
-      },
-      {
-        "item": "mace",
-        "count": 1,
-        "slot": 3,
-        "enchants": {
-          "breach": 4,
-          "unbreaking": 3
-        }
-      },
-      {
-        "item": "wind_charge",
-        "count": 64,
-        "slot": 4
-      },
-      {
-        "item": "ender_pearl",
-        "count": 16,
-        "slot": 5
-      },
-      {
-        "item": "ender_pearl",
-        "count": 16,
-        "slot": 6
-      },
-      {
-        "item": "golden_apple",
-        "count": 64,
-        "slot": 7
-      },
-      {
-        "item": "golden_apple",
-        "count": 64,
-        "slot": 8
-      },
-      {
-        "item": "totem_of_undying",
-        "count": 1,
-        "slot": 9
-      },
-      {
-        "item": "totem_of_undying",
-        "count": 1,
-        "slot": 10
-      },
-      {
-        "item": "experience_bottle",
-        "count": 64,
-        "slot": 11
-      },
-      {
-        "slot": 12,
-        "item": "elytra",
-        "count": 1,
-        "enchants": {
-          "mending": 1,
-          "unbreaking": 3
-        }
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 13,
-        "potion": "strong_strength"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 14,
-        "potion": "strong_swiftness"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 15,
-        "potion": "fire_resistance"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 16,
-        "potion": "strong_strength"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 17,
-        "potion": "strong_swiftness"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 18,
-        "potion": "fire_resistance"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 19,
-        "potion": "strong_strength"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 20,
-        "potion": "strong_swiftness"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 21,
-        "potion": "fire_resistance"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 22,
-        "potion": "strong_strength"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 23,
-        "potion": "strong_swiftness"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 24,
-        "potion": "fire_resistance"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 25,
-        "potion": "strong_strength"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 26,
-        "potion": "strong_swiftness"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 27,
-        "potion": "fire_resistance"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 28,
-        "potion": "strong_strength"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 29,
-        "potion": "strong_swiftness"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 30,
-        "potion": "fire_resistance"
-      },
-      {
-        "item": "splash_potion",
-        "count": 1,
-        "slot": 31,
-        "potion": "strong_strength"
-      }
-    ],
-    "equipment": {
-      "head": {
-        "item": "netherite_helmet",
-        "count": 1,
-        "enchants": {
-          "mending": 1,
-          "unbreaking": 3,
-          "protection": 4
-        }
-      },
-      "feet": {
-        "item": "netherite_boots",
-        "count": 1,
-        "enchants": {
-          "mending": 1,
-          "unbreaking": 3,
-          "feather_falling": 4,
-          "protection": 4
-        }
-      },
-      "chest": {
-        "item": "netherite_chestplate",
-        "count": 1,
-        "enchants": {
-          "mending": 1,
-          "unbreaking": 3,
-          "protection": 4
-        }
-      },
-      "legs": {
-        "item": "netherite_leggings",
-        "count": 1,
-        "enchants": {
-          "mending": 1,
-          "unbreaking": 3,
-          "protection": 4
-        }
-      },
-      "offhand": {
-        "item": "shield",
-        "count": 1,
-        "enchants": {
-          "mending": 1,
-          "unbreaking": 3
-        }
-      }
-    }
-  },
   "cart": {
     "slots": [
       {
@@ -2031,6 +1778,278 @@
         "enchants": {
           "mending": 1,
           "unbreaking": 3
+        }
+      }
+    }
+  },
+  "crystal": {
+    "slots": [
+      {
+        "item": "netherite_axe",
+        "count": 1,
+        "slot": 0,
+        "enchants": {
+          "sharpness": 5,
+          "efficiency": 5,
+          "unbreaking": 3,
+          "mending": 1
+        }
+      },
+      {
+        "item": "crossbow",
+        "count": 1,
+        "slot": 1,
+        "enchants": {
+          "multishot": 1,
+          "quick_charge": 3,
+          "unbreaking": 3,
+          "mending": 1
+        }
+      },
+      {
+        "item": "end_crystal",
+        "count": 64,
+        "slot": 2
+      },
+      {
+        "item": "obsidian",
+        "count": 64,
+        "slot": 3
+      },
+      {
+        "item": "respawn_anchor",
+        "count": 64,
+        "slot": 4
+      },
+      {
+        "item": "glowstone",
+        "count": 64,
+        "slot": 5
+      },
+      {
+        "item": "golden_apple",
+        "count": 64,
+        "slot": 6
+      },
+      {
+        "item": "ender_pearl",
+        "count": 16,
+        "slot": 7
+      },
+      {
+        "item": "ender_pearl",
+        "count": 16,
+        "slot": 8
+      },
+      {
+        "item": "ender_pearl",
+        "count": 16,
+        "slot": 9
+      },
+      {
+        "item": "ender_pearl",
+        "count": 16,
+        "slot": 10
+      },
+      {
+        "item": "shulker_box",
+        "count": 1,
+        "slot": 11,
+        "name": "Restock Shulker"
+      },
+      {
+        "item": "netherite_pickaxe",
+        "count": 1,
+        "slot": 12,
+        "enchants": {
+          "efficiency": 5,
+          "unbreaking": 3,
+          "mending": 1,
+          "fortune": 3
+        }
+      },
+      {
+        "item": "tipped_arrow",
+        "count": 64,
+        "slot": 13,
+        "effects": [
+          {
+            "id": "slow_falling",
+            "ticks": 4800
+          }
+        ]
+      },
+      {
+        "item": "tipped_arrow",
+        "count": 64,
+        "slot": 14,
+        "effects": [
+          {
+            "id": "fire_resistance",
+            "ticks": 4800
+          }
+        ]
+      },
+      {
+        "item": "splash_potion",
+        "count": 1,
+        "slot": 15,
+        "potion": "strong_strength"
+      },
+      {
+        "item": "splash_potion",
+        "count": 1,
+        "slot": 16,
+        "potion": "strong_strength"
+      },
+      {
+        "item": "splash_potion",
+        "count": 1,
+        "slot": 17,
+        "potion": "strong_strength"
+      },
+      {
+        "item": "splash_potion",
+        "count": 1,
+        "slot": 18,
+        "potion": "strong_swiftness"
+      },
+      {
+        "item": "splash_potion",
+        "count": 1,
+        "slot": 19,
+        "potion": "strong_swiftness"
+      },
+      {
+        "item": "splash_potion",
+        "count": 1,
+        "slot": 20,
+        "potion": "strong_swiftness"
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 21
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 22
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 23
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 24
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 25
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 26
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 27
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 28
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 29
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 30
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 31
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 32
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 33
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 34
+      },
+      {
+        "item": "totem_of_undying",
+        "count": 1,
+        "slot": 35
+      }
+    ],
+    "equipment": {
+      "head": {
+        "item": "netherite_helmet",
+        "count": 1,
+        "enchants": {
+          "protection": 4,
+          "unbreaking": 3,
+          "mending": 1,
+          "respiration": 3,
+          "aqua_affinity": 1
+        }
+      },
+      "chest": {
+        "item": "netherite_chestplate",
+        "count": 1,
+        "enchants": {
+          "protection": 4,
+          "unbreaking": 3,
+          "mending": 1
+        }
+      },
+      "legs": {
+        "item": "netherite_leggings",
+        "count": 1,
+        "enchants": {
+          "protection": 4,
+          "unbreaking": 3,
+          "mending": 1,
+          "swift_sneak": 3
+        }
+      },
+      "feet": {
+        "item": "netherite_boots",
+        "count": 1,
+        "enchants": {
+          "protection": 4,
+          "unbreaking": 3,
+          "mending": 1,
+          "feather_falling": 4,
+          "depth_strider": 3
+        }
+      },
+      "offhand": {
+        "item": "shield",
+        "count": 1,
+        "enchants": {
+          "unbreaking": 3,
+          "mending": 1
         }
       }
     }

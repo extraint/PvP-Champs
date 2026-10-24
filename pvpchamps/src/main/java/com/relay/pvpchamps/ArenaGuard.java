@@ -86,6 +86,7 @@ final class ArenaGuard {
 
 	private static boolean leftover(Entity e) {
 		return e instanceof ItemEntity || e instanceof ExperienceOrb || e instanceof PrimedTnt
-			|| e instanceof AbstractMinecart || e instanceof Projectile;
+			|| e instanceof AbstractMinecart || e instanceof Projectile
+			|| e instanceof net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 	}
 }
