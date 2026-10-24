@@ -113,8 +113,7 @@ public final class MoveEngine {
 		}
 		if (st.current == null || !st.current.id().equals("heal_4_hearts")) {
 			Move heal = st.moves.get(0);
-			if (heal.id().equals("heal_4_hearts") && (CombatMaster.is(profile.difficulty()) || profile.moves().contains(heal.id()))
-					&& heal.start(c)) {
+			if (heal.id().equals("heal_4_hearts") && heal.start(c)) { // every bot heals: it is not a roster-specific trick
 				if (st.current != null) endCurrent(st, c);
 				st.current = heal;
 				USED.merge(bot.getGameProfile().name() + ":" + heal.id(), 1, Integer::sum);

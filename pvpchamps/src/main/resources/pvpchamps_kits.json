@@ -9,6 +9,11 @@
           "sharpness": 5,
           "unbreaking": 3
         }
+      },
+      {
+        "item": "golden_apple",
+        "count": 4,
+        "slot": 1
       }
     ],
     "equipment": {
