@@ -49,6 +49,8 @@ public final class ExplosionShield implements Move {
 		if (c.dist > 16) return MoveEngine.reject(id(), "far");
 		where = explosive(c);
 		if (where == null) return MoveEngine.reject(id(), "nothing_to_block");
+		// Shielding every blast stalls the fight: only when the bot is hurt, or the blast is right on top of it.
+		if (c.hp() >= 15f && where.distanceToSqr(c.bot.position()) > 9.0) return MoveEngine.reject(id(), "healthy");
 		t = 0;
 		gone = 0;
 		MoveEngine.reject(id(), "start");
@@ -57,7 +59,7 @@ public final class ExplosionShield implements Move {
 
 	@Override
 	public boolean tick(Ctx c) {
-		if (++t > 16 || !c.target.isAlive()) return false;
+		if (++t > 8 || !c.target.isAlive()) return false;
 		Vec3 now = explosive(c);
 		if (now == null) { if (++gone > 3) return false; } else { where = now; gone = 0; }
 		if (!c.hold(Items.SHIELD)) return false;
@@ -70,6 +72,6 @@ public final class ExplosionShield implements Move {
 	public void end(Ctx c) {
 		c.pack.stop(BotPlayerActionPack.ActionType.USE);
 		c.restoreSlot();
-		c.st.setCooldown(id(), 8);
+		c.st.setCooldown(id(), 40);
 	}
 }

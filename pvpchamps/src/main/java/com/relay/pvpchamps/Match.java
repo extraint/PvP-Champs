@@ -405,7 +405,7 @@ public final class Match {
 
 	/** Stuck in a hole for 15 seconds: reset the arena and put both fighters back on the floor. */
 	private void trackHoles(ServerPlayer a, ServerPlayer b) {
-		double floor = centre.y - 3.0;
+		double floor = centre.y - 4.5;
 		holeA = a != null && a.getY() < floor ? holeA + 1 : 0;
 		holeB = b != null && b.getY() < floor ? holeB + 1 : 0;
 		if (holeA < sc(300) && holeB < sc(300)) return;
