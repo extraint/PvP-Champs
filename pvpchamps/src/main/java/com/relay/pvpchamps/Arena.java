@@ -14,15 +14,15 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The PvP Champs colosseum: a sand-and-clay floor with cracks, a dark blue wall with a yellow band, rising stone
- * brick stands, a tall outer wall carrying the event banner, and a shell of barrier blocks around all of it. Built
+ * The PvP Champs colosseum: a dirt-and-mud cracked floor, a dark blue wall with a hazard stripe, rising mud-brick
+ * stands, a tall outer wall carrying the event banner, and a shell of barrier blocks around all of it. Built
  * with /pvpchamps arena build, remembered in config/pvpchamps/arena.json, and every match is staged inside it.
  * After each round the surrounding 500 by 500 area is put back as it was.
  */
 public final class Arena {
 	private Arena() {}
 
-	public static final int FLOOR_R = 30, STANDS_R = 49, WALL_R = 52, BARRIER_R = 55, HEIGHT = 46;
+	public static final int FLOOR_R = 30, STANDS_R = 49, WALL_R = 54, BARRIER_R = 58, HEIGHT = 70;
 	private static BlockPos centre;      // the floor's top surface, middle of the arena
 	private static ArenaGuard guard;
 
@@ -80,9 +80,11 @@ public final class Arena {
 		double[][] seeds = new double[40][2];
 		for (double[] s : seeds) { double a = rng.nextDouble() * 6.2832, r = Math.sqrt(rng.nextDouble()) * FLOOR_R; s[0] = Math.cos(a) * r; s[1] = Math.sin(a) * r; }
 
-		BlockState clay = b("orange_terracotta"), crack = b("brown_terracotta"), blue = b("blue_terracotta"), yellow = b("yellow_concrete"),
-			air = b("air"), stone = b("stone"), brick = b("stone_bricks"), pillar = b("chiseled_stone_bricks"), barrier = b("barrier"),
-			aisle = b("polished_andesite"), dark = b("deepslate_bricks");
+		BlockState dirt = b("dirt"), coarse = b("coarse_dirt"), packed = b("packed_mud"), crack = b("mud"),
+			blue = b("blue_terracotta"), base = b("deepslate_bricks"), pil = b("polished_blackstone_bricks"), cap = b("polished_blackstone"),
+			black = b("black_concrete"), yellow = b("yellow_concrete"), air = b("air"), stone = b("stone"),
+			mudb = b("mud_bricks"), aisle = b("packed_mud"), walk = b("smooth_stone"), dslate = b("deepslate_bricks"),
+			chiseled = b("chiseled_deepslate"), tiles = b("deepslate_tiles"), barrier = b("barrier");
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 		int R = BARRIER_R + 1;
 		for (int dx = -R; dx <= R; dx++) {
@@ -90,36 +92,64 @@ public final class Arena {
 				double d = Math.sqrt(dx * dx + dz * dz);
 				if (d > BARRIER_R + 0.5) continue;
 				int x = cx + dx, z = cz + dz;
-				double ang = Math.toDegrees(Math.atan2(dz, dx)); // for the aisles
-				boolean aisleCol = d > FLOOR_R + 1 && d < STANDS_R + 1 && ((ang + 360) % 22.5) < 2.0;
-				// Bedrock-side support so nothing floats, then the surface by region.
+				double ang = (Math.toDegrees(Math.atan2(dz, dx)) + 360) % 360;
+				boolean aisleCol = d > FLOOR_R + 1 && d < STANDS_R + 1 && (ang % 22.5) < 2.0;
 				for (int y = cy - 3; y <= cy - 2; y++) set(level, p.set(x, y, z), stone);
 				if (d <= FLOOR_R + 0.5) {
-					set(level, p.set(x, cy - 1, z), isCrack(dx, dz, seeds) ? crack : clay);
+					BlockState f;
+					int cell = cellOf(dx, dz, seeds);
+					if (isCrack(dx, dz, seeds)) f = crack;
+					else { int h = (cell * 7 + 3) % 5; f = h < 2 ? dirt : h < 4 ? coarse : packed; }
+					set(level, p.set(x, cy - 1, z), f);
 					clearUp(level, p, x, cz, z, cy, HEIGHT, air);
-				} else if (d <= FLOOR_R + 1.5) { // the arena wall
-					for (int y = cy - 1; y <= cy + 2; y++) set(level, p.set(x, y, z), blue);
-					set(level, p.set(x, cy + 3, z), yellow);
-					clearUp(level, p, x, cz, z, cy + 4, HEIGHT - 4, air);
-				} else if (d <= STANDS_R + 0.5) { // the stands
+				} else if (d <= FLOOR_R + 1.5) { // the arena wall: tall, pilasters, hazard stripe
+					boolean pilaster = (ang % 7.5) < 1.4;
+					for (int y = cy - 1; y <= cy + 6; y++) {
+						BlockState w = y <= cy ? base : (pilaster ? pil : (y == cy + 1 ? dslate : blue));
+						set(level, p.set(x, y, z), w);
+					}
+					set(level, p.set(x, cy + 7, z), (int) (ang / 2.5) % 2 == 0 ? yellow : black);
+					set(level, p.set(x, cy + 8, z), cap);
+					clearUp(level, p, x, cz, z, cy + 9, HEIGHT - 9, air);
+				} else if (d <= STANDS_R + 0.5) { // the stands, mud-brick seating
 					int k = (int) Math.floor(d - FLOOR_R - 1.5);
-					int h = 4 + k;
-					for (int y = cy - 1; y < cy + h; y++) set(level, p.set(x, y, z), aisleCol ? aisle : brick);
-					BlockState seat = aisleCol ? aisle : stairs("stone_brick_stairs", inward(dx, dz));
+					int h = 9 + k;
+					for (int y = cy - 1; y < cy + h; y++) set(level, p.set(x, y, z), aisleCol ? aisle : mudb);
+					BlockState seat = aisleCol ? aisle : (k % 6 == 5 ? walk : stairs("mud_brick_stairs", inward(dx, dz)));
 					set(level, p.set(x, cy + h, z), seat);
 					clearUp(level, p, x, cz, z, cy + h + 1, HEIGHT - h - 1, air);
-				} else if (d <= WALL_R + 0.5) { // the tall outer wall, with pillars every 15 degrees
-					boolean pil = ((ang + 360) % 15.0) < 2.0;
-					for (int y = cy - 1; y <= cy + 38; y++) set(level, p.set(x, y, z), pil ? pillar : (y % 8 == 7 ? dark : brick));
-					if (pil) set(level, p.set(x, cy + 39, z), pillar);
-					clearUp(level, p, x, cz, z, cy + (pil ? 40 : 39), HEIGHT - 40, air);
-				} else if (d <= BARRIER_R - 1.5 && d > WALL_R + 0.5) { // a gap, then the barrier shell
+				} else if (d <= WALL_R + 0.5) { // the huge outer wall: pillars, bands, arched windows, battlements
+					boolean pilCol = (ang % 15.0) < 2.5;
+					double a15 = ang % 15.0;
+					boolean north = ang > 235 && ang < 305; // keep the banner's face solid
+					int top = cy + 59;
+					for (int y = cy - 1; y <= top; y++) {
+						int rel = y - cy;
+						boolean band = rel % 12 == 11;
+						boolean open = false;
+						if (!pilCol && !north) {
+							for (int t = 0; t < 2; t++) {
+								int y0 = 24 + t * 17;
+								if (rel >= y0 && rel < y0 + 8 && (rel < y0 + 6 || Math.abs(a15 - 8.75) < 2.0) && Math.abs(a15 - 8.75) < 3.4) open = true;
+							}
+						}
+						BlockState w;
+						if (open) w = air;
+						else if (pilCol) w = band ? chiseled : pil;
+						else if (band) w = tiles;
+						else if (rel < 6) w = dslate;
+						else w = ((int) (d * 3 + y * 5 + ang) % 9 == 0) ? packed : mudb;
+						set(level, p.set(x, y, z), w);
+					}
+					if ((ang % 4.0) < 2.0 || pilCol) { set(level, p.set(x, top + 1, z), pilCol ? pil : mudb); set(level, p.set(x, top + 2, z), pilCol ? chiseled : mudb); }
+					clearUp(level, p, x, cz, z, top + 3, HEIGHT - 61, air);
+				} else if (d <= BARRIER_R - 1.5 && d > WALL_R + 0.5) {
 					clearUp(level, p, x, cz, z, cy - 1, HEIGHT + 1, air);
 				}
-				if (d > BARRIER_R - 1.5) { // the barrier wall around everything
+				if (d > BARRIER_R - 1.5) {
 					for (int y = cy - 3; y <= cy + HEIGHT; y++) set(level, p.set(x, y, z), barrier);
 				} else {
-					set(level, p.set(x, cy + HEIGHT, z), barrier); // roof
+					set(level, p.set(x, cy + HEIGHT, z), barrier);
 				}
 			}
 		}
@@ -141,6 +171,12 @@ public final class Arena {
 	}
 
 	/** Cracks where the two nearest of the seed points are almost equally far: a cracked-clay look. */
+	private static int cellOf(int dx, int dz, double[][] seeds) {
+		double best = 1e9; int bi = 0;
+		for (int i = 0; i < seeds.length; i++) { double d = Math.hypot(dx - seeds[i][0], dz - seeds[i][1]); if (d < best) { best = d; bi = i; } }
+		return bi;
+	}
+
 	private static boolean isCrack(int dx, int dz, double[][] seeds) {
 		double d1 = 1e9, d2 = 1e9;
 		for (double[] s : seeds) {
@@ -169,7 +205,7 @@ public final class Arena {
 		BlockState white = b("white_concrete"), orange = b("orange_concrete");
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 		double rad = STANDS_R + 1.5; // the inner face of the outer wall
-		int baseY = cy + 23;
+		int baseY = cy + 30;
 		for (double s = -total / 2.0 - 3; s <= total / 2.0 + 3; s += 0.5) {
 			double th = s / rad;
 			int x = cx + (int) Math.round(rad * Math.sin(th)), z = cz - (int) Math.round(rad * Math.cos(th));
