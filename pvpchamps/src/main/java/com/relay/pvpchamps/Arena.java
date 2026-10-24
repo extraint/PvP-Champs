@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * The PvP Champs colosseum: a dirt-and-mud cracked floor, a dark blue wall with a hazard stripe, rising mud-brick
- * stands, a tall outer wall carrying the event banner, and a shell of barrier blocks around all of it. Built
+ * stands, a tall outer wall, the event logo hung over the north stands, and a shell of barrier blocks around all of it. Built
  * with /pvpchamps arena build, remembered in config/pvpchamps/arena.json, and every match is staged inside it.
  * After each round the surrounding 500 by 500 area is put back as it was.
  */
@@ -121,13 +121,12 @@ public final class Arena {
 				} else if (d <= WALL_R + 0.5) { // the huge outer wall: pillars, bands, arched windows, battlements
 					boolean pilCol = (ang % 15.0) < 2.5;
 					double a15 = ang % 15.0;
-					boolean north = ang > 235 && ang < 305; // keep the banner's face solid
 					int top = cy + 59;
 					for (int y = cy - 1; y <= top; y++) {
 						int rel = y - cy;
 						boolean band = rel % 12 == 11;
 						boolean open = false;
-						if (!pilCol && !north) {
+						if (!pilCol) {
 							for (int t = 0; t < 2; t++) {
 								int y0 = 24 + t * 17;
 								if (rel >= y0 && rel < y0 + 8 && (rel < y0 + 6 || Math.abs(a15 - 8.75) < 2.0) && Math.abs(a15 - 8.75) < 3.4) open = true;
@@ -186,48 +185,38 @@ public final class Arena {
 		return d2 - d1 < 0.9;
 	}
 
-	// ------------------------------------------------------------------ the banner
+	// ------------------------------------------------------------------ the logo
 
-	private static final String[][] GLYPHS = {
-		{"P", "11110", "10001", "10001", "11110", "10000", "10000", "10000"},
-		{"V", "10001", "10001", "10001", "10001", "10001", "01010", "00100"},
-		{"C", "01111", "10000", "10000", "10000", "10000", "10000", "01111"},
-		{"H", "10001", "10001", "10001", "11111", "10001", "10001", "10001"},
-		{"A", "01110", "10001", "10001", "11111", "10001", "10001", "10001"},
-		{"M", "10001", "11011", "10101", "10101", "10001", "10001", "10001"},
-		{"S", "01111", "10000", "10000", "01110", "00001", "00001", "11110"},
-	};
-
-	/** "PVP CHAMPS" in white on an orange panel, curved along the north side of the outer wall, facing the floor. */
+	/**
+	 * The PvP Champs logo (orange emblem, "PVP" over a dark "CHAMPS" board, ribbon tails, tilted up to the right),
+	 * read from pvpchamps_logo.txt one block per character and hung over the north stands facing the floor, held up
+	 * by two black truss posts.
+	 */
 	private static void banner(ServerLevel level, int cx, int cy, int cz) {
-		String text = "PVP CHAMPS";
-		int scale = 2, charW = 6 * scale, total = text.length() * charW - scale;
-		BlockState white = b("white_concrete"), orange = b("orange_concrete");
-		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
-		double rad = STANDS_R + 1.5; // the inner face of the outer wall
-		int baseY = cy + 30;
-		for (double s = -total / 2.0 - 3; s <= total / 2.0 + 3; s += 0.5) {
-			double th = s / rad;
-			int x = cx + (int) Math.round(rad * Math.sin(th)), z = cz - (int) Math.round(rad * Math.cos(th));
-			for (int y = baseY - 2; y <= baseY + 7 * scale + 1; y++) set(level, p.set(x, y, z), orange);
+		java.util.List<String> rows = new java.util.ArrayList<>();
+		try (var in = Arena.class.getResourceAsStream("/pvpchamps_logo.txt")) {
+			if (in == null) return;
+			for (String line : new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).split("\n")) if (!line.isBlank()) rows.add(line);
+		} catch (Exception e) {
+			System.err.println("[pvpchamps] could not read the logo: " + e);
+			return;
 		}
-		int pos = -total / 2;
-		for (char ch : text.toCharArray()) {
-			String[] g = null;
-			for (String[] gl : GLYPHS) if (gl[0].charAt(0) == ch) g = gl;
-			if (g != null) {
-				for (int row = 0; row < 7; row++)
-					for (int col = 0; col < 5; col++) {
-						if (g[row + 1].charAt(col) != '1') continue;
-						for (double sx = 0; sx < scale; sx += 0.5)
-							for (int sy = 0; sy < scale; sy++) {
-								double th = (pos + col * scale + sx) / rad;
-								int x = cx + (int) Math.round(rad * Math.sin(th)), z = cz - (int) Math.round(rad * Math.cos(th));
-								set(level, p.set(x, baseY + (6 - row) * scale + sy, z), white);
-							}
-					}
+		java.util.Map<Character, BlockState> pal = java.util.Map.of(
+			'O', b("orange_concrete"), 'o', b("orange_terracotta"), 'h', b("honeycomb_block"), 'K', b("black_concrete"),
+			'B', b("gray_concrete"), 'D', b("black_concrete"), 'W', b("white_concrete"), 'S', b("light_gray_concrete"));
+		int w = rows.get(0).length(), h = rows.size();
+		int z = cz - 40, x0 = cx - w / 2, bottom = cy + 18;
+		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+		// truss posts from the seats up to the sign
+		BlockState post = b("polished_blackstone_bricks"), rail = b("polished_blackstone_wall");
+		for (int px : new int[] { cx - 18, cx - 17, cx + 17, cx + 18 })
+			for (int y = cy + 8; y < bottom + h / 2; y++) set(level, p.set(px, y, z - 1), y % 3 == 0 ? post : rail);
+		for (int r = 0; r < h; r++) {
+			String row = rows.get(r);
+			for (int c = 0; c < row.length(); c++) {
+				BlockState s = pal.get(row.charAt(c));
+				if (s != null) set(level, p.set(x0 + c, bottom + (h - 1 - r), z), s);
 			}
-			pos += charW;
 		}
 	}
 }
