@@ -1927,9 +1927,13 @@
         "potion": "strong_swiftness"
       },
       {
-        "item": "totem_of_undying",
+        "item": "shield",
         "count": 1,
-        "slot": 21
+        "slot": 21,
+        "enchants": {
+          "unbreaking": 3,
+          "mending": 1
+        }
       },
       {
         "item": "totem_of_undying",
@@ -2045,12 +2049,8 @@
         }
       },
       "offhand": {
-        "item": "shield",
-        "count": 1,
-        "enchants": {
-          "unbreaking": 3,
-          "mending": 1
-        }
+        "item": "totem_of_undying",
+        "count": 1
       }
     }
   }
