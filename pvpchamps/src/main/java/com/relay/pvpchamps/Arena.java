@@ -26,6 +26,7 @@ public final class Arena {
 	public static final int FLOOR_R = 40, STANDS_R = 54, WALL_R = 62, BARRIER_R = 68, HEIGHT = 70;
 	private static BlockPos centre;      // the floor's top surface, middle of the arena
 	private static ArenaGuard guard;
+	private static boolean fresh; // the arena has been generated in this run
 
 	private static Path file() { return FabricLoader.getInstance().getConfigDir().resolve("pvpchamps/arena.json"); }
 
@@ -53,12 +54,17 @@ public final class Arena {
 	/** Where matches are staged: the middle of the floor. */
 	public static Vec3 spot() { return centre == null ? null : new Vec3(centre.getX() + 0.5, centre.getY(), centre.getZ() + 0.5); }
 
-	public static void forget() { centre = null; guard = null; try { Files.deleteIfExists(file()); } catch (Exception ignored) {} }
+	public static void forget() { centre = null; guard = null; fresh = false; try { Files.deleteIfExists(file()); } catch (Exception ignored) {} }
 
 	/** The shared 500 x 500 reset area, snapshotted the first time it is needed (or right after a build). */
 	public static synchronized ArenaGuard guard(ServerLevel level) {
 		if (centre == null) return null;
-		if (guard == null) guard = new ArenaGuard(level, spot(), 250, 14, 50, true);
+		if (guard == null) {
+			// The first match of a run regenerates the arena from its design before taking the snapshot, so craters and holes
+			// left in the saved world by an earlier session are never "restored" as if they belonged there.
+			if (!fresh) { generate(level, centre); fresh = true; }
+			guard = new ArenaGuard(level, spot(), 250, 14, 50, true);
+		}
 		return guard;
 	}
 
@@ -76,6 +82,13 @@ public final class Arena {
 		centre = at;
 		save();
 		guard = null;
+		generate(level, at);
+		fresh = true;
+		guard(level);
+	}
+
+	/** Lays out every block of the arena around {@code at}. */
+	private static void generate(ServerLevel level, BlockPos at) {
 		int cx = at.getX(), cy = at.getY(), cz = at.getZ();
 		java.util.Random rng = new java.util.Random(26);
 		double[][] seeds = new double[40][2];
@@ -196,7 +209,6 @@ public final class Arena {
 					}
 		}
 		banner(level, cx, cy, cz);
-		guard(level);
 	}
 
 	private static void clearUp(ServerLevel level, BlockPos.MutableBlockPos p, int x, int cz, int z, int fromY, int count, BlockState air) {

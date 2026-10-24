@@ -336,6 +336,12 @@ public final class Match {
 		fightTicks++;
 		ServerPlayer a = watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
 		ServerPlayer b = VexBotApi.resolveBot(server, nameB);
+		// The first hunt order can arrive before a bot has finished its warm-up and then be ignored, leaving both standing at
+		// their spawn points until the stall watchdog fires: give the order again a few seconds in.
+		if (fightTicks == sc(60) || fightTicks == sc(140)) {
+			VexBotApi.hunt(nameB, nameA);
+			if (watch) VexBotApi.hunt(nameA, nameB);
+		}
 		if (fightTicks % 5 == 0) { if (watch) auditGear(nameA, a); auditGear(nameB, b); }
 		if (fightTicks % Math.max(2, sc(4)) == 1) publishLive(a, b); // about every 0.2 s of real time
 		if (fightTicks > sc(100)) stallWatch(a, b);
