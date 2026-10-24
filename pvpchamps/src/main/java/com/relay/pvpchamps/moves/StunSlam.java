@@ -1,67 +1,68 @@
 package com.relay.pvpchamps.moves;
 
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
 /**
- * Axe stun, then the slam: when the opponent has their shield up and the bot carries an axe, a mace and wind charges,
- * swing the axe to knock the shield down, swap to a wind charge and launch straight away, then hold the mace over them
- * so the dive (mace_smash) lands while the shield is still disabled.
+ * The real stun slam (as in Vexbot's own StunSlam): during a mace dive onto an opponent with their shield up, swing the
+ * axe first, which disables the shield, then swap to the mace and slam on the very next tick, still falling. The bot
+ * leads the opponent's movement like mace_smash does, so the combo lands inside the smash range with a real fall
+ * behind it. mace_smash steps aside while the target is blocking and this takes the dive.
  */
 public final class StunSlam implements Move {
-	private enum Phase { AXE, LAUNCH, RISE }
+	private enum Step { DIVE, AXE_DONE }
 
-	private Phase phase;
-	private int t;
+	private Step step;
+	private int left;
 
 	@Override public String id() { return "stun_slam"; }
 
-	private static boolean hasAxe(Ctx c) { return c.find(Items.NETHERITE_AXE) >= 0 || c.find(Items.DIAMOND_AXE) >= 0; }
+	static boolean hasAxe(Ctx c) { return c.find(Items.NETHERITE_AXE) >= 0 || c.find(Items.DIAMOND_AXE) >= 0; }
 
 	@Override
 	public boolean start(Ctx c) {
-		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (!c.carriesMace()) return MoveEngine.reject(id(), "no_mace");
 		if (!hasAxe(c)) return MoveEngine.reject(id(), "no_axe");
-		if (c.count(Items.WIND_CHARGE) < 1) return MoveEngine.reject(id(), "no_wind_charge");
+		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (!c.target.isBlocking()) return MoveEngine.reject(id(), "not_blocking");
-		if (!c.bot.onGround() || c.bot.isUsingItem()) return MoveEngine.reject(id(), "busy");
-		if (c.dist > 5.5) return MoveEngine.reject(id(), "range");
-		if (c.hp() <= 8f) return MoveEngine.reject(id(), "low_hp");
-		phase = Phase.AXE;
-		t = 0;
+		if (c.bot.onGround() || c.bot.isFallFlying() || c.bot.getDeltaMovement().y > -0.25) return MoveEngine.reject(id(), "not_diving");
+		if (c.bot.fallDistance < 1.5) return MoveEngine.reject(id(), "short_fall");
+		double horiz = Math.hypot(c.target.getX() - c.bot.getX(), c.target.getZ() - c.bot.getZ());
+		if (horiz > 7 || c.target.getY() > c.bot.getY()) return MoveEngine.reject(id(), "geometry");
+		step = Step.DIVE;
+		left = 30;
 		return true;
 	}
 
-	private double horizontal(Ctx c) { return Math.hypot(c.target.getX() - c.bot.getX(), c.target.getZ() - c.bot.getZ()); }
-
 	@Override
 	public boolean tick(Ctx c) {
-		if (++t > 90 || !c.target.isAlive()) return false;
-		switch (phase) {
-			case AXE -> {
-				if (!(c.hold(Items.NETHERITE_AXE) || c.hold(Items.DIAMOND_AXE))) return false;
-				c.face(c.target.getEyePosition().subtract(0, 0.3, 0));
-				c.run(c.dist > 2.8 ? 1f : 0f, true);
-				if (c.dist <= 3.1 && c.bot.getAttackStrengthScale(0.5f) >= 0.9f) {
-					c.attackOnce();                     // the shield goes down for a few seconds
-					phase = Phase.LAUNCH;
-					t = 0;
-				} else if (t > 30) return false;
+		if (--left <= 0 || !c.target.isAlive() || c.bot.onGround()) return false;
+		// Aim at where the opponent will be when the bot arrives, not where they are now.
+		double drop = Math.max(0.1, c.bot.getY() - c.target.getY());
+		double speed = Math.max(0.3, -c.bot.getDeltaMovement().y);
+		double ticks = Math.min(12, drop / speed);
+		Vec3 vel = c.target.getDeltaMovement();
+		Vec3 aim = c.target.position().add(vel.x * ticks, 0.9, vel.z * ticks);
+		c.face(aim);
+		double horiz = Math.hypot(aim.x - c.bot.getX(), aim.z - c.bot.getZ());
+		c.pack.setForward(horiz > 0.9 ? 1f : 0f);
+		c.pack.setSprinting(horiz > 0.9);
+		switch (step) {
+			case DIVE -> {
+				boolean inRange = c.bot.position().distanceTo(c.target.position()) <= 3.2;
+				if (!(c.hold(Items.NETHERITE_AXE) || c.hold(Items.DIAMOND_AXE))) return false; // axe in hand while falling in
+				if (inRange && c.bot.fallDistance >= 1.5) {
+					c.attackOnce();            // the axe disables the shield
+					step = Step.AXE_DONE;
+					MoveEngine.reject(id(), "axe_stun");
+				}
 			}
-			case LAUNCH -> {
-				if (!c.hold(Items.WIND_CHARGE)) return false;
-				c.pack.look(c.bot.getYRot(), 90f);      // straight down at the feet
-				if (t == 1) c.jumpOnce();
-				if (t == 4) { c.useOnce(); phase = Phase.RISE; t = 0; }
-			}
-			case RISE -> {
-				if (c.bot.onGround() && t > 6) return false;
-				c.hold(Items.MACE);                      // mace in hand for the dive
-				c.face(c.target.position().add(0, 1.0, 0));
-				c.pack.setForward(horizontal(c) > 1.2 ? 1f : 0f);
-				c.pack.setSprinting(horizontal(c) > 1.2);
-				// Falling over them: hand over to the mace smash, which needs a real fall behind the swing.
-				if (c.bot.getDeltaMovement().y < -0.25 && c.bot.fallDistance >= 1.0) return false;
+			case AXE_DONE -> {
+				if (!c.hold(Items.MACE)) return false;
+				c.attackOnce();                // the slam, one tick after the stun, with the fall still behind it
+				MoveEngine.reject(id(), "mace_slam");
+				c.st.forceMove(new MaceFollowUp());
+				return false;
 			}
 		}
 		return true;
@@ -70,6 +71,7 @@ public final class StunSlam implements Move {
 	@Override
 	public void end(Ctx c) {
 		c.pack.stopMovement();
-		c.st.setCooldown(id(), 80);
+		c.restoreSlot();
+		c.st.setCooldown(id(), 12);
 	}
 }

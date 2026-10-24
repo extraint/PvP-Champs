@@ -17,6 +17,7 @@ public final class MaceSmash implements Move {
 	public boolean start(Ctx c) {
 		if (!c.carriesMace()) return MoveEngine.reject(id(), "no_mace");
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
+		if (c.target.isBlocking() && StunSlam.hasAxe(c) && c.st.moves.stream().anyMatch(x -> x.id().equals("stun_slam"))) return MoveEngine.reject(id(), "stun_slam_case"); // an axe stun first, or the mace hits the shield
 		if (c.bot.onGround() || c.bot.isFallFlying() || c.bot.getDeltaMovement().y > -0.25) return MoveEngine.reject(id(), "not_diving");
 		if (c.bot.fallDistance < 1.5) return MoveEngine.reject(id(), "short_fall");
 		double horiz = Math.hypot(c.target.getX() - c.bot.getX(), c.target.getZ() - c.bot.getZ());
