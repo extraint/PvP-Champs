@@ -27,10 +27,16 @@ public final class Bracket {
 		"Swight", "Sweatgod", "Freekee_Fang", "ImMixed", "mikagoated", "Ymiau", "BLMcheat", "x_Kyran_x",
 		"Coldified", "ZeNain", "Flowtives", "ItzTwilightTT", "ninorc15", "Alepordio", "C0RZZ", "Blvckwlf");
 
+	/** An empty slot: whoever it is paired with advances without playing. */
+	public static final String BYE = "BYE";
+
 	private record Step(String label, int bestOf, Supplier<String[]> players, BiConsumer<String, String> record) {}
 
 	private final MinecraftServer server;
 	private final ServerPlayer viewer;
+	private final List<String> field;
+	private final boolean duo;      // 2v2: entrants are "A + B" teams and you play your team's series
+	private final String me;
 	private final Random rng = new Random();
 	private final List<Step> steps = new ArrayList<>();
 	private int idx = -1;
@@ -48,10 +54,46 @@ public final class Bracket {
 	private String lr5W, ufW, ufL, lfW;
 
 	public Bracket(MinecraftServer server, ServerPlayer viewer) {
+		this(server, viewer, FIELD, false);
+	}
+
+	public Bracket(MinecraftServer server, ServerPlayer viewer, List<String> field, boolean duo) {
 		this.server = server;
 		this.viewer = viewer;
+		this.field = field;
+		this.duo = duo;
+		this.me = viewer.getGameProfile().name();
 		build();
 	}
+
+	/**
+	 * The 2v2 field: you and a random partner as one team, every other roster player paired at random, 16 slots with
+	 * byes for the teams that do not fit (never yours).
+	 */
+	public static List<String> duoField(String me, Random rng) {
+		List<String> names = new ArrayList<>();
+		for (Roster.Opponent o : Roster.all()) if (!o.name().equalsIgnoreCase(me)) names.add(o.name());
+		Collections.shuffle(names, rng);
+		List<String> teams = new ArrayList<>();
+		teams.add(me + " + " + names.remove(names.size() - 1));
+		for (int i = 0; i + 1 < names.size(); i += 2) teams.add(names.get(i) + " + " + names.get(i + 1));
+		Collections.shuffle(teams.subList(1, teams.size()), rng);
+		int byes = Math.min(8, 16 - Math.min(16, teams.size()));
+		List<Integer> pairs = new ArrayList<>();
+		for (int i = 0; i < 8; i++) pairs.add(i);
+		Collections.shuffle(pairs, rng);
+		List<Integer> byePairs = pairs.subList(0, byes), playPairs = pairs.subList(byes, 8);
+		String[] slots = new String[16];
+		java.util.Arrays.fill(slots, BYE);
+		int t = 0;
+		for (int p : playPairs) for (int k = 0; k < 2; k++) if (t < teams.size()) slots[2 * p + k] = teams.get(t++);
+		for (int p : byePairs) if (t < teams.size()) slots[2 * p] = teams.get(t++);
+		return List.of(slots);
+	}
+
+	private static List<String> members(String entrant) { return List.of(entrant.split(" \\+ ")); }
+
+	private boolean hasMe(String entrant) { return members(entrant).stream().anyMatch(n -> n.equalsIgnoreCase(me)); }
 
 	public boolean isOver() { return stopped || finished; }
 
@@ -59,7 +101,7 @@ public final class Bracket {
 
 	private void build() {
 		for (int i = 0; i < 8; i++) { final int m = i;
-			steps.add(new Step("Upper Round 1 (" + (m + 1) + "/8)", 3, () -> new String[] {FIELD.get(2 * m), FIELD.get(2 * m + 1)},
+			steps.add(new Step("Upper Round 1 (" + (m + 1) + "/8)", 3, () -> new String[] {field.get(2 * m), field.get(2 * m + 1)},
 				(w, l) -> { ur1W[m] = w; ur1L[m] = l; })); }
 		for (int i = 0; i < 4; i++) { final int m = i;
 			steps.add(new Step("Lower Round 1 (" + (m + 1) + "/4)", 3, () -> new String[] {ur1L[2 * m], ur1L[2 * m + 1]},
@@ -87,9 +129,10 @@ public final class Bracket {
 
 	/** Starts the bracket: announces the first round and plays the first match. */
 	public void start() {
-		broadcast("§6=== " + EVENT + ": 16-player double elimination (" + steps.size() + " series) ===");
+		broadcast("§6=== " + EVENT + (duo ? " 2v2" : "") + ": 16-" + (duo ? "slot" : "player") + " double elimination (" + steps.size() + " series) ===");
+		if (duo) for (String e : field) if (hasMe(e)) broadcast("§eYour team: " + e);
 		StringBuilder sb = new StringBuilder("§eUpper Round 1: ");
-		for (int i = 0; i < 16; i += 2) sb.append(FIELD.get(i)).append(" vs ").append(FIELD.get(i + 1)).append("   ");
+		for (int i = 0; i < 16; i += 2) sb.append(field.get(i)).append(" vs ").append(field.get(i + 1)).append("   ");
 		broadcast(sb.toString());
 		broadcast("§7Best of 3 until the Upper Final, Lower Final and Grand Final, which are best of 5. /pvpchamps tournament skip to skip a series, /pvpchamps stop to end.");
 		next();
@@ -135,24 +178,40 @@ public final class Bracket {
 		Step st = steps.get(idx);
 		String[] p = st.players().get();
 		String a = p[0], b = p[1];
+		if (a.equals(BYE) || b.equals(BYE)) {      // a bye: the other side advances without playing
+			drafts.add(List.of());
+			resolve(st, a, b, a.equals(BYE) ? b : a);
+			stepScore[idx] = "bye";
+			next();
+			return;
+		}
 		broadcast("§e" + st.label() + ": " + a + " vs " + b + " (best of " + st.bestOf() + ")");
 		draftLog = new ArrayList<>();
 		List<Kits> games = draft(a, b, st.bestOf());
 		drafts.add(draftLog);
 		publish();
 		String label = EVENT + " · " + st.label();
-		MatchManager.begin(new Match(server, viewer, true, a, b, games.get(0), st.bestOf(), label, EVENT, aWon -> {
+		boolean mine = duo && (hasMe(a) || hasMe(b));
+		boolean swap = mine && hasMe(b);       // you are always side A of your own match
+		String ta = swap ? b : a, tb = swap ? a : b;
+		if (mine) broadcast("§eYour match is up!");
+		java.util.function.Consumer<Boolean> done = aWon -> {
 			if (stopped) return;
-			resolve(st, a, b, aWon ? a : b);
+			String w = aWon == !swap ? a : b;
+			resolve(st, a, b, w);
+			if (mine && !hasMe(w))
+				broadcast(st.label().startsWith("Upper") ? "§eYou dropped to the lower bracket." : "§cYou are out of the 2v2 tournament. Keep watching, or /pvpchamps tournament skip.");
 			next();
-		}).setGameKits(games));
+		};
+		if (duo) MatchManager.begin(new TeamMatch(server, viewer, !mine, members(ta), members(tb), games.get(0), st.bestOf(), label, EVENT, done).setGameKits(games));
+		else MatchManager.begin(new Match(server, viewer, true, a, b, games.get(0), st.bestOf(), label, EVENT, done).setGameKits(games));
 	}
 
 	private void resolve(Step st, String a, String b, String winner) {
 		st.record().accept(winner, winner.equals(a) ? b : a);
 		int i = steps.indexOf(st);
 		stepWinner[i] = winner;
-		stepScore[i] = WebStats.lastScoreFor(winner);
+		stepScore[i] = WebStats.lastScoreFor(members(winner).get(members(winner).size() - 1));
 	}
 
 	/** The kits a series drafts from (Netherite OP is not one of the event's kits). */
@@ -215,14 +274,22 @@ public final class Bracket {
 		return sb.toString();
 	}
 
-	private List<String> kitsOf(String name) {
-		Roster.Opponent o = Roster.byName(name);
-		return o == null || o.kits().isEmpty() ? Kits.ids() : o.kits();
+	private List<String> kitsOf(String entrant) {
+		List<String> out = new ArrayList<>();
+		for (String n : members(entrant)) {
+			Roster.Opponent o = Roster.byName(n);
+			for (String k : o == null || o.kits().isEmpty() ? Kits.ids() : o.kits()) if (!out.contains(k)) out.add(k);
+		}
+		return out;
 	}
 
-	private int rating(String name) {
-		Roster.Opponent o = Roster.byName(name);
-		return o == null ? 70 : o.rating();
+	private int rating(String entrant) {
+		int sum = 0;
+		for (String n : members(entrant)) {
+			Roster.Opponent o = Roster.byName(n);
+			sum += o == null ? (n.equalsIgnoreCase(me) ? 75 : 70) : o.rating();
+		}
+		return sum / members(entrant).size();
 	}
 
 	/** Cancels the running series and decides it by rating, then moves on. */
@@ -231,6 +298,7 @@ public final class Bracket {
 		Step st = steps.get(idx);
 		String[] p = st.players().get();
 		String a = p[0], b = p[1];
+		if (duo && (hasMe(a) || hasMe(b))) return;   // your own series is always played
 		MatchManager.cancelCurrent();
 		double pa = 1.0 / (1.0 + Math.pow(10, (rating(b) - rating(a)) / 40.0));
 		String w = rng.nextDouble() < pa ? a : b;

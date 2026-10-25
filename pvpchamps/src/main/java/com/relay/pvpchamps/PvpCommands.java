@@ -64,7 +64,7 @@ public final class PvpCommands {
 			.then(Commands.literal("tournament")
 				.then(Commands.literal("start").executes(c -> tournamentStart(c.getSource(), Tournament.Mode.SOLO, null)))
 				.then(Commands.literal("2v2")
-					.executes(c -> tournamentStart(c.getSource(), Tournament.Mode.DUO, null)))
+					.executes(c -> tournamentDuo(c.getSource())))
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
 				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
@@ -207,6 +207,17 @@ public final class PvpCommands {
 		return 1;
 	}
 
+	/** /pvpchamps tournament 2v2: the double-elimination bracket in teams of two; you play your team's series and watch the rest. */
+	private static int tournamentDuo(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		ServerPlayer p = src.getPlayerOrException();
+		if (MatchManager.blocksTournament() || !MatchManager.tournaments().isEmpty()) { say(src, "A match or tournament is already running (/pvpchamps stop)."); return 0; }
+		MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
+		Bracket b = new Bracket(src.getServer(), p, Bracket.duoField(p.getGameProfile().name(), RNG), true);
+		MatchManager.setBracket(b);
+		b.start();
+		return 1;
+	}
+
 	private static int tournamentStart(CommandSourceStack src, Tournament.Mode mode, String partner) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
 		if (MatchManager.blocksTournament()) { say(src, "A match or bracket is already running (/pvpchamps stop)."); return 0; }
@@ -220,7 +231,7 @@ public final class PvpCommands {
 	/** /pvpchamps tournament watch: a 16-player double-elimination bracket of bot matches that you just watch. */
 	private static int tournamentWatch(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
-		if (MatchManager.busy() || MatchManager.bracket() != null) { say(src, "Something is already running (/pvpchamps stop)."); return 0; }
+		if (MatchManager.busy() || MatchManager.bracket() != null || !MatchManager.tournaments().isEmpty()) { say(src, "Something is already running (/pvpchamps stop)."); return 0; }
 		MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
 		Bracket b = new Bracket(src.getServer(), p);
 		MatchManager.setBracket(b);
