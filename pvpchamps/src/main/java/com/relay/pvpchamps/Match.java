@@ -45,6 +45,7 @@ public final class Match {
 	private int respawnsLeft = 2;
 	private boolean loserDecided, aLost;
 	private net.minecraft.world.item.ItemStack[] kitStacks;
+	private final java.util.Map<String, String> barSeen = new java.util.HashMap<>();
 	private int holeA, holeB; // ticks each fighter has spent well below the arena floor
 
 	/** Tiny holder so the saved inventory can be null until captured. */
@@ -280,13 +281,17 @@ public final class Match {
 			String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(st.getItem()).getPath();
 			if (id.matches(".*(sword|_axe|pickaxe|shovel|mace|spear|shield|elytra|totem).*")) now.merge(id, st.getCount(), Integer::sum);
 		}
+		StringBuilder bar = new StringBuilder();
+		for (int i = 0; i < 9; i++) bar.append(i).append('=').append(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(p.getInventory().getItem(i).getItem()).getPath()).append(' ');
+		bar.append("off=").append(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(p.getInventory().getItem(40).getItem()).getPath());
+		String before = barSeen.put(name, bar.toString());
 		var was = gearSeen.put(name, now);
 		if (was == null) return;
 		for (var e : was.entrySet()) {
 			int have = now.getOrDefault(e.getKey(), 0);
 			if (have < e.getValue() && !e.getKey().contains("totem")) {
 				System.err.println("[pvpchamps] " + name + " lost " + e.getKey() + " (" + e.getValue() + " -> " + have + ") at tick " + fightTicks
-					+ ", round " + round + ", selected slot " + p.getInventory().getSelectedSlot());
+					+ ", round " + round + ", selected slot " + p.getInventory().getSelectedSlot() + "\n    hotbar before: " + before + "\n    hotbar now:    " + bar);
 			}
 		}
 	}
@@ -395,18 +400,82 @@ public final class Match {
 				}
 	}
 
+	private static boolean noRestock(net.minecraft.world.item.ItemStack w) {
+		var item = w.getItem();
+		return item == net.minecraft.world.item.Items.RESPAWN_ANCHOR || item == net.minecraft.world.item.Items.TOTEM_OF_UNDYING;
+	}
+
+	private static String stockKey(net.minecraft.world.item.ItemStack w) {
+		return net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(w.getItem()) + "|"
+			+ w.get(net.minecraft.core.component.DataComponents.POTION_CONTENTS);
+	}
+
+	/**
+	 * Refills the kit by what each stack is, not by where it sits: a fighter who has rearranged the hotbar keeps their
+	 * layout, and nothing is overwritten (the old slot-by-slot refill wrote the kit's glowstone over anchors that had
+	 * been moved into its slot). Anchors and totems are never touched. Armour and the offhand are replaced in place;
+	 * tools, potions and the shulker box are renewed or given back; stackable items are topped up to the kit's count.
+	 */
 	private void restock(ServerPlayer p) {
 		net.minecraft.world.item.ItemStack[] want = p.getUUID().equals(humanId) && !watch ? Layouts.apply(p, kit, kitStacks) : kitStacks;
-		for (int i = 0; i < want.length; i++) {
-			net.minecraft.world.item.ItemStack w = want[i];
-			if (w.isEmpty()) continue;
-			var item = w.getItem();
-			if (item == net.minecraft.world.item.Items.RESPAWN_ANCHOR || item == net.minecraft.world.item.Items.TOTEM_OF_UNDYING
-				|| (item instanceof net.minecraft.world.item.BlockItem bi && bi.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock)) continue;
-			p.getInventory().setItem(i, w.copy());
+		var inv = p.getInventory();
+		for (int i = 36; i < 41; i++) { // armour and offhand
+			var w = want[i];
+			if (!w.isEmpty() && !noRestock(w)) inv.setItem(i, w.copy());
 		}
+		java.util.Map<String, java.util.List<Integer>> groups = new java.util.LinkedHashMap<>();
+		for (int i = 0; i < 36; i++) {
+			var w = want[i];
+			if (!w.isEmpty() && !noRestock(w)) groups.computeIfAbsent(stockKey(w), k -> new java.util.ArrayList<>()).add(i);
+		}
+		java.util.List<java.util.Map.Entry<net.minecraft.world.item.ItemStack, Integer>> pending = new java.util.ArrayList<>(); // missing stacks and their kit slots
+		for (var g : groups.values()) {
+			var sample = want[g.get(0)];
+			String key = stockKey(sample);
+			java.util.List<Integer> mine = new java.util.ArrayList<>();
+			for (int i = 0; i < 36; i++) if (!inv.getItem(i).isEmpty() && stockKey(inv.getItem(i)).equals(key)) mine.add(i);
+			if (sample.getMaxStackSize() == 1) { // tools, potions, the shulker box: one per kit entry, renewed in place
+				for (int k = 0; k < g.size(); k++) {
+					var fresh = want[g.get(k)].copy();
+					if (k < mine.size()) inv.setItem(mine.get(k), fresh);
+					else pending.add(java.util.Map.entry(fresh, g.get(k)));
+				}
+			} else { // stackable: top up to the kit's total
+				int need = 0, have = 0;
+				for (int i : g) need += want[i].getCount();
+				for (int i : mine) have += inv.getItem(i).getCount();
+				int deficit = need - have;
+				if (deficit > 0) System.err.println("[pvpchamps] restock " + p.getGameProfile().name() + ": " + key + " need " + need + " have " + have);
+				for (int i : mine) {
+					var st = inv.getItem(i);
+					int add = Math.min(deficit, st.getMaxStackSize() - st.getCount());
+					if (add > 0) { st.grow(add); deficit -= add; }
+				}
+				for (int i = 0; deficit > 0 && i < g.size(); i++) {
+					var fresh = sample.copy();
+					fresh.setCount(Math.min(deficit, sample.getMaxStackSize()));
+					deficit -= fresh.getCount();
+					pending.add(java.util.Map.entry(fresh, g.get(i)));
+				}
+			}
+		}
+		// Every missing stack goes back to its own kit slot first, so one cannot take another's place; only then the leftovers
+		// look for any empty slot (and drop at the fighter's feet if there is none).
+		java.util.List<java.util.Map.Entry<net.minecraft.world.item.ItemStack, Integer>> left = new java.util.ArrayList<>();
+		for (var e : pending) {
+			if (inv.getItem(e.getValue()).isEmpty()) inv.setItem(e.getValue(), e.getKey());
+			else left.add(e);
+		}
+		for (var e : left) place(inv, e.getKey(), e.getValue());
 		p.inventoryMenu.broadcastChanges();
 		p.sendSystemMessage(Component.literal("§aRestocked."), true);
+	}
+
+	/** Puts a stack in its kit slot if that is empty, otherwise the first empty slot; if the inventory is full it is dropped. */
+	private static void place(net.minecraft.world.entity.player.Inventory inv, net.minecraft.world.item.ItemStack stack, int preferred) {
+		if (inv.getItem(preferred).isEmpty()) { inv.setItem(preferred, stack); return; }
+		for (int i = 0; i < 36; i++) if (inv.getItem(i).isEmpty()) { inv.setItem(i, stack); return; }
+		inv.player.drop(stack, false);
 	}
 
 	/** Stuck in a hole for 15 seconds: reset the arena and put both fighters back on the floor. */

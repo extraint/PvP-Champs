@@ -2003,13 +2003,13 @@
         "slot": 33
       },
       {
-        "item": "totem_of_undying",
-        "count": 1,
+        "item": "experience_bottle",
+        "count": 64,
         "slot": 34
       },
       {
-        "item": "totem_of_undying",
-        "count": 1,
+        "item": "experience_bottle",
+        "count": 64,
         "slot": 35
       }
     ],

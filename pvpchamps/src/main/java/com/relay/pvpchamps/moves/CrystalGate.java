@@ -21,7 +21,12 @@ public final class CrystalGate {
 			st.stash = null; // (a restock already put crystals back: nothing to return)
 			return;
 		}
-		if (st.stash != null) return;
+		if (st.stash != null) {
+			boolean refilled = false; // a restock put a fresh stack in the inventory: the old one aside is stale
+			for (int i = 0; i < 36; i++) if (inv.getItem(i).getItem() == Items.END_CRYSTAL) refilled = true;
+			if (!refilled) return;
+			st.stash = null;
+		}
 		for (int i = 0; i < 36; i++) {
 			ItemStack s = inv.getItem(i);
 			if (s.getItem() == Items.END_CRYSTAL) {
