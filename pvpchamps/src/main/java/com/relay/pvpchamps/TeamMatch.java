@@ -50,6 +50,8 @@ public final class TeamMatch implements Bout {
 	private final Set<String> dead = new HashSet<>();           // lower-case names of fighters dead this round
 	private final Map<String, Integer> missing = new HashMap<>(), hole = new HashMap<>();
 	private int lastDeathA, lastDeathB;
+	private boolean spawned;
+	private final Set<String> prepared = new HashSet<>();
 	private float stallHp = -1;
 	private int stillFor;
 	private final WebStats.Live liveInfo = new WebStats.Live();
@@ -280,6 +282,8 @@ public final class TeamMatch implements Bout {
 		for (String n : fighters()) if (!isHuman(n)) Roster.applyTier(n, kit);
 		syncTeams();
 		state = State.COUNTDOWN;
+		spawned = false;
+		prepared.clear();
 		timer = sc(60);
 		dead.clear();
 		missing.clear();
@@ -311,8 +315,13 @@ public final class TeamMatch implements Bout {
 		switch (state) {
 			case COUNTDOWN -> {
 				if (timer == sc(60) || timer == sc(40) || timer == sc(20)) message(Component.literal("§e" + Math.round(timer / (float) sc(20))), true);
-				if (--timer <= 0) {
+				// The bots appear at the start of the countdown and get their kit the tick they exist, so the fight starts fully equipped.
+				if (!spawned) {
 					for (String n : fighters()) if (!isHuman(n)) VexBotApi.spawnBot(server, n, spawnOf(n), yawOf(n), dimension());
+					spawned = true;
+				}
+				prepareNew();
+				if (--timer <= 0) {
 					state = State.SPAWNING;
 					timer = 0;
 				}
@@ -322,7 +331,7 @@ public final class TeamMatch implements Bout {
 				boolean ready = true;
 				for (String n : fighters()) if (entity(n) == null) ready = false;
 				if (ready) {
-					for (String n : fighters()) if (!isHuman(n)) prepare(entity(n), false);
+					prepareNew();
 					retarget();
 					message(Component.literal("§cFIGHT!"), true);
 					String a1 = teamA.get(0), b1 = teamB.get(0);
@@ -343,6 +352,26 @@ public final class TeamMatch implements Bout {
 			}
 			case DONE -> {}
 		}
+	}
+
+	/** Gives the kit to every bot that has appeared and has not had it yet. */
+	private void prepareNew() {
+		for (String n : fighters()) {
+			if (isHuman(n) || prepared.contains(n)) continue;
+			ServerPlayer p = entity(n);
+			if (p == null) continue;
+			prepare(p, false);
+			prepared.add(n);
+		}
+	}
+
+	/** True if this damage is one fighter hurting a teammate; it is cancelled. */
+	public boolean friendly(net.minecraft.world.entity.LivingEntity victim, net.minecraft.world.damagesource.DamageSource src) {
+		if (!(victim instanceof ServerPlayer v) || !(src.getEntity() instanceof ServerPlayer a) || a == v) return false;
+		String vn = v.getGameProfile().name(), an = a.getGameProfile().name();
+		boolean same = inMatch(vn) && inMatch(an) && inA(vn) == inA(an);
+		if (same) System.err.println("[pvpchamps] blocked friendly fire: " + an + " -> " + vn + " (" + src.type().msgId() + ")");
+		return same;
 	}
 
 	private void fightTick() {
