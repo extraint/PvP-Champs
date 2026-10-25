@@ -29,6 +29,8 @@ main{max-width:1500px;margin:0 auto;padding:18px 16px 60px}
 .p{display:flex;align-items:center;gap:8px;padding:7px 9px;height:32px}
 .p+.p{border-top:1px solid var(--line)}
 .p img{width:18px;height:18px;border-radius:0;image-rendering:pixelated;background:var(--line)}
+.p img.tm{width:13px;height:13px;margin-right:-5px}
+.p.team .nm{font-size:12.5px;letter-spacing:0}
 .p .nm{font-family:var(--head);font-size:15px;letter-spacing:.02em;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .p .sc{font-variant-numeric:tabular-nums;font-weight:700;min-width:14px;text-align:right}
 .p.tbd .nm{color:var(--mute);font-weight:400;font-style:italic}
@@ -140,7 +142,8 @@ html{scroll-behavior:smooth}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pct=(w,l)=>w+l?Math.round(100*w/(w+l))+'%':'-';
-const head=n=>`<img src="https://mc-heads.net/avatar/${encodeURIComponent(n)}/36" alt="" onerror="this.style.visibility='hidden'">`;
+const mem=n=>String(n).split(' + ');   // a 2v2 entrant is "A + B"
+const head=n=>n==='BYE'?'':mem(n).map(m=>`<img${mem(n).length>1?' class="tm"':''} src="https://mc-heads.net/avatar/${encodeURIComponent(m)}/36" alt="" onerror="this.style.visibility='hidden'">`).join('');
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.view').forEach(e=>e.classList.remove('on'));b.classList.add('on');$('#v-'+b.dataset.v).classList.add('on')});
 
 {const t=location.hash.slice(1);const b=t&&document.querySelector(`nav button[data-v="${t}"]`);if(b)b.click()}
@@ -148,10 +151,10 @@ let SER=[];
 function card(s){
   const sc=(s.score||'').split('-'), done=s.state==='done';
   const row=(n,mine)=>{
-    if(!n)return `<div class="p tbd"><span class="nm">TBD</span><span class="sc"></span></div>`;
+    if(!n||n==='BYE')return `<div class="p tbd"><span class="nm">${n?'BYE':'TBD'}</span><span class="sc"></span></div>`;
     const win=done&&s.winner===n, lose=done&&s.winner!==n;
     const v=done&&sc.length===2?(win?sc[0]:sc[1]):'';
-    return `<div class="p ${win?'win':''} ${lose?'lose':''}">${head(n)}<span class="nm">${esc(n)}</span><span class="sc">${v}</span></div>`};
+    return `<div class="p ${mem(n).length>1?'team':''} ${win?'win':''} ${lose?'lose':''}" title="${esc(n)}">${head(n)}<span class="nm">${esc(n)}</span><span class="sc">${v}</span></div>`};
   return `<div class="m ${s.state==='live'?'live':''}" data-n="${s.n}">${s.state==='live'?'<span class="badge">LIVE</span>':''}${row(s.a)}${row(s.b)}</div>`;
 }
 function col(title,list){return `<div class="col"><div class="colh"><span>${title}</span><span>Bo${list[0]?.bestOf||3}</span></div><div class="ms">${list.map(card).join('')}</div></div>`}
@@ -202,7 +205,7 @@ function slot(id,count,extra){
   return `<div class="slot ${pot?'pot':''}" title="${esc(nice(id))}${count>1?' ×'+count:''}"${st}><img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(short)}" onerror="nx(this)" alt="">${count>1?`<b>${count}</b>`:''}</div>`}
 const KITS=[['Cart','tnt_minecart','rail'],['UHC','golden_apple'],['Spear & Mace','netherite_spear','mace'],['Crystal','end_crystal','respawn_anchor'],['Sword','diamond_sword','diamond_sword'],['Diamond SMP','diamond_sword','diamond_axe'],['Netherite SMP','netherite_sword','netherite_axe']];
 function bigIcon(id){const c=cands(id);return `<img src="${c[0]}" data-i="1" data-c="${c.join('|')}" data-n="${esc(id.replace(/_/g,' '))}" onerror="nx(this)" alt="">`}
-const headBig=n=>`<img class="pf" src="https://mc-heads.net/avatar/${encodeURIComponent(n)}/128" alt="" onerror="this.style.visibility='hidden'">`;
+const headBig=n=>mem(n).map(m=>`<img class="pf" src="https://mc-heads.net/avatar/${encodeURIComponent(m)}/128" alt="" onerror="this.style.visibility='hidden'">`).join('');
 const KITPLAYER={'Cart':'Freekee_Fang','UHC':'BLMcheat','Spear & Mace':'Swight','Crystal':'mikagoated','Sword':'Coldified','Diamond SMP':'ImMixed','Netherite SMP':'Alepordio'};
 const KITPOSE={'Cart':'sit','UHC':'sneak','Spear & Mace':'point','Crystal':'jump','Sword':'punch','Diamond SMP':'flex','Netherite SMP':'salute'};
 const KSLUG={'Cart':'cart','UHC':'uhc','Spear & Mace':'spear_mace','Crystal':'crystal','Sword':'sword','Diamond SMP':'diamond_smp','Netherite SMP':'netherite_smp'};
@@ -237,7 +240,7 @@ function gear(g){ if(!g)return '';
   return `<div class="armrow">${arm}<div class="arm1" title="Offhand">${slot(off?off[0]:null,off?off[1]:1)}<div class="dur" style="visibility:hidden"></div><em>Offhand</em></div></div>
   <div class="gl">Hotbar</div><div class="slots">${hb}</div>
   <div class="gl">Materials</div><div class="slots">${mats}</div>`}
-const body=n=>`<img class="body" src="https://mc-heads.net/body/${encodeURIComponent(n)}/120" alt="" onerror="this.style.visibility='hidden'">`;
+const body=n=>mem(n).map(m=>`<img class="body" src="https://mc-heads.net/body/${encodeURIComponent(m)}/120" alt="" onerror="this.style.visibility='hidden'">`).join('');
 const hpw=v=>Math.max(0,Math.min(100,v/20*100));
 function fighter(n,hp,g,right){return `<div class="${right?'r':''}"><div class="fh">${body(n)}<div><div class="nm">${esc(n)}</div>${hearts(hp)}</div></div>${gear(g)}</div>`}
 function setH(el,html){if(!el)return;if(el._h!==html){el._h=html;el.innerHTML=html}}
