@@ -18,8 +18,8 @@ public final class ReachCombo implements Move {
 	/** 0 to 1 from this bot's MCTiers points in the kit being played (log scale: 1 point is 0, 60 points is 1). */
 	static double skillOf(Ctx c) {
 		var m = com.relay.pvpchamps.MatchManager.current();
-		if (m == null || m.kit == null) return 0.5;
-		String tier = com.relay.pvpchamps.Tiers.tier(c.bot.getGameProfile().name(), m.kit);
+		if (m == null || m.kit() == null) return 0.5;
+		String tier = com.relay.pvpchamps.Tiers.tier(c.bot.getGameProfile().name(), m.kit());
 		return Math.log(Math.max(1, com.relay.pvpchamps.Tiers.points(tier))) / Math.log(60);
 	}
 

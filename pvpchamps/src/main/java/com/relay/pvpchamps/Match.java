@@ -17,7 +17,7 @@ import vexbot.kit.KitManager;
  * One best-of-N match between a human and a roster bot ({@code play}) or two roster bots watched by a spectator
  * ({@code watch}). A round is: countdown, spawn the bots, fight until someone dies, a pause to look at the result.
  */
-public final class Match {
+public final class Match implements Bout {
 	private enum State { COUNTDOWN, SPAWNING, FIGHT, BETWEEN, DONE }
 
 	public final MinecraftServer server;
@@ -94,7 +94,9 @@ public final class Match {
 		return Math.round(ticks * Math.max(1f, rate / 20f));
 	}
 
-	public boolean isDone() { return state == State.DONE; }
+	@Override public Kits kit() { return kit; }
+
+	@Override public boolean isDone() { return state == State.DONE; }
 
 	/** A dead human would sit on the death screen: respawn them so the next round can place them. */
 	private void revive() {
@@ -110,6 +112,7 @@ public final class Match {
 	}
 
 	/** Who the named fighter is fighting right now, or null if they are not in this match or it isn't a fight yet. */
+	@Override
 	public ServerPlayer opponentOf(String name) {
 		if (state != State.FIGHT) return null;
 		if (name.equalsIgnoreCase(nameB)) return watch ? VexBotApi.resolveBot(server, nameA) : humanRef;
@@ -176,6 +179,7 @@ public final class Match {
 		p.clearFire();
 	}
 
+	@Override
 	public void tick() {
 		if (state == State.DONE) return;
 		if (human() == null) { // the player left the server
@@ -259,6 +263,7 @@ public final class Match {
 	}
 
 	/** Called when a fighter dies, from the death event or from polling. */
+	@Override
 	public void fighterDown(String name) {
 		if (state != State.FIGHT || loserDecided) return;
 		ServerPlayer who = name.equalsIgnoreCase(nameA) ? (watch ? VexBotApi.resolveBot(server, nameA) : humanRef) : VexBotApi.resolveBot(server, nameB);
@@ -386,95 +391,10 @@ public final class Match {
 
 	// ----------------------------------------------------------------------- shulker restock and holes
 
-	/** A shulker box placed next to a fighter disappears and restocks the kit (not anchors, totems or the shulker itself). */
+	/** A shulker box placed next to a fighter disappears and restocks the kit (not anchors, totems, worn armour or the offhand). */
 	private void restockPlaced(ServerPlayer p) {
 		if (p == null || !p.isAlive()) return;
-		net.minecraft.core.BlockPos at = p.blockPosition();
-		for (int dx = -4; dx <= 4; dx++)
-			for (int dz = -4; dz <= 4; dz++)
-				for (int dy = -2; dy <= 3; dy++) {
-					net.minecraft.core.BlockPos pos = at.offset(dx, dy, dz);
-					if (level.getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock) {
-						level.setBlock(pos, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 18);
-						restock(p);
-						return;
-					}
-				}
-	}
-
-	private static boolean noRestock(net.minecraft.world.item.ItemStack w) {
-		var item = w.getItem();
-		return item == net.minecraft.world.item.Items.RESPAWN_ANCHOR || item == net.minecraft.world.item.Items.TOTEM_OF_UNDYING;
-	}
-
-	private static String stockKey(net.minecraft.world.item.ItemStack w) {
-		return net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(w.getItem()) + "|"
-			+ w.get(net.minecraft.core.component.DataComponents.POTION_CONTENTS);
-	}
-
-	/**
-	 * Refills the kit by what each stack is, not by where it sits: a fighter who has rearranged the hotbar keeps their
-	 * layout, and nothing is overwritten (the old slot-by-slot refill wrote the kit's glowstone over anchors that had
-	 * been moved into its slot). Anchors, totems, worn armour and the offhand are never touched;
-	 * tools, potions and the shulker box are renewed or given back; stackable items are topped up to the kit's count.
-	 */
-	private void restock(ServerPlayer p) {
-		net.minecraft.world.item.ItemStack[] want = p.getUUID().equals(humanId) && !watch ? Layouts.apply(p, kit, kitStacks) : kitStacks;
-		var inv = p.getInventory();
-		// Worn armour and the offhand are left exactly as they are: a restock refills items only.
-		java.util.Map<String, java.util.List<Integer>> groups = new java.util.LinkedHashMap<>();
-		for (int i = 0; i < 36; i++) {
-			var w = want[i];
-			if (!w.isEmpty() && !noRestock(w)) groups.computeIfAbsent(stockKey(w), k -> new java.util.ArrayList<>()).add(i);
-		}
-		java.util.List<java.util.Map.Entry<net.minecraft.world.item.ItemStack, Integer>> pending = new java.util.ArrayList<>(); // missing stacks and their kit slots
-		for (var g : groups.values()) {
-			var sample = want[g.get(0)];
-			String key = stockKey(sample);
-			java.util.List<Integer> mine = new java.util.ArrayList<>();
-			for (int i = 0; i < 36; i++) if (!inv.getItem(i).isEmpty() && stockKey(inv.getItem(i)).equals(key)) mine.add(i);
-			if (sample.getMaxStackSize() == 1) { // tools, potions, the shulker box: one per kit entry, renewed in place
-				for (int k = 0; k < g.size(); k++) {
-					var fresh = want[g.get(k)].copy();
-					if (k < mine.size()) inv.setItem(mine.get(k), fresh);
-					else pending.add(java.util.Map.entry(fresh, g.get(k)));
-				}
-			} else { // stackable: top up to the kit's total
-				int need = 0, have = 0;
-				for (int i : g) need += want[i].getCount();
-				for (int i : mine) have += inv.getItem(i).getCount();
-				int deficit = need - have;
-				if (deficit > 0) System.err.println("[pvpchamps] restock " + p.getGameProfile().name() + ": " + key + " need " + need + " have " + have);
-				for (int i : mine) {
-					var st = inv.getItem(i);
-					int add = Math.min(deficit, st.getMaxStackSize() - st.getCount());
-					if (add > 0) { st.grow(add); deficit -= add; }
-				}
-				for (int i = 0; deficit > 0 && i < g.size(); i++) {
-					var fresh = sample.copy();
-					fresh.setCount(Math.min(deficit, sample.getMaxStackSize()));
-					deficit -= fresh.getCount();
-					pending.add(java.util.Map.entry(fresh, g.get(i)));
-				}
-			}
-		}
-		// Every missing stack goes back to its own kit slot first, so one cannot take another's place; only then the leftovers
-		// look for any empty slot (and drop at the fighter's feet if there is none).
-		java.util.List<java.util.Map.Entry<net.minecraft.world.item.ItemStack, Integer>> left = new java.util.ArrayList<>();
-		for (var e : pending) {
-			if (inv.getItem(e.getValue()).isEmpty()) inv.setItem(e.getValue(), e.getKey());
-			else left.add(e);
-		}
-		for (var e : left) place(inv, e.getKey(), e.getValue());
-		p.inventoryMenu.broadcastChanges();
-		p.sendSystemMessage(Component.literal("§aRestocked."), true);
-	}
-
-	/** Puts a stack in its kit slot if that is empty, otherwise the first empty slot; if the inventory is full it is dropped. */
-	private static void place(net.minecraft.world.entity.player.Inventory inv, net.minecraft.world.item.ItemStack stack, int preferred) {
-		if (inv.getItem(preferred).isEmpty()) { inv.setItem(preferred, stack); return; }
-		for (int i = 0; i < 36; i++) if (inv.getItem(i).isEmpty()) { inv.setItem(i, stack); return; }
-		inv.player.drop(stack, false);
+		Restock.placed(level, p, p.getUUID().equals(humanId) && !watch ? Layouts.apply(p, kit, kitStacks) : kitStacks);
 	}
 
 	/** Stuck in a hole for 15 seconds: reset the arena and put both fighters back on the floor. */
@@ -492,6 +412,7 @@ public final class Match {
 
 	// ----------------------------------------------------------------------- end
 
+	@Override
 	public void cancel() { finish(false, true); }
 
 	private void finish(boolean aWon, boolean cancelled) {

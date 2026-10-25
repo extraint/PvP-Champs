@@ -62,7 +62,12 @@ public final class PvpCommands {
 					return 1;
 				})))
 			.then(Commands.literal("tournament")
-				.then(Commands.literal("start").executes(c -> tournamentStart(c.getSource())))
+				.then(Commands.literal("start").executes(c -> tournamentStart(c.getSource(), Tournament.Mode.SOLO, null)))
+				.then(Commands.literal("2v2")
+					.executes(c -> tournamentStart(c.getSource(), Tournament.Mode.DUO, null))
+					.then(Commands.argument("partner", StringArgumentType.word())
+						.suggests((c, b) -> SharedSuggestionProvider.suggest(Roster.all().stream().map(Roster.Opponent::name), b))
+						.executes(c -> tournamentStart(c.getSource(), Tournament.Mode.DUO, StringArgumentType.getString(c, "partner")))))
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
 				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
@@ -205,11 +210,13 @@ public final class PvpCommands {
 		return 1;
 	}
 
-	private static int tournamentStart(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+	private static int tournamentStart(CommandSourceStack src, Tournament.Mode mode, String partner) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
-		if (MatchManager.busy()) { say(src, "A match is already running (/pvpchamps stop)."); return 0; }
-		MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
-		MatchManager.setTournament(new Tournament(src.getServer(), p));
+		if (MatchManager.blocksTournament()) { say(src, "A match or bracket is already running (/pvpchamps stop)."); return 0; }
+		for (Tournament t : MatchManager.tournaments()) if (t.mode() == mode && !t.isOver()) { say(src, "That tournament is already running."); return 0; }
+		if (partner != null && Roster.byName(partner) == null) { say(src, "Unknown partner. /pvpchamps roster"); return 0; }
+		if (MatchManager.tournaments().isEmpty()) MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
+		MatchManager.addTournament(new Tournament(src.getServer(), p, mode, partner));
 		return 1;
 	}
 
@@ -225,16 +232,16 @@ public final class PvpCommands {
 	}
 
 	private static int tournamentSkip(CommandSourceStack src) {
-		Bracket b = MatchManager.bracket();
-		if (b == null) { say(src, "No bracket running. /pvpchamps tournament watch"); return 0; }
-		b.skip();
+		if (MatchManager.bracket() != null) { MatchManager.bracket().skip(); return 1; }
+		if (MatchManager.tournaments().isEmpty()) { say(src, "Nothing running. /pvpchamps tournament start"); return 0; }
+		for (Tournament t : new java.util.ArrayList<>(MatchManager.tournaments())) t.skip();
 		return 1;
 	}
 
 	private static int tournamentStatus(CommandSourceStack src) {
 		if (MatchManager.bracket() != null) { say(src, MatchManager.bracket().status()); return 1; }
-		Tournament t = MatchManager.tournament();
-		say(src, t == null ? "No tournament running. /pvpchamps tournament start" : t.status());
+		if (MatchManager.tournaments().isEmpty()) { say(src, "No tournament running. /pvpchamps tournament start | 2v2"); return 0; }
+		for (Tournament t : MatchManager.tournaments()) say(src, t.status());
 		return 1;
 	}
 }
