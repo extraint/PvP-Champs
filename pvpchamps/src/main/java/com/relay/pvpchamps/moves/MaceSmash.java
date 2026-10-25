@@ -40,9 +40,9 @@ public final class MaceSmash implements Move {
 		double horiz = Math.hypot(aim.x - c.bot.getX(), aim.z - c.bot.getZ());
 		c.pack.setForward(horiz > 0.9 ? 1f : 0f); // steer over them; do not overshoot
 		c.pack.setSprinting(horiz > 0.9);
-		boolean inRange = c.bot.position().distanceTo(c.target.position()) <= 3.0;
+		boolean inRange = c.bot.position().distanceTo(c.target.position()) <= (c.swapReach() > 4.0 ? 4.2 : 3.0); // spear to mace swap: extra reach
 		if (inRange && c.bot.fallDistance >= 1.5) {
-			c.attackOnce();
+			c.swapAttack(Items.MACE);
 			MoveEngine.reject(id(), "smash_swing");
 			c.st.forceMove(new MaceFollowUp()); // react the same tick: no pause before the follow-up
 			return false;

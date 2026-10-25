@@ -75,17 +75,17 @@ public final class StunSlam implements Move {
 				if (c.bot.getDeltaMovement().y < -0.25) step = Step.DIVE;                      // past the top: falling onto them
 			}
 			case DIVE -> {
-				boolean inRange = c.bot.position().distanceTo(c.target.position()) <= 3.2;
+				boolean inRange = c.bot.position().distanceTo(c.target.position()) <= c.swapReach(); // 4.4 with a spear: "spear stun slam"
 				if (!(c.hold(Items.NETHERITE_AXE) || c.hold(Items.DIAMOND_AXE))) return false;
 				if (inRange && c.bot.fallDistance >= 1.5) {
-					c.attackOnce();            // the axe disables the shield
+					c.swapAttack(c.find(Items.NETHERITE_AXE) >= 0 ? Items.NETHERITE_AXE : Items.DIAMOND_AXE); // the axe disables the shield
 					step = Step.AXE_DONE;
 					MoveEngine.reject(id(), "axe_stun");
 				}
 			}
 			case AXE_DONE -> {
-				if (!c.hold(Items.MACE)) return false;
-				c.attackOnce();                // the slam, one tick after the stun, with the fall still behind it
+				if (c.find(Items.MACE) < 0) return false;
+				c.swapAttack(Items.MACE);      // the slam, one tick after the stun, with the fall still behind it
 				MoveEngine.reject(id(), "mace_slam");
 				c.st.forceMove(new MaceFollowUp());
 				return false;

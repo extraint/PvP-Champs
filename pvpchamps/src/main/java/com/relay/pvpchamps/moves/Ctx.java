@@ -58,6 +58,25 @@ public final class Ctx {
 		return true;
 	}
 
+	/** Hotbar slot (0-8) holding the item, moving it there first if it sits in the main inventory; -1 if the bot has none. */
+	public int hotbarSlot(Item item) {
+		int slot = find(item);
+		if (slot < 0) return -1;
+		if (slot > 8) { hold(item); return 8; }
+		return slot;
+	}
+
+	/** Strike range for swapped hits: a spear in the inventory gives 4.4 blocks of reach on the swap (spear reach swap), else 3.2. */
+	public double swapReach() {
+		return find(net.minecraft.world.item.Items.NETHERITE_SPEAR) >= 0 || find(net.minecraft.world.item.Items.DIAMOND_SPEAR) >= 0 ? 4.4 : 3.2;
+	}
+
+	/** Same-tick select-and-attack through Vexbot's own swap engine (the attribute swap: this item's damage, the last item's reach). */
+	public void swapAttack(Item item) {
+		int slot = hotbarSlot(item);
+		if (slot >= 0) vexbot.util.SwapEngine.syncedAttack(bot, slot, target);
+	}
+
 	public void restoreSlot() {
 		if (st.prevSlot >= 0) pack.setSlot(st.prevSlot + 1);
 		st.prevSlot = -1;
