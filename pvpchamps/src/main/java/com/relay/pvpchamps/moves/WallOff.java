@@ -50,7 +50,9 @@ public final class WallOff implements Move {
 		Vec3 toward = c.target.position().subtract(c.bot.position());
 		Vec3 spot = c.bot.position().add(toward.normalize().scale(1.5 + placed * 0.5));
 		c.face(new Vec3(spot.x, c.bot.getY() - 0.5, spot.z));
-		if (!c.hold(c.bot.getInventory().getItem(blockSlot(c)).getItem())) return false;
+		int slot = blockSlot(c);
+		if (slot < 0) return false; // the blocks ran out mid-wall
+		if (!c.hold(c.bot.getInventory().getItem(slot).getItem())) return false;
 		if (t % 4 == 0) {
 			c.useOnce();
 			placed++;
