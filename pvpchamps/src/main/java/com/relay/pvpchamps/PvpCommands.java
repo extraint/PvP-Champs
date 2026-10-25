@@ -67,9 +67,9 @@ public final class PvpCommands {
 					.suggests((c, b) -> SharedSuggestionProvider.suggest(Draft.POOL.stream().map(k -> k.id), b))
 					.executes(c -> draftCmd(c.getSource(), StringArgumentType.getString(c, "kit")))))
 			.then(Commands.literal("tournament")
-				.then(Commands.literal("start").executes(c -> tournamentStart(c.getSource(), Tournament.Mode.SOLO, null)))
+				.then(Commands.literal("start").executes(c -> tournamentBracket(c.getSource(), false)))
 				.then(Commands.literal("2v2")
-					.executes(c -> tournamentDuo(c.getSource())))
+					.executes(c -> tournamentBracket(c.getSource(), true)))
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
 				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
@@ -212,24 +212,15 @@ public final class PvpCommands {
 		return 1;
 	}
 
-	/** /pvpchamps tournament 2v2: the double-elimination bracket in teams of two; you play your team's series and watch the rest. */
-	private static int tournamentDuo(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+	/** /pvpchamps tournament start | 2v2: the double-elimination bracket; you play your own series and watch the rest. */
+	private static int tournamentBracket(CommandSourceStack src, boolean duo) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
 		if (MatchManager.blocksTournament() || !MatchManager.tournaments().isEmpty()) { say(src, "A match or tournament is already running (/pvpchamps stop)."); return 0; }
 		MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
-		Bracket b = new Bracket(src.getServer(), p, Bracket.duoField(p.getGameProfile().name(), RNG), true);
+		String me = p.getGameProfile().name();
+		Bracket b = new Bracket(src.getServer(), p, duo ? Bracket.duoField(me, RNG) : Bracket.soloField(me, RNG), duo, true);
 		MatchManager.setBracket(b);
 		b.start();
-		return 1;
-	}
-
-	private static int tournamentStart(CommandSourceStack src, Tournament.Mode mode, String partner) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
-		ServerPlayer p = src.getPlayerOrException();
-		if (MatchManager.blocksTournament()) { say(src, "A match or bracket is already running (/pvpchamps stop)."); return 0; }
-		for (Tournament t : MatchManager.tournaments()) if (!t.isOver()) { say(src, "You can only be in one tournament at a time (/pvpchamps stop)."); return 0; }
-		if (partner != null && Roster.byName(partner) == null) { say(src, "Unknown partner. /pvpchamps roster"); return 0; }
-		if (MatchManager.tournaments().isEmpty()) MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
-		MatchManager.addTournament(new Tournament(src.getServer(), p, mode, partner));
 		return 1;
 	}
 
