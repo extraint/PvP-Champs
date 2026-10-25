@@ -76,7 +76,7 @@ public final class TeamMatch implements Bout {
 			for (int i = 0; i < 41; i++) savedInv[i] = human.getInventory().getItem(i).copy();
 		}
 		vexbot.BotSettings.botDontLeave = true;
-		vexbot.BotSettings.botLeaveOnDeath = true;   // a dead fighter leaves for the round instead of respawning in place and rejoining the fight
+		vexbot.BotSettings.botLeaveOnDeath = false;
 		vexbot.BotSettings.shulkerRegear = false;
 		vexbot.BotSettings.enderChestRegear = false;
 		vexbot.BotSettings.pearlChasing = false;
@@ -257,7 +257,6 @@ public final class TeamMatch implements Bout {
 		if (!dead.add(name.toLowerCase())) return;
 		if (inA(name)) lastDeathA = fightTicks; else lastDeathB = fightTicks;
 		message(Component.literal("§7" + name + " is down."));
-		if (!isHuman(name)) VexBotApi.despawnBot(server, name); // so Vexbot cannot respawn it in place and put it back in the fight
 	}
 
 	/** Points every living bot at the nearest living enemy. */
@@ -355,6 +354,8 @@ public final class TeamMatch implements Bout {
 			missing.remove(n);
 			if (e.getHealth() <= 0 || !e.isAlive()) markDead(n);
 		}
+		// Vexbot respawns a dead bot in place; take it out on the tick after, never inside the death (an explosion is still iterating players).
+		for (String n : fighters()) if (!isHuman(n) && !alive(n) && VexBotApi.resolveBot(server, n) != null) VexBotApi.despawnBot(server, n);
 		if (!watch && !alive(humanName)) spectateAsDead();
 		if (fightTicks == sc(60) || fightTicks == sc(140) || fightTicks % sc(200) == 0) retarget();
 		if (fightTicks % Math.max(2, sc(4)) == 1) publishLive();
