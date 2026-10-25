@@ -76,7 +76,7 @@ public final class TeamMatch implements Bout {
 			for (int i = 0; i < 41; i++) savedInv[i] = human.getInventory().getItem(i).copy();
 		}
 		vexbot.BotSettings.botDontLeave = true;
-		vexbot.BotSettings.botLeaveOnDeath = false;
+		vexbot.BotSettings.botLeaveOnDeath = true;   // a dead fighter leaves for the round instead of respawning in place and rejoining the fight
 		vexbot.BotSettings.shulkerRegear = false;
 		vexbot.BotSettings.enderChestRegear = false;
 		vexbot.BotSettings.pearlChasing = false;
