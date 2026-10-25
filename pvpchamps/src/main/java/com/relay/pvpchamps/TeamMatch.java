@@ -86,9 +86,50 @@ public final class TeamMatch implements Bout {
 			Roster.Opponent o = Roster.byName(n);
 			if (o != null && !isHuman(n)) Roster.applyProfile(o);
 		}
+		makeTeams();
 		message(Component.literal("=== " + roundPrefix + ": " + label(teamA) + " vs " + label(teamB) + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
+	}
+
+	private static final String TEAM_A = "pvpchamps_a", TEAM_B = "pvpchamps_b";
+
+	/** Puts each side into a Vexbot team so partners never target or retaliate against each other. */
+	private void makeTeams() {
+		for (String[] t : new String[][] { { TEAM_A }, { TEAM_B } }) {
+			boolean a = t[0].equals(TEAM_A);
+			List<String> side = a ? teamA : teamB;
+			vexbot.team.TeamManager.delete(t[0]);
+			vexbot.team.TeamManager.getOrCreate(t[0]);
+			List<String> bots = new ArrayList<>(), players = new ArrayList<>();
+			for (String n : side) (isHuman(n) ? players : bots).add(n);
+			vexbot.team.TeamManager.setTeamBots(t[0], bots);
+			vexbot.team.TeamManager.setTeamPlayers(t[0], players);
+		}
+	}
+
+	/**
+	 * A Vexbot team's own settings replace the global ones for its members (and start at different defaults), so copy
+	 * every global setting into the two teams; run after the bots' profiles are applied.
+	 */
+	private void syncTeams() {
+		for (String t : new String[] { TEAM_A, TEAM_B }) {
+			var team = vexbot.team.TeamManager.get(t);
+			if (team == null) continue;
+			for (java.lang.reflect.Field f : team.getClass().getFields()) {
+				if (java.lang.reflect.Modifier.isStatic(f.getModifiers()) || java.lang.reflect.Modifier.isFinal(f.getModifiers())) continue;
+				try {
+					java.lang.reflect.Field g = vexbot.BotSettings.class.getField(f.getName());
+					if (java.lang.reflect.Modifier.isStatic(g.getModifiers()) && g.getType() == f.getType()) f.set(team, g.get(null));
+				} catch (ReflectiveOperationException ignored) { /* no global of that name: leave the team's own value */ }
+			}
+		}
+		vexbot.EffectiveSettings.invalidate();
+	}
+
+	private static void dropTeams() {
+		vexbot.team.TeamManager.delete(TEAM_A);
+		vexbot.team.TeamManager.delete(TEAM_B);
 	}
 
 	public TeamMatch setGameKits(List<Kits> kits) { this.gameKits = kits; return this; }
@@ -238,6 +279,7 @@ public final class TeamMatch implements Bout {
 			message(Component.literal("§eGame " + round + " kit: " + kit.label));
 		}
 		for (String n : fighters()) if (!isHuman(n)) Roster.applyTier(n, kit);
+		syncTeams();
 		state = State.COUNTDOWN;
 		timer = sc(60);
 		dead.clear();
@@ -406,6 +448,7 @@ public final class TeamMatch implements Bout {
 	private void finish(boolean aWon, boolean cancelled) {
 		if (state == State.DONE) return;
 		state = State.DONE;
+		dropTeams();
 		WebStats.endLive(label(teamA) + "|" + label(teamB));
 		if (!cancelled) {
 			List<String> win = aWon ? teamA : teamB, lose = aWon ? teamB : teamA;
