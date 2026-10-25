@@ -18,7 +18,10 @@ public final class PearlOut implements Move {
 		Vec3 o = MatchManager.origin();
 		if (o == null) return MoveEngine.reject(id(), "no_origin");
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
-		if (c.bot.getY() > o.y - 4.5) return MoveEngine.reject(id(), "not_in_hole"); // a blast crater is not a hole
+		if (c.bot.getY() > o.y - 4.5) { c.st.inHole = 0; return MoveEngine.reject(id(), "not_in_hole"); } // a blast crater is not a hole
+		// Crystal and anchor fights are fought in holes: only a bot that has been stuck for about 4 seconds uses a pearl on it
+		// (this check runs every 4 ticks), so it does not burn its pearls leaving every pit it steps into.
+		if (++c.st.inHole < 20) return MoveEngine.reject(id(), "settling");
 		if (!c.bot.onGround()) return MoveEngine.reject(id(), "busy"); // a raised shield counts as using an item, so that is not a reason to stay in the hole
 		if (c.find(Items.ENDER_PEARL) < 0) return MoveEngine.reject(id(), "no_pearl");
 		t = 0;
@@ -75,6 +78,6 @@ public final class PearlOut implements Move {
 	public void end(Ctx c) {
 		c.pack.stopMovement();
 		c.restoreSlot();
-		c.st.setCooldown(id(), 100);
+		c.st.setCooldown(id(), 300);
 	}
 }

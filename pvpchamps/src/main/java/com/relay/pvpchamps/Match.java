@@ -359,7 +359,9 @@ public final class Match {
 				teleport(p, p.position(), p.getYRot());
 			}
 		}
-		if (fightTicks % 4 == 0) { restockPlaced(a); restockPlaced(b); } // a placed shulker vanishes and restocks the kit
+		// Only the Crystal kit's empty restock shulker works this way. Other kits carry a shulker with real items in it (totems,
+		// potions) that Vexbot places and loots itself: removing that block would destroy everything inside.
+		if (kit == Kits.CRYSTAL && fightTicks % 4 == 0) { restockPlaced(a); restockPlaced(b); } // a placed shulker vanishes and restocks the kit
 		trackHoles(a, b);
 		// A bot that drops off the server mid-round while alive is brought back where it stood, with the kit, up to twice.
 		if (watch && handleBotDrop(0, nameA, nameB, a, -90f)) return;

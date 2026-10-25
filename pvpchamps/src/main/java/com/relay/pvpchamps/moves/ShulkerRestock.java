@@ -20,6 +20,8 @@ public final class ShulkerRestock implements Move {
 	public boolean start(Ctx c) {
 		if (c.st.cooldown(id()) > 0) return MoveEngine.reject(id(), "cooldown");
 		if (c.find(Items.SHULKER_BOX) < 0) return MoveEngine.reject(id(), "no_shulker");
+		// Only the Crystal kit has the empty restock shulker; other kits' shulkers hold real items and are Vexbot's to place.
+		if (c.st.stash == null && c.count(Items.END_CRYSTAL) == 0 && c.count(Items.RESPAWN_ANCHOR) == 0 && c.count(Items.GLOWSTONE) == 0) return MoveEngine.reject(id(), "not_crystal_kit");
 		if (!c.bot.onGround() || c.bot.isFallFlying()) return MoveEngine.reject(id(), "airborne");
 		boolean low = crystals(c) <= 24 || c.count(Items.OBSIDIAN) <= 16 || c.count(Items.GOLDEN_APPLE) <= 16 || c.count(Items.ENDER_PEARL) <= 16
 			|| c.count(Items.TIPPED_ARROW) <= 32;

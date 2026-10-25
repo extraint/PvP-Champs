@@ -34,6 +34,7 @@ public final class MoveEngine {
 		final List<Move> moves;
 		net.minecraft.world.item.ItemStack stash; // crystals put aside by CrystalGate
 		int stashSlot;
+		int inHole; // consecutive start checks spent deep below the arena floor
 
 		State() {
 			moves = List.of(new HealAtFourHearts(), new PearlOut(), new ShulkerRestock(), new ExplosionShield(), new AxeOpener(), new StunSlam(), new PotUp(), new HealPunish(), new MaceSmash(), new SpearAscent(), new ReachCombo(), punish, new MasterCircle(), new MendReset(), new PearlClose(), new BaitRetreat(punish), new LungeSwap(), new WallOff(), new CartBomb(), new TntMinecart(), new PearlWind(), new StrafePressure(), new AntiStall(), new ShieldBreak(), new ThreeBlockHit());
