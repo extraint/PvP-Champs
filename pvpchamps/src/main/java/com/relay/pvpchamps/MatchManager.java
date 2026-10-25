@@ -59,6 +59,7 @@ public final class MatchManager {
 	}
 
 	public static void stop() {
+		Draft.cancel();
 		if (bracket != null) bracket.stop();
 		bracket = null;
 		queue.clear();
@@ -79,6 +80,7 @@ public final class MatchManager {
 	}
 
 	public static void tick() {
+		Draft.tickActive();
 		if (current == null) startQueued();
 		if (current != null) {
 			Bout m = current;
@@ -86,7 +88,7 @@ public final class MatchManager {
 			// A tournament queues its next match from inside the end callback, so only clear if nothing replaced it.
 			if (m.isDone() && current == m) { current = null; currentOwner = null; }
 		}
-		if (current == null && queue.isEmpty()) {
+		if (current == null && queue.isEmpty() && !Draft.pending()) {
 			// A tournament that is neither playing nor waiting lost its match to a cancel: drop it.
 			for (Tournament t : tournaments) if (!t.isOver()) t.abort();
 			tournaments.removeIf(Tournament::isOver);

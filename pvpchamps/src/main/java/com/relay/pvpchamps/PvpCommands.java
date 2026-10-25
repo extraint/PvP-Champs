@@ -61,6 +61,11 @@ public final class PvpCommands {
 					say(c.getSource(), "Removed " + names.size() + " bot(s).");
 					return 1;
 				})))
+			.then(Commands.literal("draft")
+				.executes(c -> draftCmd(c.getSource(), null))
+				.then(Commands.argument("kit", StringArgumentType.greedyString())
+					.suggests((c, b) -> SharedSuggestionProvider.suggest(Draft.POOL.stream().map(k -> k.id), b))
+					.executes(c -> draftCmd(c.getSource(), StringArgumentType.getString(c, "kit")))))
 			.then(Commands.literal("tournament")
 				.then(Commands.literal("start").executes(c -> tournamentStart(c.getSource(), Tournament.Mode.SOLO, null)))
 				.then(Commands.literal("2v2")
@@ -237,6 +242,12 @@ public final class PvpCommands {
 		MatchManager.setBracket(b);
 		b.start();
 		return 1;
+	}
+
+	private static int draftCmd(CommandSourceStack src, String kit) {
+		String err = Draft.choose(kit);
+		if (err != null) say(src, err);
+		return err == null ? 1 : 0;
 	}
 
 	private static int tournamentSkip(CommandSourceStack src) {

@@ -126,18 +126,36 @@ public final class Tournament {
 	private void play(Pair p, boolean mine) {
 		List<String> a = mine && hasMe(p.b()) ? p.b() : p.a();
 		List<String> b = a == p.a() ? p.b() : p.a();
-		Kits kit = pickKit(b, mine);
-		String label = prefix();
-		Consumer<Boolean> done = aWon -> finished(a, b, aWon, mine);
 		humanMatch = mine;
 		activePair = p;
+		if (mine && mode == Mode.SOLO) {       // your own series starts with the kit draft in a menu
+			ServerPlayer pl = player();
+			if (pl != null) {
+				Draft.start(server, pl, a.get(0), a.get(0), b.get(0), 3, this::kitsOf, n -> rating(List.of(n)), this::broadcast,
+					games -> { if (!over) queue(a, b, games.get(0), games, mine); });
+				return;
+			}
+		}
+		queue(a, b, pickKit(b, mine), null, mine);
+	}
+
+	private List<String> kitsOf(String name) {
+		Roster.Opponent o = Roster.byName(name);
+		return o == null || o.kits().isEmpty() ? Kits.ids() : o.kits();
+	}
+
+	private void queue(List<String> a, List<String> b, Kits kit, List<Kits> games, boolean mine) {
+		String label = prefix();
+		Consumer<Boolean> done = aWon -> finished(a, b, aWon, mine);
 		MatchManager.enqueue(this, () -> {
 			ServerPlayer pl = player();
 			if (pl == null) { over = true; return null; }
 			if (mine) pl.sendSystemMessage(Component.literal("§eYour match is up: " + label(a) + " vs " + label(b) + " (" + kit.label + ")"));
-			return mode == Mode.SOLO
-				? new Match(server, pl, !mine, a.get(0), b.get(0), kit, 3, label, EVENT, done)
-				: new TeamMatch(server, pl, !mine, a, b, kit, 3, label, EVENT, done);
+			if (mode == Mode.SOLO) {
+				Match m = new Match(server, pl, !mine, a.get(0), b.get(0), kit, 3, label, EVENT, done);
+				return games == null ? m : m.setGameKits(games);
+			}
+			return new TeamMatch(server, pl, !mine, a, b, kit, 3, label, EVENT, done);
 		});
 	}
 

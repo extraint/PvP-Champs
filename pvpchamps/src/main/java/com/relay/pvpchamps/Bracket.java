@@ -187,11 +187,16 @@ public final class Bracket {
 		}
 		broadcast("§e" + st.label() + ": " + a + " vs " + b + " (best of " + st.bestOf() + ")");
 		draftLog = new ArrayList<>();
-		List<Kits> games = draft(a, b, st.bestOf());
+		publish();
+		boolean mine = duo && (hasMe(a) || hasMe(b));
+		Draft.start(server, mine ? viewer : null, mine ? (hasMe(a) ? a : b) : null, a, b, st.bestOf(), this::kitsOf, this::rating, this::broadcast,
+			games -> { if (!stopped) play(st, a, b, games, mine); });
+	}
+
+	private void play(Step st, String a, String b, List<Kits> games, boolean mine) {
 		drafts.add(draftLog);
 		publish();
 		String label = EVENT + " · " + st.label();
-		boolean mine = duo && (hasMe(a) || hasMe(b));
 		boolean swap = mine && hasMe(b);       // you are always side A of your own match
 		String ta = swap ? b : a, tb = swap ? a : b;
 		if (mine) broadcast("§eYour match is up!");
@@ -212,66 +217,6 @@ public final class Bracket {
 		int i = steps.indexOf(st);
 		stepWinner[i] = winner;
 		stepScore[i] = WebStats.lastScoreFor(members(winner).get(members(winner).size() - 1));
-	}
-
-	/** The kits a series drafts from (Netherite OP is not one of the event's kits). */
-	private static final List<Kits> POOL = List.of(Kits.SWORD, Kits.UHC, Kits.SPEAR_MACE, Kits.CRYSTAL, Kits.CART,
-		Kits.DIAMOND_SMP, Kits.NETHERITE_SMP);
-
-	/**
-	 * The kit draft, with the higher seed (higher rating) going first.
-	 * Best of 3: ban, ban, pick, pick, ban, ban, and the last kit left is the decider (games 1, 2, 3).
-	 * Best of 5: ban, ban, and the five kits left are the five games, in a random order.
-	 */
-	private List<Kits> draft(String a, String b, int bestOf) {
-		String hi = rating(a) >= rating(b) ? a : b, lo = hi.equals(a) ? b : a;
-		List<Kits> left = new ArrayList<>(POOL);
-		ban(hi, lo, left);
-		ban(lo, hi, left);
-		if (bestOf >= 5) {
-			Collections.shuffle(left, rng);
-			broadcast("§7Games: " + names(left));
-			return left;
-		}
-		Kits p1 = pick(hi, left), p2 = pick(lo, left);
-		ban(hi, lo, left);
-		ban(lo, hi, left);
-		Kits decider = left.get(0);
-		broadcast("§7Decider: " + decider.label);
-		return List.of(p1, p2, decider);
-	}
-
-	/** Bans the kit that helps the opponent most: one they play and the banner does not. */
-	private void ban(String by, String opp, List<Kits> left) {
-		Kits best = null;
-		double bestScore = -1e9;
-		for (Kits k : left) {
-			double score = (kitsOf(opp).contains(k.id) ? 2 : 0) - (kitsOf(by).contains(k.id) ? 1 : 0) + rng.nextDouble() * 0.5;
-			if (score > bestScore) { bestScore = score; best = k; }
-		}
-		left.remove(best);
-		broadcast("§c" + by + " bans " + best.label);
-	}
-
-	/** Picks the banner's own best kit still available (earlier in their kit list means more preferred). */
-	private Kits pick(String by, List<Kits> left) {
-		Kits best = null;
-		double bestScore = -1e9;
-		List<String> own = kitsOf(by);
-		for (Kits k : left) {
-			int i = own.indexOf(k.id);
-			double score = (i >= 0 ? 3 - i * 0.2 : 0) + rng.nextDouble() * 0.5;
-			if (score > bestScore) { bestScore = score; best = k; }
-		}
-		left.remove(best);
-		broadcast("§a" + by + " picks " + best.label);
-		return best;
-	}
-
-	private static String names(List<Kits> kits) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < kits.size(); i++) sb.append(i == 0 ? "" : ", ").append(kits.get(i).label);
-		return sb.toString();
 	}
 
 	private List<String> kitsOf(String entrant) {
