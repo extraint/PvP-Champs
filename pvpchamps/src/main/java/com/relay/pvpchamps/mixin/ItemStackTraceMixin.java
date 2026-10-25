@@ -17,6 +17,13 @@ public abstract class ItemStackTraceMixin {
 			new Throwable("SWORD SHRUNK dmg=" + s.getDamageValue() + "/" + s.getMaxDamage()).printStackTrace();
 	}
 
+	@Inject(method = "split", at = @At("HEAD"))
+	private void pvpchamps$split(int n, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<ItemStack> cir) {
+		ItemStack s = (ItemStack) (Object) this;
+		if ((s.getItem() == Items.NETHERITE_SWORD || s.getItem() == Items.DIAMOND_SWORD) && s.getCount() - n <= 0)
+			new Throwable("SWORD SPLIT dmg=" + s.getDamageValue() + "/" + s.getMaxDamage()).printStackTrace();
+	}
+
 	@Inject(method = "setCount", at = @At("HEAD"))
 	private void pvpchamps$count(int n, CallbackInfo ci) {
 		ItemStack s = (ItemStack) (Object) this;

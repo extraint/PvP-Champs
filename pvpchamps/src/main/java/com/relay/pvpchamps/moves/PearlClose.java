@@ -18,6 +18,8 @@ public final class PearlClose implements Move {
 		if (c.dist < 18 || c.dist > 48 || c.st.cooldown(id()) > 0) return false;
 		if (!c.bot.onGround() || c.bot.isFallFlying() || c.bot.isUsingItem() || c.count(Items.ENDER_PEARL) == 0) return false;
 		if (c.st.rng.nextDouble() > 0.3) return false;
+		// Aggro pearl only to secure a pop or a kill, or with a big health lead to keep the pressure (HT2 guide).
+		if (!(c.target.getHealth() <= 8f || c.hp() - c.target.getHealth() >= 8f)) return false;
 		phase = 0;
 		wait = 0;
 		return true;

@@ -28,6 +28,16 @@ public abstract class InventoryTraceMixin {
 		if (isSword(((Inventory) (Object) this).getItem(slot))) trace("removeItemNoUpdate(" + slot + ")");
 	}
 
+	@Inject(method = "clearContent", at = @At("HEAD"))
+	private void pvpchamps$clear(CallbackInfo ci) {
+		for (int i = 0; i < 41; i++) if (isSword(((Inventory) (Object) this).getItem(i))) { trace("clearContent"); return; }
+	}
+
+	@Inject(method = "dropAll", at = @At("HEAD"))
+	private void pvpchamps$dropAll(CallbackInfo ci) {
+		for (int i = 0; i < 41; i++) if (isSword(((Inventory) (Object) this).getItem(i))) { trace("dropAll"); return; }
+	}
+
 	private static boolean isSword(ItemStack s) { return s.getItem() == Items.NETHERITE_SWORD || s.getItem() == Items.DIAMOND_SWORD; }
 
 	private static void trace(String what) {

@@ -17,7 +17,7 @@ import vexbot.fakeplayer.bot.BotPlayerActionPack;
  * Vexbot's own heal threshold is fixed in its jar, so this runs ahead of it.
  */
 public final class HealAtFourHearts implements Move {
-	private enum Mode { POTION, APPLE }
+	private enum Mode { POTION, APPLE, PEARL }
 
 	private Mode mode;
 	private int ticks, fled;
@@ -38,6 +38,20 @@ public final class HealAtFourHearts implements Move {
 		return -1;
 	}
 
+	/** The opponent is stuck in a cobweb: slowed and unable to crit, the best moment to heal (HT2 Diamond SMP guide). */
+	private static boolean inWeb(Ctx c) {
+		return c.target.level().getBlockState(c.target.blockPosition()).is(net.minecraft.world.level.block.Blocks.COBWEB);
+	}
+
+	/**
+	 * Down on health in a trade it cannot gap out of (opponent on top of it, clearly ahead, no healing potion): the guide's
+	 * answer is to pearl away, then gap. Throws toward the far side of the arena, away from the opponent.
+	 */
+	private static boolean pearlAway(Ctx c, float hp) {
+		return hp <= 6.5f && c.dist <= 4.5 && c.target.getHealth() >= hp + 3f && c.count(Items.ENDER_PEARL) > 0 && potionSlot(c) < 0
+			&& c.st.cooldown("pearl_away") <= 0 && c.bot.onGround();
+	}
+
 	/** The opponent is moving away from the bot: a good moment to disengage and heal instead of chasing. */
 	private static boolean opponentRunning(Ctx c) {
 		var to = c.target.position().subtract(c.bot.position()).multiply(1, 0, 1);
@@ -53,15 +67,16 @@ public final class HealAtFourHearts implements Move {
 		double skill = ReachCombo.skillOf(c);      // 0..1 from the bot's tier in this kit
 		float dangerHp = (float) (6 + 2 * skill);    // a real emergency: 3 to 4 hearts, not the first scratch
 		float topUpHp = (float) (10 + 4 * skill);    // top-ups wait for a safe window (see below), 5 to 7 hearts
-		boolean danger = hp <= dangerHp, safeTopUp = hp <= topUpHp && (c.dist > 7.0 || opponentRunning(c)); // heal earlier: 5 hearts is danger, 7 is a safe top-up
+		boolean danger = hp <= dangerHp, safeTopUp = hp <= topUpHp && (c.dist > 7.0 || opponentRunning(c) || inWeb(c)); // heal earlier: 5 hearts is danger, 7 is a safe top-up
 		// After a totem pop the bot has Regeneration II for 45 seconds: let it heal on its own and keep the pressure, and only
 		// step in with a potion if it is really low.
 		if (c.bot.hasEffect(net.minecraft.world.effect.MobEffects.REGENERATION) && hp > 6f) return MoveEngine.reject(id(), "regen_active");
 		if (!danger && !safeTopUp) return MoveEngine.reject(id(), "healthy_hp" + (int) Math.min(hp, 20));
-		if (danger && potionSlot(c) >= 0) mode = Mode.POTION;
+		if (danger && pearlAway(c, hp)) mode = Mode.PEARL;
+		else if (danger && potionSlot(c) >= 0) mode = Mode.POTION;
 		else if (c.count(Items.GOLDEN_APPLE) > 0) {
 			// Never gap with the opponent on top of you unless it is the last resort: they get free hits while you eat.
-			if (c.dist < 3.0 && hp > 6f && !opponentRunning(c)) return MoveEngine.reject(id(), "opponent_near_no_gap");
+			if (c.dist < 3.0 && hp > 6f && !opponentRunning(c) && !inWeb(c)) return MoveEngine.reject(id(), "opponent_near_no_gap");
 			mode = Mode.APPLE;
 		}
 		else return MoveEngine.reject(id(), "nothing_to_heal_with");
@@ -74,6 +89,24 @@ public final class HealAtFourHearts implements Move {
 	@Override
 	public boolean tick(Ctx c) {
 		if (++ticks > 140) return false;
+		if (mode == Mode.PEARL) {
+			if (!c.hold(Items.ENDER_PEARL)) { mode = Mode.APPLE; return true; }
+			var origin = com.relay.pvpchamps.MatchManager.origin();
+			net.minecraft.world.phys.Vec3 away = c.bot.position().subtract(c.target.position()).multiply(1, 0, 1);
+			net.minecraft.world.phys.Vec3 dir = away.lengthSqr() < 1e-4 ? new net.minecraft.world.phys.Vec3(1, 0, 0) : away.normalize();
+			net.minecraft.world.phys.Vec3 land = c.bot.position().add(dir.scale(18));
+			if (origin != null) { // stay on the arena floor: never throw out over the stands
+				net.minecraft.world.phys.Vec3 off = land.subtract(origin).multiply(1, 0, 1);
+				if (off.length() > 34) land = origin.add(off.normalize().scale(34));
+				land = new net.minecraft.world.phys.Vec3(land.x, origin.y, land.z);
+			}
+			float[] a = Ballistics.aim(c.bot.getEyePosition(), land);
+			c.pack.look(a[0], a[1]);
+			c.pack.stopMovement();
+			if (ticks == 4) c.useOnce();
+			if (ticks >= 7) { c.st.setCooldown("pearl_away", 400); mode = Mode.APPLE; ticks = 0; fled = 0; } // landed far away: now the gap to eat in
+			return true;
+		}
 		if (mode == Mode.POTION) {
 			int slot = potionSlot(c);
 			if (slot < 0) return false;
@@ -90,6 +123,7 @@ public final class HealAtFourHearts implements Move {
 		}
 		if (c.dist < 4.0 && c.hp() > 6f && fled < 20 && flee(c, 5.0, 20)) return true; // a short break from point-blank range, then eat where it stands
 		if (!c.hold(Items.GOLDEN_APPLE)) return false;
+		c.face(c.targetEye());                          // keep eyes on the opponent while eating, not on wherever the run ended
 		c.pack.stopMovement();
 		c.pack.start(BotPlayerActionPack.ActionType.USE, BotPlayerActionPack.Action.continuous());
 		return c.bot.isUsingItem() && c.bot.getHealth() < 20f;
@@ -99,7 +133,9 @@ public final class HealAtFourHearts implements Move {
 	private boolean flee(Ctx c, double gap, int maxTicks) {
 		if (fled == 0 && c.dist <= 3.2 && c.bot.getAttackStrengthScale(0.5f) >= 0.9f) c.attackOnce(); // fly-out: land one hit, then get flung away
 		if (c.dist >= gap || ++fled > maxTicks) return false;
-		if (fled % 4 == 1) fleeYaw = c.openYawAwayFrom(c.target.position()); // re-check the way out every few ticks
+		// Pick the way out once and stick to it: re-picking every few ticks made the head swing back and forth. Look again
+		// only if the bot has barely moved (a wall in the way).
+		if (fled == 1 || (fled % 10 == 1 && c.st.stillTicks > 5)) fleeYaw = c.openYawAwayFrom(c.target.position());
 		c.pack.look(fleeYaw, 0f);
 		c.pack.setForward(1f);
 		c.pack.setSprinting(true);
