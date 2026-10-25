@@ -64,10 +64,7 @@ public final class PvpCommands {
 			.then(Commands.literal("tournament")
 				.then(Commands.literal("start").executes(c -> tournamentStart(c.getSource(), Tournament.Mode.SOLO, null)))
 				.then(Commands.literal("2v2")
-					.executes(c -> tournamentStart(c.getSource(), Tournament.Mode.DUO, null))
-					.then(Commands.argument("partner", StringArgumentType.word())
-						.suggests((c, b) -> SharedSuggestionProvider.suggest(Roster.all().stream().map(Roster.Opponent::name), b))
-						.executes(c -> tournamentStart(c.getSource(), Tournament.Mode.DUO, StringArgumentType.getString(c, "partner")))))
+					.executes(c -> tournamentStart(c.getSource(), Tournament.Mode.DUO, null)))
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
 				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
@@ -213,7 +210,7 @@ public final class PvpCommands {
 	private static int tournamentStart(CommandSourceStack src, Tournament.Mode mode, String partner) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
 		if (MatchManager.blocksTournament()) { say(src, "A match or bracket is already running (/pvpchamps stop)."); return 0; }
-		for (Tournament t : MatchManager.tournaments()) if (t.mode() == mode && !t.isOver()) { say(src, "That tournament is already running."); return 0; }
+		for (Tournament t : MatchManager.tournaments()) if (!t.isOver()) { say(src, "You can only be in one tournament at a time (/pvpchamps stop)."); return 0; }
 		if (partner != null && Roster.byName(partner) == null) { say(src, "Unknown partner. /pvpchamps roster"); return 0; }
 		if (MatchManager.tournaments().isEmpty()) MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
 		MatchManager.addTournament(new Tournament(src.getServer(), p, mode, partner));

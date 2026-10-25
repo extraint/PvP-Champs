@@ -286,8 +286,7 @@ public final class TeamMatch implements Bout {
 					message(Component.literal("§cFIGHT!"), true);
 					String a1 = teamA.get(0), b1 = teamB.get(0);
 					String extra = "2v2: " + label(teamA) + " vs " + label(teamB);
-					if (watch) Spec.watch(humanRef, a1, b1, kit.label, roundLabel(), event, extra);
-					else Spec.play(humanRef, humanName, inA(humanName) ? b1 : a1, kit.label, roundLabel(), event);
+					if (watch) Spec.watch(humanRef, a1, b1, kit.label, roundLabel(), event, extra); // no top bar while you play
 					state = State.FIGHT;
 				} else if (timer > sc(300)) {
 					message(Component.literal("§cA fighter did not spawn (is the area loaded and clear?). Match cancelled."));
@@ -331,7 +330,7 @@ public final class TeamMatch implements Bout {
 		if (aWon) scoreA++; else scoreB++;
 		List<String> win = aWon ? teamA : teamB, lose = aWon ? teamB : teamA;
 		for (int i = 0; i < Math.max(win.size(), lose.size()); i++) WebStats.round(win.get(i % win.size()), lose.get(i % lose.size()), kit.label);
-		if (!watch) Spec.roundEnd(humanRef, lose.get(0));
+		if (watch) Spec.roundEnd(humanRef, lose.get(0));
 		message(Component.literal("§6" + label(win) + " win round " + round + " (" + scoreA + "-" + scoreB + ")"));
 		state = State.BETWEEN;
 		timer = sc(140);

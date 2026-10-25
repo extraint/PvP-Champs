@@ -209,8 +209,7 @@ public final class Match implements Bout {
 					VexBotApi.hunt(nameB, nameA);
 					if (watch) VexBotApi.hunt(nameA, nameB);
 					message(Component.literal("§cFIGHT!"), true);
-					if (watch) Spec.watch(humanRef, nameA, nameB, kit.label, roundLabel(), event, "");
-					else Spec.play(humanRef, nameA, nameB, kit.label, roundLabel(), event);
+					if (watch) Spec.watch(humanRef, nameA, nameB, kit.label, roundLabel(), event, ""); // no top bar while you play
 					state = State.FIGHT;
 				} else if (timer > sc(300)) {
 					message(Component.literal("§cThe bot did not spawn (is the area loaded and clear?). Match cancelled."));
@@ -383,7 +382,7 @@ public final class Match implements Bout {
 		if (!loserDecided) return;
 		if (aLost) scoreB++; else scoreA++;
 		WebStats.round(aLost ? nameB : nameA, aLost ? nameA : nameB, kit.label);
-		Spec.roundEnd(humanRef, aLost ? nameA : nameB); // the breakdown opens only now, never on a client-side guess
+		if (watch) Spec.roundEnd(humanRef, aLost ? nameA : nameB); // the breakdown opens only now, never on a client-side guess
 		message(Component.literal("§6" + (aLost ? nameB : nameA) + " wins round " + round + " (" + scoreA + "-" + scoreB + ")"));
 		state = State.BETWEEN;
 		timer = sc(140);
