@@ -415,16 +415,13 @@ public final class Match {
 	/**
 	 * Refills the kit by what each stack is, not by where it sits: a fighter who has rearranged the hotbar keeps their
 	 * layout, and nothing is overwritten (the old slot-by-slot refill wrote the kit's glowstone over anchors that had
-	 * been moved into its slot). Anchors and totems are never touched. Armour and the offhand are replaced in place;
+	 * been moved into its slot). Anchors, totems, worn armour and the offhand are never touched;
 	 * tools, potions and the shulker box are renewed or given back; stackable items are topped up to the kit's count.
 	 */
 	private void restock(ServerPlayer p) {
 		net.minecraft.world.item.ItemStack[] want = p.getUUID().equals(humanId) && !watch ? Layouts.apply(p, kit, kitStacks) : kitStacks;
 		var inv = p.getInventory();
-		for (int i = 36; i < 41; i++) { // armour and offhand
-			var w = want[i];
-			if (!w.isEmpty() && !noRestock(w)) inv.setItem(i, w.copy());
-		}
+		// Worn armour and the offhand are left exactly as they are: a restock refills items only.
 		java.util.Map<String, java.util.List<Integer>> groups = new java.util.LinkedHashMap<>();
 		for (int i = 0; i < 36; i++) {
 			var w = want[i];
