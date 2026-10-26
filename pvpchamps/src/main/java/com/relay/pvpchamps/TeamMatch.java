@@ -96,7 +96,7 @@ public final class TeamMatch implements Bout {
 		aimTeams();
 		List<ServerPlayer> fighting = new ArrayList<>();
 		for (ServerPlayer p : participants) if (isHuman(p.getGameProfile().name())) fighting.add(p);
-		ping = Ping.begin(fighters(), fighting, text -> message(Component.literal(text)));
+		ping = Ping.begin(server, fighters(), fighting, text -> message(Component.literal(text)));
 		message(Component.literal("=== " + roundPrefix + ": " + label(teamA) + " vs " + label(teamB) + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
@@ -353,6 +353,7 @@ public final class TeamMatch implements Bout {
 	@Override
 	public void tick() {
 		if (state == State.DONE) return;
+		ping.syncBots();
 		boolean fighterGone = false;           // a fighter leaving ends the match; a spectator leaving does not
 		for (String n : humanNames) if (entity(n) == null) fighterGone = true;
 		if (fighterGone || players().isEmpty()) {

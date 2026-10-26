@@ -84,7 +84,7 @@ public final class Match implements Bout {
 			Roster.Opponent o = Roster.byName(n);
 			if (o != null) Roster.applyProfile(o);
 		}
-		ping = Ping.begin(java.util.List.of(a, b), watch ? java.util.List.of() : java.util.List.of(human), t -> message(Component.literal(t)));
+		ping = Ping.begin(server, java.util.List.of(a, b), watch ? java.util.List.of() : java.util.List.of(human), t -> message(Component.literal(t)));
 		message(Component.literal("=== " + roundPrefix + ": " + a + " vs " + b + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
@@ -185,6 +185,7 @@ public final class Match implements Bout {
 	@Override
 	public void tick() {
 		if (state == State.DONE) return;
+		ping.syncBots();
 		if (human() == null) { // the player left the server
 			System.err.println("[pvpchamps] match " + nameA + " vs " + nameB + " cancelled: " + humanId + " left the server");
 			finish(false, true);

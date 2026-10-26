@@ -151,8 +151,32 @@ public final class Ping {
 
 	/** The ping of one match: who is where, the host, and the lag put on the real players until {@link #end}. */
 	public static final class Session {
+		private final MinecraftServer server;
 		private final Map<String, Integer> pings = new HashMap<>();
+		private final Map<String, Integer> shown = new HashMap<>();       // what each bot's tab-list ping currently says
 		private final List<ServerPlayer> lagged = new ArrayList<>();
+
+		Session(MinecraftServer server) { this.server = server; }
+
+		/** Makes each bot's ping in the tab list its simulated ping (a bot has no connection of its own, so nothing else would ever set it). */
+		public void syncBots() {
+			if (!enabled) return;
+			for (Map.Entry<String, Integer> e : pings.entrySet()) showPing(e.getKey(), e.getValue());
+		}
+
+		private void showPing(String bot, int ms) {
+			ServerPlayer p = vexbot.api.VexBotApi.resolveBot(server, bot);
+			if (p == null || p.connection == null) return;
+			if (p.connection.latency() == ms && shown.containsKey(bot)) return;
+			try {
+				((com.relay.pvpchamps.mixin.CommonListenerAccess) p.connection).pvpchamps$setLatency(ms);
+				server.getPlayerList().broadcastAll(new net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket(
+					java.util.EnumSet.of(net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY), List.of(p)));
+				shown.put(bot, ms);
+			} catch (RuntimeException ex) {
+				System.err.println("[pvpchamps] could not set " + bot + "'s ping: " + ex);
+			}
+		}
 
 		/** Gives every bot in the match its ping (call after the bot's tier is applied each round, which resets its skill). */
 		public void applyBots() {
@@ -172,6 +196,7 @@ public final class Ping {
 		public void end() {
 			for (ServerPlayer p : lagged) clearLag(p);
 			lagged.clear();
+			for (String bot : pings.keySet()) showPing(bot, 0);
 		}
 	}
 
@@ -179,8 +204,8 @@ public final class Ping {
 	 * Starts the ping for a match. {@code fighters} are every fighter's name; {@code humans} the real players among them.
 	 * Announces the host and everyone's ping through {@code say}.
 	 */
-	public static Session begin(List<String> fighters, List<ServerPlayer> humans, Consumer<String> say) {
-		Session s = new Session();
+	public static Session begin(MinecraftServer server, List<String> fighters, List<ServerPlayer> humans, Consumer<String> say) {
+		Session s = new Session(server);
 		if (!enabled) return s;
 		List<Region> regions = new ArrayList<>();
 		Map<String, Region> by = new HashMap<>();
@@ -229,10 +254,11 @@ public final class Ping {
 	public static List<String> status(MinecraftServer server) {
 		List<String> out = new ArrayList<>();
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-			if (p.connection == null || p.getClass().getSimpleName().contains("Bot")) continue;
+			if (p.connection == null) continue;
 			int added = 0;
-			try { if (channelOf(p).pipeline().get(HANDLER) instanceof Lag l) added = l.oneWayMs * 2; } catch (RuntimeException ignored) { continue; }
-			out.add(p.getGameProfile().name() + ": latency " + p.connection.latency() + " ms, simulated ping " + added + " ms");
+			boolean bot = vexbot.api.VexBotApi.isBot(server, p.getGameProfile().name());
+			if (!bot) try { if (channelOf(p).pipeline().get(HANDLER) instanceof Lag l) added = l.oneWayMs * 2; } catch (RuntimeException ignored) { continue; }
+			out.add(p.getGameProfile().name() + (bot ? " (bot)" : "") + ": latency " + p.connection.latency() + " ms" + (bot ? "" : ", simulated ping " + added + " ms"));
 		}
 		return out;
 	}
@@ -245,46 +271,72 @@ public final class Ping {
 	}
 
 	/**
-	 * Delays every packet in and out by half the ping (plus or minus 12% jitter). Deliveries are kept in order: a packet is
-	 * never delivered before one sent earlier, even when the delay is lowered.
+	 * Delays every packet in and out by half the ping (plus or minus 12% jitter). Each direction has its own queue that is
+	 * drained strictly in order, so a packet is never delivered before one sent earlier: reordering packets is what makes
+	 * a client disconnect with a network protocol error.
 	 */
 	private static final class Lag extends ChannelDuplexHandler {
 		volatile int oneWayMs;
-		private long nextIn, nextOut;
 		private final Random rng = new Random();
+		private final java.util.ArrayDeque<Item> in = new java.util.ArrayDeque<>(), out = new java.util.ArrayDeque<>();
+		private long lastIn, lastOut;
+		private boolean pumpIn, pumpOut;
+
+		private record Item(Object msg, ChannelPromise promise, long due) {}   // promise null: a flush (outbound) or read-complete (inbound)
 
 		Lag(int oneWayMs) { this.oneWayMs = oneWayMs; }
 
 		private long due(long previous) {
-			long now = System.nanoTime();
 			double jitter = 1.0 + (rng.nextDouble() - 0.5) * 0.24;
-			return Math.max(previous, now + (long) (oneWayMs * jitter * 1_000_000L));
+			return Math.max(previous, System.nanoTime() + (long) (oneWayMs * jitter * 1_000_000L));
+		}
+
+		private void queue(ChannelHandlerContext ctx, java.util.ArrayDeque<Item> q, Item item, boolean inbound) {
+			q.add(item);
+			boolean running = inbound ? pumpIn : pumpOut;
+			if (!running) schedule(ctx, q, inbound);
+		}
+
+		private void schedule(ChannelHandlerContext ctx, java.util.ArrayDeque<Item> q, boolean inbound) {
+			Item head = q.peek();
+			if (head == null) { if (inbound) pumpIn = false; else pumpOut = false; return; }
+			if (inbound) pumpIn = true; else pumpOut = true;
+			ctx.executor().schedule(() -> drain(ctx, q, inbound), Math.max(0, head.due() - System.nanoTime()), TimeUnit.NANOSECONDS);
+		}
+
+		private void drain(ChannelHandlerContext ctx, java.util.ArrayDeque<Item> q, boolean inbound) {
+			long now = System.nanoTime();
+			for (Item it; (it = q.peek()) != null && it.due() <= now; ) {
+				q.poll();
+				if (inbound) { if (it.msg() == null) ctx.fireChannelReadComplete(); else ctx.fireChannelRead(it.msg()); }
+				else if (it.msg() == null) ctx.flush();
+				else ctx.write(it.msg(), it.promise());
+			}
+			schedule(ctx, q, inbound);
 		}
 
 		@Override
 		public void channelRead(ChannelHandlerContext ctx, Object msg) {
-			if (oneWayMs <= 0 && nextIn <= System.nanoTime()) { ctx.fireChannelRead(msg); return; }
-			nextIn = due(nextIn);
-			ctx.executor().schedule(() -> ctx.fireChannelRead(msg), Math.max(0, nextIn - System.nanoTime()), TimeUnit.NANOSECONDS);
+			lastIn = due(lastIn);
+			queue(ctx, in, new Item(msg, null, lastIn), true);
 		}
 
 		@Override
 		public void channelReadComplete(ChannelHandlerContext ctx) {
-			if (oneWayMs <= 0 && nextIn <= System.nanoTime()) { ctx.fireChannelReadComplete(); return; }
-			ctx.executor().schedule(ctx::fireChannelReadComplete, Math.max(0, nextIn - System.nanoTime()), TimeUnit.NANOSECONDS);
+			lastIn = due(lastIn);
+			queue(ctx, in, new Item(null, null, lastIn), true);
 		}
 
 		@Override
 		public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-			if (oneWayMs <= 0 && nextOut <= System.nanoTime()) { ctx.write(msg, promise); return; }
-			nextOut = due(nextOut);
-			ctx.executor().schedule(() -> ctx.write(msg, promise), Math.max(0, nextOut - System.nanoTime()), TimeUnit.NANOSECONDS);
+			lastOut = due(lastOut);
+			queue(ctx, out, new Item(msg, promise, lastOut), false);
 		}
 
 		@Override
 		public void flush(ChannelHandlerContext ctx) {
-			if (oneWayMs <= 0 && nextOut <= System.nanoTime()) { ctx.flush(); return; }
-			ctx.executor().schedule(ctx::flush, Math.max(0, nextOut - System.nanoTime()), TimeUnit.NANOSECONDS);
+			lastOut = due(lastOut);
+			queue(ctx, out, new Item(null, null, lastOut), false);
 		}
 	}
 }

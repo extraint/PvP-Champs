@@ -9,4 +9,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface CommonListenerAccess {
 	@Accessor("connection")
 	Connection pvpchamps$connection();
+
+	@Accessor("latency")
+	void pvpchamps$setLatency(int latency);
 }
