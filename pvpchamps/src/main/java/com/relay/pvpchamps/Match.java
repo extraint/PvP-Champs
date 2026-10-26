@@ -46,6 +46,7 @@ public final class Match implements Bout {
 	private boolean loserDecided, aLost;
 	private net.minecraft.world.item.ItemStack[] kitStacks;
 	private final java.util.Map<String, String> barSeen = new java.util.HashMap<>();
+	private Ping.Session ping;
 	private int holeA, holeB; // ticks each fighter has spent well below the arena floor
 
 	/** Tiny holder so the saved inventory can be null until captured. */
@@ -83,6 +84,7 @@ public final class Match implements Bout {
 			Roster.Opponent o = Roster.byName(n);
 			if (o != null) Roster.applyProfile(o);
 		}
+		ping = Ping.begin(java.util.List.of(a, b), watch ? java.util.List.of() : java.util.List.of(human), t -> message(Component.literal(t)));
 		message(Component.literal("=== " + roundPrefix + ": " + a + " vs " + b + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
@@ -141,6 +143,7 @@ public final class Match implements Bout {
 		}
 		Roster.applyTier(nameB, kit);
 		if (watch) Roster.applyTier(nameA, kit);
+		ping.applyBots();
 		state = State.COUNTDOWN;
 		timer = sc(60);
 		loserDecided = false;
@@ -417,6 +420,7 @@ public final class Match implements Bout {
 	private void finish(boolean aWon, boolean cancelled) {
 		if (state == State.DONE) return;
 		state = State.DONE;
+		ping.end();
 		WebStats.endLive(nameA + "|" + nameB);
 		if (!cancelled) WebStats.match(aWon ? nameA : nameB, aWon ? nameB : nameA, kit.label, roundPrefix, Math.max(scoreA, scoreB), Math.min(scoreA, scoreB));
 		VexBotApi.despawnBot(server, nameB);

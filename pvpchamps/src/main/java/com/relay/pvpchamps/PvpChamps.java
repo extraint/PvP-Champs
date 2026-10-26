@@ -11,6 +11,7 @@ public final class PvpChamps implements ModInitializer {
 	public void onInitialize() {
 		Roster.load();
 		Arena.load();
+		Ping.load();
 		WebStats.start(); // up from game launch to game exit: the page works with or without a world loaded
 		net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			if (WebStats.port() > 0) handler.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(

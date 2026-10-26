@@ -61,6 +61,16 @@ public final class PvpCommands {
 					say(c.getSource(), "Removed " + names.size() + " bot(s).");
 					return 1;
 				})))
+			.then(Commands.literal("region")
+				.executes(c -> regionCmd(c.getSource(), null))
+				.then(Commands.argument("region", StringArgumentType.greedyString())
+					.suggests((c, bld) -> SharedSuggestionProvider.suggest(java.util.Arrays.stream(Ping.Region.values()).map(r -> r.name()), bld))
+					.executes(c -> regionCmd(c.getSource(), StringArgumentType.getString(c, "region")))))
+			.then(Commands.literal("regions").executes(c -> regionsCmd(c.getSource())))
+			.then(Commands.literal("ping")
+				.then(Commands.literal("on").executes(c -> { Ping.setEnabled(true); say(c.getSource(), "Simulated ping is on."); return 1; }))
+				.then(Commands.literal("off").executes(c -> { Ping.setEnabled(false); say(c.getSource(), "Simulated ping is off."); return 1; }))
+				.then(Commands.literal("status").executes(c -> { for (String l : Ping.status(c.getSource().getServer())) say(c.getSource(), l); return 1; })))
 			.then(Commands.literal("draft")
 				.executes(c -> draftCmd(c.getSource(), null))
 				.then(Commands.argument("kit", StringArgumentType.greedyString())
@@ -265,6 +275,27 @@ public final class PvpCommands {
 		Bracket b = new Bracket(src.getServer(), p);
 		MatchManager.setBracket(b);
 		b.start();
+		return 1;
+	}
+
+	/** /pvpchamps region [region]: where you are (default NA_WEST, California); it decides your ping in tournaments. */
+	private static int regionCmd(CommandSourceStack src, String region) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		ServerPlayer p = src.getPlayerOrException();
+		String me = p.getGameProfile().name();
+		if (region == null) { say(src, "You are in " + Ping.regionOf(me, true).label + " (" + Ping.regionOf(me, true).name() + "). /pvpchamps region <NA_WEST|NA_EAST|EU|SA|AS|OCE>"); return 1; }
+		Ping.Region r = null;
+		for (Ping.Region x : Ping.Region.values()) if (x.name().equalsIgnoreCase(region.trim()) || x.label.equalsIgnoreCase(region.trim())) r = x;
+		if (r == null) { say(src, "Unknown region. Use NA_WEST, NA_EAST, EU, SA, AS or OCE."); return 0; }
+		Ping.setHumanRegion(me, r);
+		say(src, "You are now in " + r.label + ".");
+		return 1;
+	}
+
+	private static int regionsCmd(CommandSourceStack src) {
+		java.util.Map<Ping.Region, java.util.List<String>> by = new java.util.EnumMap<>(Ping.Region.class);
+		for (Roster.Opponent o : Roster.all()) by.computeIfAbsent(Ping.regionOf(o.name(), false), k -> new java.util.ArrayList<>()).add(o.name());
+		for (var e : by.entrySet()) say(src, e.getKey().label + ": " + String.join(", ", e.getValue()));
+		say(src, "Best guesses, not verified. Edit config/pvpchamps/regions.json to correct anyone.");
 		return 1;
 	}
 

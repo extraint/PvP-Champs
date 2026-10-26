@@ -49,6 +49,7 @@ public final class TeamMatch implements Bout {
 	private final Set<String> dead = new HashSet<>();           // lower-case names of fighters dead this round
 	private final Map<String, Integer> missing = new HashMap<>(), hole = new HashMap<>();
 	private int lastDeathA, lastDeathB;
+	private Ping.Session ping;
 	private boolean spawned;
 	private final Set<String> prepared = new HashSet<>();
 	private float stallHp = -1;
@@ -93,6 +94,9 @@ public final class TeamMatch implements Bout {
 		}
 		makeTeams();
 		aimTeams();
+		List<ServerPlayer> fighting = new ArrayList<>();
+		for (ServerPlayer p : participants) if (isHuman(p.getGameProfile().name())) fighting.add(p);
+		ping = Ping.begin(fighters(), fighting, text -> message(Component.literal(text)));
 		message(Component.literal("=== " + roundPrefix + ": " + label(teamA) + " vs " + label(teamB) + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
@@ -318,6 +322,7 @@ public final class TeamMatch implements Bout {
 			message(Component.literal("§eGame " + round + " kit: " + kit.label));
 		}
 		for (String n : fighters()) if (!isHuman(n)) Roster.applyTier(n, kit);
+		ping.applyBots();
 		syncTeams();
 		state = State.COUNTDOWN;
 		spawned = false;
@@ -522,6 +527,7 @@ public final class TeamMatch implements Bout {
 	private void finish(boolean aWon, boolean cancelled) {
 		if (state == State.DONE) return;
 		state = State.DONE;
+		ping.end();
 		dropTeams();
 		WebStats.endLive(label(teamA) + "|" + label(teamB));
 		if (!cancelled) {
