@@ -19,19 +19,18 @@ import vexbot.api.VexBotApi;
 import vexbot.kit.KitManager;
 
 /**
- * One best-of-N match between two teams (2v2). Any member can be the human ({@code watch} false: the human fights and is
- * the first name in their team) or all four are bots with the human spectating ({@code watch} true). A round is a
- * countdown, the spawn, a fight until one whole team is dead, and a short pause. A dead bot is removed straight away so
- * Vexbot cannot respawn it in place; a dead human spectates the rest of the round.
+ * One best-of-N match between two teams (a team can be a single fighter). Any fighter can be a real player or a bot.
+ * {@code participants} are the real players of the tournament: those named in a team fight, the others spectate. A round
+ * is a countdown, the spawn, a fight until one whole team is dead, and a short pause. A dead bot is removed straight
+ * away so Vexbot cannot respawn it in place; a dead player spectates the rest of the round.
  */
 public final class TeamMatch implements Bout {
 	private enum State { COUNTDOWN, SPAWNING, FIGHT, BETWEEN, DONE }
 
 	private final MinecraftServer server;
-	private final java.util.UUID humanId;
-	private ServerPlayer humanRef;
-	private final String humanName;
-	private final boolean watch;
+	private final List<java.util.UUID> partIds = new ArrayList<>();      // every real player of the tournament
+	private final Set<String> humanNames = new HashSet<>();               // lower-case names of the real players fighting in this match
+	private final boolean watch;                                          // no real player fights: they all just spectate
 	private final List<String> teamA, teamB;
 	private Kits kit;
 	private List<Kits> gameKits;
@@ -40,8 +39,8 @@ public final class TeamMatch implements Bout {
 	private final Consumer<Boolean> onEnd;     // true if team A won
 	private final ServerLevel level;
 	private final Vec3 centre;
-	private final GameType savedMode;
-	private net.minecraft.world.item.ItemStack[] savedInv;
+	private final Map<java.util.UUID, GameType> savedMode = new HashMap<>();
+	private final Map<java.util.UUID, net.minecraft.world.item.ItemStack[]> savedInv = new HashMap<>();
 	private net.minecraft.world.item.ItemStack[] kitStacks;
 	private ArenaGuard arena;
 
@@ -56,27 +55,31 @@ public final class TeamMatch implements Bout {
 	private int stillFor;
 	private final WebStats.Live liveInfo = new WebStats.Live();
 
-	public TeamMatch(MinecraftServer server, ServerPlayer human, boolean watch, List<String> teamA, List<String> teamB, Kits kit,
+	public TeamMatch(MinecraftServer server, List<ServerPlayer> participants, List<String> teamA, List<String> teamB, Kits kit,
 			int bestOf, String roundPrefix, String event, Consumer<Boolean> onEnd) {
 		this.server = server;
-		this.humanId = human.getUUID();
-		this.humanRef = human;
-		this.humanName = human.getGameProfile().name();
-		this.watch = watch;
 		this.teamA = List.copyOf(teamA);
 		this.teamB = List.copyOf(teamB);
+		ServerPlayer lead = participants.get(0);
+		for (ServerPlayer p : participants) {
+			partIds.add(p.getUUID());
+			savedMode.put(p.getUUID(), p.gameMode());
+			String n = p.getGameProfile().name();
+			if (inMatch(n)) {
+				humanNames.add(n.toLowerCase());
+				net.minecraft.world.item.ItemStack[] inv = new net.minecraft.world.item.ItemStack[41];
+				for (int i = 0; i < 41; i++) inv[i] = p.getInventory().getItem(i).copy();
+				savedInv.put(p.getUUID(), inv);
+			}
+		}
+		this.watch = humanNames.isEmpty();
 		this.kit = kit;
 		this.bestOf = bestOf;
 		this.roundPrefix = roundPrefix;
 		this.event = event;
 		this.onEnd = onEnd;
-		this.level = (ServerLevel) human.level();
-		this.centre = MatchManager.origin() != null ? MatchManager.origin() : human.position();
-		this.savedMode = human.gameMode();
-		if (!watch) {
-			savedInv = new net.minecraft.world.item.ItemStack[41];
-			for (int i = 0; i < 41; i++) savedInv[i] = human.getInventory().getItem(i).copy();
-		}
+		this.level = (ServerLevel) lead.level();
+		this.centre = MatchManager.origin() != null ? MatchManager.origin() : lead.position();
 		vexbot.BotSettings.botDontLeave = true;
 		vexbot.BotSettings.botLeaveOnDeath = false;
 		vexbot.BotSettings.shulkerRegear = false;
@@ -169,19 +172,32 @@ public final class TeamMatch implements Bout {
 		return all;
 	}
 
-	private boolean isHuman(String name) { return !watch && name.equalsIgnoreCase(humanName); }
+	private boolean isHuman(String name) { return humanNames.contains(name.toLowerCase()); }
+
+	/** The name as the teams spell it. */
+	private String teamName(String name) {
+		for (String n : fighters()) if (n.equalsIgnoreCase(name)) return n;
+		return name;
+	}
 
 	private boolean inA(String name) { return teamA.stream().anyMatch(n -> n.equalsIgnoreCase(name)); }
 
 	private boolean inMatch(String name) { return inA(name) || teamB.stream().anyMatch(n -> n.equalsIgnoreCase(name)); }
 
-	private ServerPlayer human() {
-		ServerPlayer p = server.getPlayerList().getPlayer(humanId);
-		if (p != null) humanRef = p;
-		return p;
+	/** Every tournament player who is still online. */
+	private List<ServerPlayer> players() {
+		List<ServerPlayer> out = new ArrayList<>();
+		for (java.util.UUID id : partIds) { ServerPlayer p = server.getPlayerList().getPlayer(id); if (p != null) out.add(p); }
+		return out;
 	}
 
-	private ServerPlayer entity(String name) { return isHuman(name) ? human() : VexBotApi.resolveBot(server, name); }
+	private boolean spectates(ServerPlayer p) { return !isHuman(p.getGameProfile().name()); }
+
+	private ServerPlayer entity(String name) {
+		if (!isHuman(name)) return VexBotApi.resolveBot(server, name);
+		for (ServerPlayer p : players()) if (p.getGameProfile().name().equalsIgnoreCase(name)) return p;
+		return null;
+	}
 
 	private boolean alive(String name) { return !dead.contains(name.toLowerCase()); }
 
@@ -222,13 +238,12 @@ public final class TeamMatch implements Bout {
 		server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), cmd);
 	}
 
-	private void message(Component c) { humanRef.sendSystemMessage(c); }
+	private void message(Component c) { for (ServerPlayer p : players()) p.sendSystemMessage(c); }
 
-	private void message(Component c, boolean overlay) { humanRef.sendSystemMessage(c, overlay); }
+	private void message(Component c, boolean overlay) { for (ServerPlayer p : players()) p.sendSystemMessage(c, overlay); }
 
 	private void revive() {
-		ServerPlayer p = human();
-		if (p != null && !p.isAlive()) humanRef = server.getPlayerList().respawn(p, false, net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+		for (ServerPlayer p : players()) if (!p.isAlive()) server.getPlayerList().respawn(p, false, net.minecraft.world.entity.Entity.RemovalReason.KILLED);
 	}
 
 	private void prepare(ServerPlayer p, boolean isHumanFighter) {
@@ -317,21 +332,26 @@ public final class TeamMatch implements Bout {
 		for (String n : fighters()) if (!isHuman(n)) VexBotApi.despawnBot(server, n);
 		revive();
 		System.err.println("[pvpchamps] round " + round + " begins: " + label(teamA) + " vs " + label(teamB) + " in " + kit.label);
-		if (watch) {
-			humanRef.setGameMode(GameType.SPECTATOR);
-			teleport(humanRef, centre.add(0, 7, 0), 0f);
-		} else {
-			prepare(humanRef, true);
-			teleport(humanRef, spawnOf(humanName), yawOf(humanName));
+		for (ServerPlayer p : players()) {
+			String n = teamName(p.getGameProfile().name());
+			if (spectates(p)) {
+				p.setGameMode(GameType.SPECTATOR);
+				teleport(p, centre.add(0, 7, 0), 0f);
+			} else {
+				prepare(p, true);
+				teleport(p, spawnOf(n), yawOf(n));
+			}
+			Spec.stop(p);
 		}
-		Spec.stop(humanRef);
 	}
 
 	@Override
 	public void tick() {
 		if (state == State.DONE) return;
-		if (human() == null) {
-			System.err.println("[pvpchamps] team match cancelled: " + humanId + " left the server");
+		boolean fighterGone = false;           // a fighter leaving ends the match; a spectator leaving does not
+		for (String n : humanNames) if (entity(n) == null) fighterGone = true;
+		if (fighterGone || players().isEmpty()) {
+			System.err.println("[pvpchamps] team match cancelled: a player left the server");
 			finish(false, true);
 			return;
 		}
@@ -359,7 +379,7 @@ public final class TeamMatch implements Bout {
 					message(Component.literal("§cFIGHT!"), true);
 					String a1 = teamA.get(0), b1 = teamB.get(0);
 					String extra = "2v2: " + label(teamA) + " vs " + label(teamB);
-					if (watch) Spec.watch(humanRef, a1, b1, kit.label, roundLabel(), event, extra); // no top bar while you play
+					for (ServerPlayer p : players()) if (spectates(p)) Spec.watch(p, a1, b1, kit.label, roundLabel(), event, extra); // no top bar while you play
 					state = State.FIGHT;
 				} else if (timer > sc(300)) {
 					message(Component.literal("§cA fighter did not spawn (is the area loaded and clear?). Match cancelled."));
@@ -408,7 +428,7 @@ public final class TeamMatch implements Bout {
 		}
 		// Vexbot respawns a dead bot in place; take it out on the tick after, never inside the death (an explosion is still iterating players).
 		for (String n : fighters()) if (!isHuman(n) && !alive(n) && VexBotApi.resolveBot(server, n) != null) VexBotApi.despawnBot(server, n);
-		if (!watch && !alive(humanName)) spectateAsDead();
+		for (String n : humanNames) if (!alive(n)) spectateAsDead(n);
 		if (fightTicks == sc(60) || fightTicks == sc(140) || fightTicks % sc(200) == 0) retarget();
 		if (fightTicks % Math.max(2, sc(4)) == 1) publishLive();
 		if (fightTicks > sc(100)) stallWatch();
@@ -425,18 +445,19 @@ public final class TeamMatch implements Bout {
 		if (aWon) scoreA++; else scoreB++;
 		List<String> win = aWon ? teamA : teamB, lose = aWon ? teamB : teamA;
 		for (int i = 0; i < Math.max(win.size(), lose.size()); i++) WebStats.round(win.get(i % win.size()), lose.get(i % lose.size()), kit.label);
-		if (watch) Spec.roundEnd(humanRef, lose.get(0));
+		for (ServerPlayer p : players()) if (spectates(p)) Spec.roundEnd(p, lose.get(0));
 		message(Component.literal("§6" + label(win) + " win round " + round + " (" + scoreA + "-" + scoreB + ")"));
 		state = State.BETWEEN;
 		timer = sc(140);
 	}
 
 	/** A dead human spectates the rest of the round from above the arena. */
-	private void spectateAsDead() {
+	private void spectateAsDead(String name) {
 		revive();
-		if (humanRef.isAlive() && humanRef.gameMode() != GameType.SPECTATOR) {
-			humanRef.setGameMode(GameType.SPECTATOR);
-			teleport(humanRef, centre.add(0, 7, 0), 0f);
+		ServerPlayer p = entity(name);
+		if (p != null && p.isAlive() && p.gameMode() != GameType.SPECTATOR) {
+			p.setGameMode(GameType.SPECTATOR);
+			teleport(p, centre.add(0, 7, 0), 0f);
 		}
 	}
 
@@ -511,11 +532,14 @@ public final class TeamMatch implements Bout {
 		for (String n : fighters()) if (!isHuman(n)) VexBotApi.despawnBot(server, n);
 		if (arena != null) arena.restore();
 		revive();
-		Spec.stop(humanRef);
-		humanRef.setGameMode(savedMode);
-		if (!watch && savedInv != null) {
-			humanRef.getInventory().clearContent();
-			KitManager.apply(humanRef, savedInv);
+		for (ServerPlayer p : players()) {
+			Spec.stop(p);
+			p.setGameMode(savedMode.getOrDefault(p.getUUID(), GameType.SURVIVAL));
+			net.minecraft.world.item.ItemStack[] inv = savedInv.get(p.getUUID());
+			if (inv != null) {
+				p.getInventory().clearContent();
+				KitManager.apply(p, inv);
+			}
 		}
 		command("gamerule immediate_respawn false");
 		if (!cancelled) message(Component.literal("§a=== " + label(aWon ? teamA : teamB) + " win the match " + Math.max(scoreA, scoreB) + "-" + Math.min(scoreA, scoreB) + " ==="));

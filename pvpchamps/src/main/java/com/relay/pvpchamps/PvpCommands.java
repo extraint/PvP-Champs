@@ -67,9 +67,15 @@ public final class PvpCommands {
 					.suggests((c, b) -> SharedSuggestionProvider.suggest(Draft.POOL.stream().map(k -> k.id), b))
 					.executes(c -> draftCmd(c.getSource(), StringArgumentType.getString(c, "kit")))))
 			.then(Commands.literal("tournament")
-				.then(Commands.literal("start").executes(c -> tournamentBracket(c.getSource(), false)))
+				.then(Commands.literal("start").executes(c -> tournamentBracket(c.getSource(), false, ""))
+					.then(Commands.argument("players", StringArgumentType.greedyString())
+						.suggests((c, b) -> SharedSuggestionProvider.suggest(onlineNames(c.getSource()), b))
+						.executes(c -> tournamentBracket(c.getSource(), false, StringArgumentType.getString(c, "players")))))
 				.then(Commands.literal("2v2")
-					.executes(c -> tournamentBracket(c.getSource(), true)))
+					.executes(c -> tournamentBracket(c.getSource(), true, ""))
+					.then(Commands.argument("players", StringArgumentType.greedyString())
+						.suggests((c, b) -> SharedSuggestionProvider.suggest(onlineNames(c.getSource()), b))
+						.executes(c -> tournamentBracket(c.getSource(), true, StringArgumentType.getString(c, "players")))))
 				.then(Commands.literal("watch").executes(c -> tournamentWatch(c.getSource())))
 				.then(Commands.literal("skip").executes(c -> tournamentSkip(c.getSource())))
 				.then(Commands.literal("status").executes(c -> tournamentStatus(c.getSource()))))
@@ -212,13 +218,40 @@ public final class PvpCommands {
 		return 1;
 	}
 
-	/** /pvpchamps tournament start | 2v2: the double-elimination bracket; you play your own series and watch the rest. */
-	private static int tournamentBracket(CommandSourceStack src, boolean duo) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+	private static java.util.List<String> onlineNames(CommandSourceStack src) {
+		java.util.List<String> out = new java.util.ArrayList<>();
+		for (ServerPlayer p : src.getServer().getPlayerList().getPlayers()) out.add(p.getGameProfile().name());
+		return out;
+	}
+
+	/**
+	 * /pvpchamps tournament start [friends...] | 2v2 [partner [other players...]]: the double-elimination bracket. Every
+	 * real player named plays their own series and spectates the rest. In 2v2 the first player named is your partner and
+	 * the rest are paired up in order (an odd one out gets a roster partner); with nobody named you get a random roster partner.
+	 */
+	private static int tournamentBracket(CommandSourceStack src, boolean duo, String named) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
-		if (MatchManager.blocksTournament() || !MatchManager.tournaments().isEmpty()) { say(src, "A match or tournament is already running (/pvpchamps stop)."); return 0; }
+		if (MatchManager.blocksTournament()) { say(src, "A match or tournament is already running (/pvpchamps stop)."); return 0; }
+		java.util.List<ServerPlayer> all = new java.util.ArrayList<>();
+		all.add(p);
+		for (String n : named.trim().isEmpty() ? new String[0] : named.trim().split("\\s+")) {
+			ServerPlayer o = src.getServer().getPlayerList().getPlayerByName(n);
+			if (o == null) { say(src, n + " is not online."); return 0; }
+			if (all.contains(o)) { say(src, n + " is listed twice (or is you)."); return 0; }
+			all.add(o);
+		}
+		if (all.size() > (duo ? 12 : 8)) { say(src, "Too many players for this bracket."); return 0; }
 		MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
-		String me = p.getGameProfile().name();
-		Bracket b = new Bracket(src.getServer(), p, duo ? Bracket.duoField(me, RNG) : Bracket.soloField(me, RNG), duo, true);
+		java.util.List<String> names = new java.util.ArrayList<>();
+		for (ServerPlayer o : all) names.add(o.getGameProfile().name());
+		java.util.List<String> field;
+		if (duo) {
+			java.util.List<java.util.List<String>> teams = new java.util.ArrayList<>();
+			for (int i = 0; i < names.size(); i += 2) teams.add(names.subList(i, Math.min(i + 2, names.size())));
+			field = Bracket.duoField(teams, RNG);
+		} else field = Bracket.soloField(names, RNG);
+		for (ServerPlayer o : all) if (o != p) o.sendSystemMessage(Component.literal("§e" + p.getGameProfile().name() + " added you to a PvP Champs " + (duo ? "2v2 " : "") + "tournament."));
+		Bracket b = new Bracket(src.getServer(), all, field, duo, true);
 		MatchManager.setBracket(b);
 		b.start();
 		return 1;
@@ -227,7 +260,7 @@ public final class PvpCommands {
 	/** /pvpchamps tournament watch: a 16-player double-elimination bracket of bot matches that you just watch. */
 	private static int tournamentWatch(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
-		if (MatchManager.busy() || MatchManager.bracket() != null || !MatchManager.tournaments().isEmpty()) { say(src, "Something is already running (/pvpchamps stop)."); return 0; }
+		if (MatchManager.busy() || MatchManager.bracket() != null) { say(src, "Something is already running (/pvpchamps stop)."); return 0; }
 		MatchManager.setOrigin(Arena.exists() ? Arena.spot() : p.position());
 		Bracket b = new Bracket(src.getServer(), p);
 		MatchManager.setBracket(b);
@@ -236,22 +269,20 @@ public final class PvpCommands {
 	}
 
 	private static int draftCmd(CommandSourceStack src, String kit) {
-		String err = Draft.choose(kit);
+		String err = Draft.choose(src.getTextName(), kit);
 		if (err != null) say(src, err);
 		return err == null ? 1 : 0;
 	}
 
 	private static int tournamentSkip(CommandSourceStack src) {
 		if (MatchManager.bracket() != null) { MatchManager.bracket().skip(); return 1; }
-		if (MatchManager.tournaments().isEmpty()) { say(src, "Nothing running. /pvpchamps tournament start"); return 0; }
-		for (Tournament t : new java.util.ArrayList<>(MatchManager.tournaments())) t.skip();
-		return 1;
+		say(src, "Nothing running. /pvpchamps tournament start");
+		return 0;
 	}
 
 	private static int tournamentStatus(CommandSourceStack src) {
 		if (MatchManager.bracket() != null) { say(src, MatchManager.bracket().status()); return 1; }
-		if (MatchManager.tournaments().isEmpty()) { say(src, "No tournament running. /pvpchamps tournament start | 2v2"); return 0; }
-		for (Tournament t : MatchManager.tournaments()) say(src, t.status());
-		return 1;
+		say(src, "No tournament running. /pvpchamps tournament start | 2v2");
+		return 0;
 	}
 }

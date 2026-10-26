@@ -58,8 +58,8 @@ public final class Draft {
 	private static final Random RNG = new Random();
 
 	private final MinecraftServer server;
-	private final UUID humanId;
-	private final String humanEntrant, human, hi, lo;
+	private final Map<String, UUID> humans;      // the real players taking part, by lower-case name
+	private final String hi, lo;
 	private final int bestOf;
 	private final Function<String, List<String>> kitsOf;
 	private final Consumer<String> say;
@@ -76,12 +76,11 @@ public final class Draft {
 	private final SimpleContainer container = new SimpleContainer(27);
 	private boolean finished;
 
-	private Draft(MinecraftServer server, ServerPlayer human, String humanEntrant, String a, String b, int bestOf,
+	private Draft(MinecraftServer server, List<ServerPlayer> humanPlayers, String a, String b, int bestOf,
 			Function<String, List<String>> kitsOf, ToIntFunction<String> rating, Consumer<String> say, Consumer<List<Kits>> done) {
 		this.server = server;
-		this.humanId = human == null ? null : human.getUUID();
-		this.human = human == null ? null : human.getGameProfile().name();
-		this.humanEntrant = humanEntrant;
+		this.humans = new java.util.HashMap<>();
+		for (ServerPlayer p : humanPlayers) humans.put(p.getGameProfile().name().toLowerCase(), p.getUUID());
 		this.hi = rating.applyAsInt(a) >= rating.applyAsInt(b) ? a : b;
 		this.lo = hi.equals(a) ? b : a;
 		this.bestOf = bestOf;
@@ -99,13 +98,15 @@ public final class Draft {
 	}
 
 	/**
-	 * Runs the draft between {@code a} and {@code b} and hands the games' kits to {@code done}. {@code human} and
-	 * {@code humanEntrant} (a or b) say which side you are on; pass null for a draft of two bot sides, which finishes at once.
+	 * Runs the draft between {@code a} and {@code b} (entrants, "A + B" for a team) and hands the games' kits to
+	 * {@code done}. {@code humanPlayers} are the real players among the entrants: each makes the bans and picks of their
+	 * own turns in a menu (members of a team take turns in the order they are listed); everything else is decided by the
+	 * bots. With no real players the draft finishes at once.
 	 */
-	public static void start(MinecraftServer server, ServerPlayer human, String humanEntrant, String a, String b, int bestOf,
+	public static void start(MinecraftServer server, List<ServerPlayer> humanPlayers, String a, String b, int bestOf,
 			Function<String, List<String>> kitsOf, ToIntFunction<String> rating, Consumer<String> say, Consumer<List<Kits>> done) {
-		Draft d = new Draft(server, human, humanEntrant, a, b, bestOf, kitsOf, rating, say, done);
-		if (human != null) {
+		Draft d = new Draft(server, humanPlayers, a, b, bestOf, kitsOf, rating, say, done);
+		if (!humanPlayers.isEmpty()) {
 			active = d;
 			say.accept("§eKit draft: " + d.hi + " has the first ban.");
 		}
@@ -113,9 +114,9 @@ public final class Draft {
 	}
 
 	/** /pvpchamps draft [kit]: makes your ban or pick by name, or reopens the menu. Returns an error message or null. */
-	public static String choose(String kitId) {
+	public static String choose(String who, String kitId) {
 		Draft d = active;
-		if (d == null || d.waiting == null) return "It is not your turn to draft.";
+		if (d == null || d.waiting == null || !who.equalsIgnoreCase(d.waitingAs)) return "It is not your turn to draft.";
 		if (kitId == null) {
 			ServerPlayer p = d.player();
 			if (p != null) d.open(p);
@@ -149,7 +150,11 @@ public final class Draft {
 		if (++d.reopenIn >= 40) { d.reopenIn = 0; d.open(p); }
 	}
 
-	private ServerPlayer player() { return humanId == null ? null : server.getPlayerList().getPlayer(humanId); }
+	/** The player whose turn it is, or any real player when none is waiting. */
+	private ServerPlayer player() {
+		UUID id = waitingAs != null ? humans.get(waitingAs.toLowerCase()) : humans.values().stream().findFirst().orElse(null);
+		return id == null ? null : server.getPlayerList().getPlayer(id);
+	}
 
 	// ----------------------------------------------------------------------- flow
 
@@ -158,20 +163,21 @@ public final class Draft {
 			Step s = steps.get(idx);
 			String by = s.hi() ? hi : lo, opp = s.hi() ? lo : hi;
 			String actor = by;
-			if (human != null && by.equals(humanEntrant)) {
+			if (!humans.isEmpty()) {
 				int own = 0;
 				for (int i = 0; i < idx; i++) if (steps.get(i).hi() == s.hi()) own++;
 				List<String> team = List.of(by.split(" \\+ "));
-				if (team.size() == 1 || own % 2 == 0) {                 // your turn; in 2v2 your teammate takes the other ones
+				String member = team.get(own % team.size());               // team members take turns in order
+				if (humans.containsKey(member.toLowerCase())) {
 					waiting = s;
-					waitingAs = human;
+					waitingAs = member;
 					ServerPlayer p = player();
 					if (p == null) { finished = true; active = null; return; }
 					render();
 					open(p);
 					return;
 				}
-				actor = team.stream().filter(n -> !n.equalsIgnoreCase(human)).findFirst().orElse(by);
+				actor = team.size() > 1 ? member : by;
 			}
 			Kits k = s.act() == Act.BAN ? chooseBan(by, opp) : choosePick(by);
 			apply(s, actor, k);
