@@ -47,6 +47,7 @@ public final class Match implements Bout {
 	private net.minecraft.world.item.ItemStack[] kitStacks;
 	private final java.util.Map<String, String> barSeen = new java.util.HashMap<>();
 	private Ping.Session ping;
+	private long gameTicks;   // every tick of the match, for /DUR logs: game time does not depend on the server's tick rate
 	private int holeA, holeB; // ticks each fighter has spent well below the arena floor
 
 	/** Tiny holder so the saved inventory can be null until captured. */
@@ -186,6 +187,7 @@ public final class Match implements Bout {
 	public void tick() {
 		if (state == State.DONE) return;
 		ping.sync(state == State.FIGHT);
+		gameTicks++;
 		if (human() == null) { // the player left the server
 			System.err.println("[pvpchamps] match " + nameA + " vs " + nameB + " cancelled: " + humanId + " left the server");
 			finish(false, true);
@@ -389,6 +391,7 @@ public final class Match implements Bout {
 		WebStats.round(aLost ? nameB : nameA, aLost ? nameA : nameB, kit.label);
 		if (watch) Spec.roundEnd(humanRef, aLost ? nameA : nameB); // the breakdown opens only now, never on a client-side guess
 		message(Component.literal("§6" + (aLost ? nameB : nameA) + " wins round " + round + " (" + scoreA + "-" + scoreB + ")"));
+		System.err.println("[pvpchamps] DUR round " + round + " " + kit.id + " " + nameA + " vs " + nameB + ": " + fightTicks / 20 + " s of fight");
 		state = State.BETWEEN;
 		timer = sc(140);
 	}
@@ -422,6 +425,7 @@ public final class Match implements Bout {
 	private void finish(boolean aWon, boolean cancelled) {
 		if (state == State.DONE) return;
 		state = State.DONE;
+		System.err.println("[pvpchamps] DUR match " + kit.id + " " + nameA + " vs " + nameB + ": " + gameTicks / 20 + " s total, " + round + " rounds");
 		ping.end();
 		WebStats.endLive(nameA + "|" + nameB);
 		if (!cancelled) WebStats.match(aWon ? nameA : nameB, aWon ? nameB : nameA, kit.label, roundPrefix, Math.max(scoreA, scoreB), Math.min(scoreA, scoreB));

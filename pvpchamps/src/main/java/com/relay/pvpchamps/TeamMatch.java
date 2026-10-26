@@ -50,6 +50,7 @@ public final class TeamMatch implements Bout {
 	private final Map<String, Integer> missing = new HashMap<>(), hole = new HashMap<>();
 	private int lastDeathA, lastDeathB;
 	private Ping.Session ping;
+	private long gameTicks;
 	private boolean spawned;
 	private final Set<String> prepared = new HashSet<>();
 	private float stallHp = -1;
@@ -358,6 +359,7 @@ public final class TeamMatch implements Bout {
 	public void tick() {
 		if (state == State.DONE) return;
 		ping.sync(state == State.FIGHT);
+		gameTicks++;
 		boolean fighterGone = false;           // a fighter leaving ends the match; a spectator leaving does not
 		for (String n : humanNames) if (entity(n) == null) fighterGone = true;
 		if (fighterGone || players().isEmpty()) {
@@ -457,6 +459,7 @@ public final class TeamMatch implements Bout {
 		for (int i = 0; i < Math.max(win.size(), lose.size()); i++) WebStats.round(win.get(i % win.size()), lose.get(i % lose.size()), kit.label);
 		for (ServerPlayer p : players()) if (spectates(p)) Spec.roundEnd(p, lose.get(0));
 		message(Component.literal("§6" + label(win) + " win round " + round + " (" + scoreA + "-" + scoreB + ")"));
+		System.err.println("[pvpchamps] DUR round " + round + " " + kit.id + " " + label(teamA) + " vs " + label(teamB) + ": " + fightTicks / 20 + " s of fight");
 		state = State.BETWEEN;
 		timer = sc(140);
 	}
@@ -533,6 +536,7 @@ public final class TeamMatch implements Bout {
 	private void finish(boolean aWon, boolean cancelled) {
 		if (state == State.DONE) return;
 		state = State.DONE;
+		System.err.println("[pvpchamps] DUR match " + kit.id + " " + label(teamA) + " vs " + label(teamB) + ": " + gameTicks / 20 + " s total, " + round + " rounds");
 		ping.end();
 		dropTeams();
 		WebStats.endLive(label(teamA) + "|" + label(teamB));
