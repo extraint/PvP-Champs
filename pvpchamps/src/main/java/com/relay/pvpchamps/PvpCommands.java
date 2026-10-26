@@ -67,6 +67,7 @@ public final class PvpCommands {
 					.suggests((c, bld) -> SharedSuggestionProvider.suggest(java.util.Arrays.stream(Ping.Region.values()).map(r -> r.name()), bld))
 					.executes(c -> regionCmd(c.getSource(), StringArgumentType.getString(c, "region")))))
 			.then(Commands.literal("regions").executes(c -> regionsCmd(c.getSource())))
+			.then(Commands.literal("servers").executes(c -> serversCmd(c.getSource())))
 			.then(Commands.literal("ping")
 				.then(Commands.literal("on").executes(c -> { Ping.setEnabled(true); say(c.getSource(), "Simulated ping is on."); return 1; }))
 				.then(Commands.literal("off").executes(c -> { Ping.setEnabled(false); say(c.getSource(), "Simulated ping is off."); return 1; }))
@@ -282,12 +283,19 @@ public final class PvpCommands {
 	private static int regionCmd(CommandSourceStack src, String region) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
 		ServerPlayer p = src.getPlayerOrException();
 		String me = p.getGameProfile().name();
-		if (region == null) { say(src, "You are in " + Ping.regionOf(me, true).label + " (" + Ping.regionOf(me, true).name() + "). /pvpchamps region <NA_WEST|NA_EAST|EU|SA|AS|OCE>"); return 1; }
-		Ping.Region r = null;
-		for (Ping.Region x : Ping.Region.values()) if (x.name().equalsIgnoreCase(region.trim()) || x.label.equalsIgnoreCase(region.trim())) r = x;
-		if (r == null) { say(src, "Unknown region. Use NA_WEST, NA_EAST, EU, SA, AS or OCE."); return 0; }
+		if (region == null) { say(src, "You are in " + Ping.regionOf(me, true).label + ". /pvpchamps region <region> (tab-complete), /pvpchamps servers"); return 1; }
+		Ping.Region r = Ping.Region.parse(region);
+		if (r == null) { say(src, "Unknown region. /pvpchamps servers lists them."); return 0; }
 		Ping.setHumanRegion(me, r);
 		say(src, "You are now in " + r.label + ".");
+		return 1;
+	}
+
+	/** /pvpchamps servers: every server location with your ping to it from your region. */
+	private static int serversCmd(CommandSourceStack src) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		Ping.Region mine = Ping.regionOf(src.getPlayerOrException().getGameProfile().name(), true);
+		say(src, "Server locations (ping from " + mine.label + "):");
+		for (Ping.Region r : Ping.Region.values()) say(src, "  " + r.name() + " - " + r.label + ": " + Ping.rtt(mine, r) + " ms");
 		return 1;
 	}
 

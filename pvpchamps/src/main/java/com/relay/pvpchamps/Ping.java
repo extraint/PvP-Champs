@@ -32,31 +32,41 @@ import vexbot.DifficultyParams;
 public final class Ping {
 	private Ping() {}
 
+	/** Server locations and player regions: the same list, each with where it is, so the round trip between two is worked out from the distance. */
 	public enum Region {
-		NA_WEST("NA West"), NA_EAST("NA East"), EU("Europe"), SA("South America"), AS("Asia"), OCE("Oceania");
+		NA_WEST("NA West (California)", 34.05, -118.24), NA_CENTRAL("NA Central (Texas)", 32.78, -96.80), NA_EAST("NA East (Virginia)", 39.04, -77.49),
+		SA("South America (Brazil)", -23.55, -46.63),
+		EU_WEST("EU West (London)", 51.51, -0.13), EU_SOUTH("EU South (Madrid)", 40.42, -3.70), EU_CENTRAL("EU Central (Frankfurt)", 50.11, 8.68),
+		EU_EAST("EU East (Warsaw)", 52.23, 21.01),
+		MIDDLE_EAST("Middle East (Dubai)", 25.20, 55.27), INDIA("India (Mumbai)", 19.08, 72.88), ASIA_SEA("SE Asia (Singapore)", 1.35, 103.82),
+		JAPAN("Japan (Tokyo)", 35.68, 139.69), OCE("Oceania (Sydney)", -33.87, 151.21), AFRICA("Africa (Johannesburg)", -26.20, 28.05);
+
 		public final String label;
-		Region(String label) { this.label = label; }
+		final double lat, lon;
+
+		Region(String label, double lat, double lon) { this.label = label; this.lat = lat; this.lon = lon; }
+
+		/** A region from its name, its label, or an older short name (EU, AS, NA). */
 		static Region parse(String s) {
-			String k = s.toLowerCase().replace(' ', '_').replace('-', '_');
-			for (Region r : values()) if (r.name().toLowerCase().equals(k) || r.label.toLowerCase().replace(' ', '_').equals(k)) return r;
-			return null;
+			String k = s.trim().toLowerCase().replace(' ', '_').replace('-', '_');
+			for (Region r : values()) if (r.name().toLowerCase().equals(k) || r.label.toLowerCase().replace(' ', '_').equals(k)
+					|| r.label.toLowerCase().replaceAll(" \\(.*", "").replace(' ', '_').equals(k)) return r;
+			return switch (k) { case "eu", "europe" -> EU_CENTRAL; case "as", "asia" -> JAPAN; case "na" -> NA_EAST; case "oceania", "au" -> OCE; default -> null; };
 		}
 	}
 
-	/** Typical round-trip times in milliseconds between regions (symmetric); the diagonal is a player and a server in the same region. */
-	private static final int[][] RTT = {
-		//            NA_W NA_E  EU  SA  AS OCE
-		/* NA_WEST */ { 25,  70, 150, 160, 130, 140 },
-		/* NA_EAST */ { 70,  25,  85, 120, 190, 210 },
-		/* EU      */ { 150, 85,  25, 200, 230, 290 },
-		/* SA      */ { 160, 120, 200, 30, 300, 280 },
-		/* AS      */ { 130, 190, 230, 300, 40, 110 },
-		/* OCE     */ { 140, 210, 290, 280, 110, 25 },
-	};
+	/**
+	 * Round trip in milliseconds between two regions, from the distance: light in fibre covers about 200 km a millisecond
+	 * and cables run roughly 1.5 times the straight line, plus a few milliseconds of routing. A player and a server in the
+	 * same region still have at least 25 ms.
+	 */
+	public static int rtt(Region a, Region b) {
+		double p1 = Math.toRadians(a.lat), p2 = Math.toRadians(b.lat), dl = Math.toRadians(b.lon - a.lon);
+		double d = 6371 * Math.acos(Math.min(1, Math.sin(p1) * Math.sin(p2) + Math.cos(p1) * Math.cos(p2) * Math.cos(dl)));
+		return (int) Math.max(25, Math.round(2 * (d * 1.5 / 200) + 8));
+	}
 
-	public static int rtt(Region a, Region b) { return RTT[a.ordinal()][b.ordinal()]; }
-
-	/** The region closest to everyone: lowest worst-case round trip, then lowest total. */
+	/** The server location closest to everyone: lowest worst-case round trip, then lowest total. */
 	public static Region host(List<Region> regions) {
 		Region best = Region.NA_EAST;
 		int bestMax = Integer.MAX_VALUE, bestSum = Integer.MAX_VALUE;
@@ -76,36 +86,48 @@ public final class Ping {
 	private static boolean enabled = true;
 
 	/**
-	 * Where each roster player lives. These are best guesses, NOT looked up from a real source: edit
-	 * config/pvpchamps/regions.json (names to NA_WEST, NA_EAST, EU, SA, AS or OCE) to put anyone where they really are.
+	 * Where each roster player lives. Coldified (Spain), MyDogIsConfused (Japan) and SpawnPlayer (North America) were told to me;
+	 * the rest are best guesses, NOT looked up from a real source: edit config/pvpchamps/regions.json (name to a region name)
+	 * to put anyone where they really are.
 	 */
 	private static Map<String, Region> defaults() {
 		Map<String, Region> m = new HashMap<>();
 		for (String n : new String[] { "Swight", "JACKS5ON", "ItzTwilightTT", "Freekee_Fang" }) m.put(n, Region.NA_WEST);
-		for (String n : new String[] { "Coldified", "Sweatgod", "BLMcheat", "MyDogIsConfused", "DarkKnightAragon", "Blvckwlf" }) m.put(n, Region.NA_EAST);
+		for (String n : new String[] { "Sweatgod", "BLMcheat", "DarkKnightAragon", "Blvckwlf", "SpawnPlayer" }) m.put(n, Region.NA_EAST);
 		for (String n : new String[] { "ImMixed", "x_Kyran_x", "mikagoated", "Sizierung", "Ricardoxx_", "TheobaldTheBird", "C0RZZ", "Ymiau", "ZeNain",
-				"Alepordio", "1kiks_", "Flowtives", "ninorc15" }) m.put(n, Region.EU);
-		m.put("SpawnPlayer", Region.AS);
+				"Alepordio", "1kiks_", "Flowtives", "ninorc15" }) m.put(n, Region.EU_CENTRAL);
+		m.put("Coldified", Region.EU_SOUTH);
+		m.put("MyDogIsConfused", Region.JAPAN);
 		return m;
 	}
+
+	private static final String REGIONS_VERSION = "2";
 
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("regions.json");
 		Map<String, String> read = null;
 		try {
 			Files.createDirectories(file.getParent());
-			if (Files.exists(file)) read = GSON.fromJson(Files.readString(file), new TypeToken<Map<String, String>>() {}.getType());
-			else {
+			if (Files.exists(file)) {
+				read = GSON.fromJson(Files.readString(file), new TypeToken<Map<String, String>>() {}.getType());
+				if (read == null || !REGIONS_VERSION.equals(read.get("_version"))) {       // written by an older build: keep it aside and start from the new list
+					Files.move(file, file.resolveSibling("regions.json.old"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+					read = null;
+				}
+			}
+			if (read == null) {
 				Map<String, String> out = new java.util.TreeMap<>();
+				out.put("_version", REGIONS_VERSION);
 				defaults().forEach((k, v) -> out.put(k, v.name()));
 				Files.writeString(file, GSON.toJson(out));
 			}
 		} catch (IOException | RuntimeException e) {
 			System.err.println("[pvpchamps] regions.json unreadable, using the built-in regions: " + e);
+			read = null;
 		}
 		BOTS.clear();
 		defaults().forEach((k, v) -> BOTS.put(k.toLowerCase(), v));
-		if (read != null) read.forEach((k, v) -> { Region r = Region.parse(v); if (r != null) BOTS.put(k.toLowerCase(), r); });
+		if (read != null) read.forEach((k, v) -> { Region r = k.startsWith("_") ? null : Region.parse(v); if (r != null) BOTS.put(k.toLowerCase(), r); });
 	}
 
 	public static Region regionOf(String name, boolean human) {
