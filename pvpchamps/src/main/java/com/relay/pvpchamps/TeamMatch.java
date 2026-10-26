@@ -89,6 +89,7 @@ public final class TeamMatch implements Bout {
 			if (o != null && !isHuman(n)) Roster.applyProfile(o);
 		}
 		makeTeams();
+		aimTeams();
 		message(Component.literal("=== " + roundPrefix + ": " + label(teamA) + " vs " + label(teamB) + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
@@ -107,6 +108,10 @@ public final class TeamMatch implements Bout {
 			for (String n : side) (isHuman(n) ? players : bots).add(n);
 			vexbot.team.TeamManager.setTeamBots(t[0], bots);
 			vexbot.team.TeamManager.setTeamPlayers(t[0], players);
+			var team = vexbot.team.TeamManager.get(t[0]);
+			var tc = team.tactics;
+			System.err.println("[pvpchamps] team " + t[0] + " defaults: mode=" + team.getMode() + " shield=" + tc.shieldBehaviour + " priority=" + tc.targetPriority
+				+ " formation=" + tc.formation + " maintain=" + tc.maintainFormation + " follow=" + tc.followBoss + " active=" + tc.active());
 		}
 	}
 
@@ -126,7 +131,25 @@ public final class TeamMatch implements Bout {
 				} catch (ReflectiveOperationException ignored) { /* no global of that name: leave the team's own value */ }
 			}
 		}
+		// Revenge makes a bot hit back at whoever it last saw attack it: one stray arrow at a partner and the pair fight for the whole round.
+		for (String t : new String[] { TEAM_A, TEAM_B }) vexbot.team.TeamManager.setTeamRevengeMode(t, false);
 		vexbot.EffectiveSettings.invalidate();
+	}
+
+	/** Each team targets only the other team, and its shield and target behaviour is left to the bots. */
+	private void aimTeams() {
+		vexbot.team.TeamManager.setMode(TEAM_A, vexbot.team.TeamManager.TargetMode.SPECIFIC_TEAMS);
+		vexbot.team.TeamManager.setTargetTeams(TEAM_A, List.of(TEAM_B));
+		vexbot.team.TeamManager.setMode(TEAM_B, vexbot.team.TeamManager.TargetMode.SPECIFIC_TEAMS);
+		vexbot.team.TeamManager.setTargetTeams(TEAM_B, List.of(TEAM_A));
+		for (String t : new String[] { TEAM_A, TEAM_B }) {
+			var tc = vexbot.team.TeamManager.get(t).tactics;
+			tc.shieldBehaviour = vexbot.team.TeamTactics.ShieldBehaviour.FREE;
+			tc.targetPriority = vexbot.team.TeamTactics.TargetPriority.INDEPENDENT;
+			tc.maintainFormation = false;
+			tc.followBoss = false;
+			tc.protectBoss = false;
+		}
 	}
 
 	private static void dropTeams() {
