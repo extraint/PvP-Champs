@@ -86,22 +86,26 @@ public final class Ping {
 	private static boolean enabled = true;
 
 	/**
-	 * Where each roster player lives. Coldified (Spain), MyDogIsConfused (Japan) and SpawnPlayer (North America) were told to me;
+	 * Where each roster player lives. Coldified, MyDogIsConfused, SpawnPlayer, BLMcheat, x_Kyran_x, mikagoated, ninorc15, Flowtives, ZeNain, Blvckwlf and ItzTwilightTT were told to me;
 	 * the rest are best guesses, NOT looked up from a real source: edit config/pvpchamps/regions.json (name to a region name)
 	 * to put anyone where they really are.
 	 */
 	private static Map<String, Region> defaults() {
 		Map<String, Region> m = new HashMap<>();
-		for (String n : new String[] { "Swight", "JACKS5ON", "ItzTwilightTT", "Freekee_Fang" }) m.put(n, Region.NA_WEST);
-		for (String n : new String[] { "Sweatgod", "BLMcheat", "DarkKnightAragon", "Blvckwlf", "SpawnPlayer" }) m.put(n, Region.NA_EAST);
-		for (String n : new String[] { "ImMixed", "x_Kyran_x", "mikagoated", "Sizierung", "Ricardoxx_", "TheobaldTheBird", "C0RZZ", "Ymiau", "ZeNain",
-				"Alepordio", "1kiks_", "Flowtives", "ninorc15" }) m.put(n, Region.EU_CENTRAL);
-		m.put("Coldified", Region.EU_SOUTH);
+		for (String n : new String[] { "Swight", "JACKS5ON", "Freekee_Fang" }) m.put(n, Region.NA_WEST);
+		for (String n : new String[] { "Sweatgod", "DarkKnightAragon", "SpawnPlayer", "ZeNain" }) m.put(n, Region.NA_EAST);   // ZeNain: Canada
+		for (String n : new String[] { "ImMixed", "Sizierung", "Ricardoxx_", "TheobaldTheBird", "C0RZZ", "Ymiau", "Alepordio", "1kiks_" }) m.put(n, Region.EU_CENTRAL);
+		for (String n : new String[] { "mikagoated", "Blvckwlf" }) m.put(n, Region.EU_CENTRAL);                                 // Germany
+		for (String n : new String[] { "x_Kyran_x", "ninorc15" }) m.put(n, Region.EU_WEST);                                     // England
+		m.put("Flowtives", Region.EU_EAST);                                                                                     // Bulgaria
+		m.put("Coldified", Region.EU_SOUTH);                                                                                    // Spain
 		m.put("MyDogIsConfused", Region.JAPAN);
+		m.put("BLMcheat", Region.INDIA);
+		m.put("ItzTwilightTT", Region.ASIA_SEA);                                                                                // Philippines
 		return m;
 	}
 
-	private static final String REGIONS_VERSION = "2";
+	private static final String REGIONS_VERSION = "3";
 
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("regions.json");
