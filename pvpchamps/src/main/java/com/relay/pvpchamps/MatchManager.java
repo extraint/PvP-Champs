@@ -32,8 +32,9 @@ public final class MatchManager {
 		current = null;
 	}
 
-	public static void stop() {
+	public static void stop(net.minecraft.server.MinecraftServer server) {
 		Draft.cancel();
+		Viewers.leaveAll(server);
 		if (bracket != null) bracket.stop();
 		bracket = null;
 		if (current != null) current.cancel();
@@ -41,8 +42,9 @@ public final class MatchManager {
 		origin = null;
 	}
 
-	public static void tick() {
+	public static void tick(net.minecraft.server.MinecraftServer server) {
 		Draft.tickActive();
+		Viewers.tick(server);
 		if (current != null) {
 			Bout m = current;
 			m.tick();
@@ -50,7 +52,7 @@ public final class MatchManager {
 			if (m.isDone() && current == m) current = null;
 		}
 		if (bracket != null && bracket.isOver() && current == null && !Draft.pending()) bracket = null;
-		if (bracket == null && current == null) origin = null;
+		if (bracket == null && current == null && origin != null) { origin = null; Viewers.leaveAll(server); }
 	}
 
 	/** The opponent of a bot in the running match, or null. */

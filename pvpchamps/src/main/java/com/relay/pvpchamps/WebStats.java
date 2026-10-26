@@ -29,6 +29,8 @@ public final class WebStats {
 
 	public static final class Live {
 		public String id, a, b, kit, round, state;
+		/** Where the match is hosted and each side's region and ping, e.g. "NA West 25 ms" (null when ping simulation is off). */
+		public String server, netA, netB;
 		public int scoreA, scoreB, bestOf;
 		public double hpA, hpB;
 		public Gear gearA, gearB;
@@ -97,6 +99,11 @@ public final class WebStats {
 	private static Path file;
 
 	public static void setBracket(Object b) { bracket = b; }
+
+	private static volatile Map<String, String> regions = Map.of();
+
+	/** Roster player to region label, for the leaderboard. */
+	public static void setRegions(Map<String, String> r) { regions = r; }
 
 	/** "2-1" style score of the latest finished match won by this player, or null (a skipped series has none). */
 	public static synchronized String lastScoreFor(String winner) {
@@ -238,6 +245,7 @@ public final class WebStats {
 			byte[] body;
 			switch (path) {
 				case "/api/live" -> body = GSON.toJson(new ArrayList<>(LIVE.values())).getBytes(StandardCharsets.UTF_8);
+				case "/api/regions" -> body = GSON.toJson(regions).getBytes(StandardCharsets.UTF_8);
 				case "/api/bracket" -> body = GSON.toJson(bracket == null ? Map.of() : bracket).getBytes(StandardCharsets.UTF_8);
 				case "/api/stats" -> {
 					Map<String, Object> out = new LinkedHashMap<>();

@@ -242,9 +242,13 @@ public final class TeamMatch implements Bout {
 		server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), cmd);
 	}
 
-	private void message(Component c) { for (ServerPlayer p : players()) p.sendSystemMessage(c); }
+	@Override public List<String> fighterNames() { return fighters(); }
 
-	private void message(Component c, boolean overlay) { for (ServerPlayer p : players()) p.sendSystemMessage(c, overlay); }
+	@Override public ServerLevel level() { return level; }
+
+	private void message(Component c) { for (ServerPlayer p : players()) p.sendSystemMessage(c); Viewers.message(server, c, false); }
+
+	private void message(Component c, boolean overlay) { for (ServerPlayer p : players()) p.sendSystemMessage(c, overlay); Viewers.message(server, c, overlay); }
 
 	private void revive() {
 		for (ServerPlayer p : players()) if (!p.isAlive()) server.getPlayerList().respawn(p, false, net.minecraft.world.entity.Entity.RemovalReason.KILLED);
@@ -353,7 +357,7 @@ public final class TeamMatch implements Bout {
 	@Override
 	public void tick() {
 		if (state == State.DONE) return;
-		ping.syncBots();
+		ping.sync(state == State.FIGHT);
 		boolean fighterGone = false;           // a fighter leaving ends the match; a spectator leaving does not
 		for (String n : humanNames) if (entity(n) == null) fighterGone = true;
 		if (fighterGone || players().isEmpty()) {
@@ -511,6 +515,7 @@ public final class TeamMatch implements Bout {
 		liveInfo.a = label(teamA); liveInfo.b = label(teamB);
 		liveInfo.kit = kit.label; liveInfo.round = roundLabel(); liveInfo.state = state.name().toLowerCase();
 		liveInfo.scoreA = scoreA; liveInfo.scoreB = scoreB; liveInfo.bestOf = bestOf;
+		liveInfo.server = ping.serverLabel(); liveInfo.netA = ping.net(teamA); liveInfo.netB = ping.net(teamB);
 		ServerPlayer a = firstAlive(teamA), b = firstAlive(teamB);
 		liveInfo.hpA = a == null ? 0 : a.getHealth() + a.getAbsorptionAmount();
 		liveInfo.hpB = b == null ? 0 : b.getHealth() + b.getAbsorptionAmount();

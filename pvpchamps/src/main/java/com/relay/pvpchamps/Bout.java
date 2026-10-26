@@ -16,4 +16,10 @@ public interface Bout {
 
 	/** A fighter died (from the death event or from polling). */
 	void fighterDown(String name);
+
+	/** Everyone fighting in it (the names a spectator can follow). */
+	java.util.List<String> fighterNames();
+
+	/** The level the fight is in. */
+	net.minecraft.server.level.ServerLevel level();
 }

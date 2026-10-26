@@ -71,7 +71,22 @@ public final class PvpCommands {
 			.then(Commands.literal("ping")
 				.then(Commands.literal("on").executes(c -> { Ping.setEnabled(true); say(c.getSource(), "Simulated ping is on."); return 1; }))
 				.then(Commands.literal("off").executes(c -> { Ping.setEnabled(false); say(c.getSource(), "Simulated ping is off."); return 1; }))
+				.then(Commands.literal("spikes")
+					.then(Commands.literal("on").executes(c -> { Ping.setSpikes(true); say(c.getSource(), "Lag spikes are on."); return 1; }))
+					.then(Commands.literal("off").executes(c -> { Ping.setSpikes(false); say(c.getSource(), "Lag spikes are off."); return 1; })))
 				.then(Commands.literal("status").executes(c -> { for (String l : Ping.status(c.getSource().getServer())) say(c.getSource(), l); return 1; })))
+			.then(Commands.literal("spectate")
+				.executes(c -> viewerCmd(c.getSource(), false))
+				.then(Commands.literal("leave").executes(c -> viewerCmd(c.getSource(), true))))
+			.then(Commands.literal("cam")
+				.then(Commands.argument("who", StringArgumentType.greedyString())
+					.suggests((c, bld) -> SharedSuggestionProvider.suggest(Viewers.suggestions(), bld))
+					.executes(c -> {
+						ServerPlayer pl = c.getSource().getPlayerOrException();
+						String err = Viewers.cam(pl, StringArgumentType.getString(c, "who"));
+						if (err != null) say(c.getSource(), err);
+						return err == null ? 1 : 0;
+					})))
 			.then(Commands.literal("draft")
 				.executes(c -> draftCmd(c.getSource(), null))
 				.then(Commands.argument("kit", StringArgumentType.greedyString())
@@ -118,7 +133,7 @@ public final class PvpCommands {
 			}))
 			.then(Commands.literal("speedup").executes(c -> setRate(c.getSource(), 100)))
 			.then(Commands.literal("slowdown").executes(c -> setRate(c.getSource(), 20)))
-			.then(Commands.literal("stop").executes(c -> { MatchManager.stop(); say(c.getSource(), "Stopped."); return 1; }))
+			.then(Commands.literal("stop").executes(c -> { MatchManager.stop(c.getSource().getServer()); say(c.getSource(), "Stopped."); return 1; }))
 			.then(Commands.literal("moves")
 				.then(Commands.literal("on").executes(c -> { MoveEngine.setEnabled(true); say(c.getSource(), "Extra moves on."); return 1; }))
 				.then(Commands.literal("off").executes(c -> { MoveEngine.setEnabled(false); say(c.getSource(), "Extra moves off (plain VexBot)."); return 1; }))
@@ -305,6 +320,14 @@ public final class PvpCommands {
 		for (var e : by.entrySet()) say(src, e.getKey().label + ": " + String.join(", ", e.getValue()));
 		say(src, "Best guesses, not verified. Edit config/pvpchamps/regions.json to correct anyone.");
 		return 1;
+	}
+
+	/** /pvpchamps spectate [leave]: watch the running tournament as a spectator, with a camera you can put on any fighter. */
+	private static int viewerCmd(CommandSourceStack src, boolean leave) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		ServerPlayer p = src.getPlayerOrException();
+		String err = leave ? Viewers.leave(p) : Viewers.join(p);
+		if (err != null) say(src, err);
+		return err == null ? 1 : 0;
 	}
 
 	private static int draftCmd(CommandSourceStack src, String kit) {

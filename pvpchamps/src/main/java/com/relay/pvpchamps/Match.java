@@ -185,7 +185,7 @@ public final class Match implements Bout {
 	@Override
 	public void tick() {
 		if (state == State.DONE) return;
-		ping.syncBots();
+		ping.sync(state == State.FIGHT);
 		if (human() == null) { // the player left the server
 			System.err.println("[pvpchamps] match " + nameA + " vs " + nameB + " cancelled: " + humanId + " left the server");
 			finish(false, true);
@@ -311,6 +311,7 @@ public final class Match implements Bout {
 		liveInfo.a = nameA; liveInfo.b = nameB;
 		liveInfo.kit = kit.label; liveInfo.round = roundLabel(); liveInfo.state = state.name().toLowerCase();
 		liveInfo.scoreA = scoreA; liveInfo.scoreB = scoreB; liveInfo.bestOf = bestOf;
+		liveInfo.server = ping.serverLabel(); liveInfo.netA = ping.net(java.util.List.of(nameA)); liveInfo.netB = ping.net(java.util.List.of(nameB));
 		liveInfo.hpA = a == null ? 0 : a.getHealth() + a.getAbsorptionAmount();
 		liveInfo.hpB = b == null ? 0 : b.getHealth() + b.getAbsorptionAmount();
 		liveInfo.gearA = WebStats.gearOf(a);
@@ -453,7 +454,11 @@ public final class Match implements Bout {
 		server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), cmd);
 	}
 
-	private void message(Component c) { humanRef.sendSystemMessage(c); }
+	@Override public java.util.List<String> fighterNames() { return java.util.List.of(nameA, nameB); }
 
-	private void message(Component c, boolean overlay) { humanRef.sendSystemMessage(c, overlay); }
+	@Override public ServerLevel level() { return level; }
+
+	private void message(Component c) { humanRef.sendSystemMessage(c); Viewers.message(server, c, false); }
+
+	private void message(Component c, boolean overlay) { humanRef.sendSystemMessage(c, overlay); Viewers.message(server, c, overlay); }
 }

@@ -84,6 +84,7 @@ public final class Ping {
 	private static final Map<String, Region> BOTS = new HashMap<>();   // lower-case roster name
 	private static final Map<String, Region> HUMANS = new HashMap<>(); // lower-case player name
 	private static boolean enabled = true;
+	private static boolean spikes = true;
 
 	/**
 	 * Where each roster player lives. Coldified, MyDogIsConfused, SpawnPlayer, BLMcheat, x_Kyran_x, mikagoated, ninorc15, Flowtives, ZeNain, Blvckwlf and ItzTwilightTT were told to me;
@@ -106,6 +107,13 @@ public final class Ping {
 	}
 
 	private static final String REGIONS_VERSION = "3";
+
+	/** Roster player to region label, for the website. */
+	private static void publishRegions() {
+		Map<String, String> m = new java.util.TreeMap<>();
+		BOTS.forEach((k, v) -> m.put(k, v.label));
+		WebStats.setRegions(m);
+	}
 
 	public static void load() {
 		Path file = FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("regions.json");
@@ -132,6 +140,7 @@ public final class Ping {
 		BOTS.clear();
 		defaults().forEach((k, v) -> BOTS.put(k.toLowerCase(), v));
 		if (read != null) read.forEach((k, v) -> { Region r = k.startsWith("_") ? null : Region.parse(v); if (r != null) BOTS.put(k.toLowerCase(), r); });
+		publishRegions();
 	}
 
 	public static Region regionOf(String name, boolean human) {
@@ -143,6 +152,8 @@ public final class Ping {
 
 	public static boolean enabled() { return enabled; }
 
+	public static void setSpikes(boolean on) { spikes = on; }
+
 	public static void setEnabled(boolean on) { enabled = on; }
 
 	public static Map<String, Region> botRegions() { return BOTS; }
@@ -152,10 +163,26 @@ public final class Ping {
 	/** The ping of one match: who is where, the host, and the lag put on the real players until {@link #end}. */
 	public static final class Session {
 		private final MinecraftServer server;
+		private Region host;
+		private final Map<String, Region> regionOf = new HashMap<>();
+		private final Map<String, Integer> allPings = new HashMap<>();
 		private final Map<String, Integer> pings = new HashMap<>();
 		private final List<ServerPlayer> lagged = new ArrayList<>();
 
 		Session(MinecraftServer server) { this.server = server; }
+
+		/** "NA East (Virginia)", or null when the simulation is off. */
+		public String serverLabel() { return host == null ? null : host.label; }
+
+		/** "NA West (California) 25 ms" for one fighter, joined with " · " for a team; null when the simulation is off. */
+		public String net(List<String> names) {
+			List<String> out = new ArrayList<>();
+			for (String n : names) {
+				Integer ms = allPings.get(n);
+				if (ms != null) out.add(regionOf.get(n).label.replaceAll(" \\(.*", "") + " " + ms + " ms");
+			}
+			return out.isEmpty() ? null : String.join(" · ", out);
+		}
 
 		private void resetShown(ServerPlayer p) {
 			if (p == null || p.connection == null) return;
@@ -167,15 +194,51 @@ public final class Ping {
 		private final Map<java.util.UUID, Integer> humanPings = new HashMap<>();
 		private int ticks;
 
+		private final Map<String, java.util.ArrayDeque<net.minecraft.world.phys.Vec3>> trail = new HashMap<>();
+		private final Map<String, Integer> nextSpike = new HashMap<>(), spikeEnd = new HashMap<>();
+
+		private boolean spiking(String bot) { return spikeEnd.getOrDefault(bot, 0) > ticks; }
+
 		/**
-		 * Makes the ping in the tab list the simulated ping, for the bots (they have no connection of their own, so nothing else
-		 * would ever set it) and for the real players (Minecraft measures it only every 15 seconds, and never for the host of a
-		 * singleplayer or LAN world, whose ping always reads 0). Runs every tick; the tab list is refreshed once a second.
+		 * Runs every tick while the match is on. Keeps the ping in the tab list at the simulated ping, for the bots (they have no
+		 * connection of their own, so nothing else would ever set it) and for the real players (Minecraft measures it only
+		 * every 15 seconds, and never for the host of a singleplayer or LAN world, whose ping always reads 0). Also gives a
+		 * bot with a high ping the odd lag spike: it rubber-bands back to where it was a few ticks ago and its ping jumps.
+		 * Real players' spikes are in their connection ({@link Lag}).
 		 */
-		public void syncBots() {
-			if (!enabled || ++ticks % 20 != 1) return;
-			for (Map.Entry<String, Integer> e : pings.entrySet()) showPing(vexbot.api.VexBotApi.resolveBot(server, e.getKey()), e.getValue());
-			for (Map.Entry<java.util.UUID, Integer> e : humanPings.entrySet()) showPing(server.getPlayerList().getPlayer(e.getKey()), e.getValue());
+		public void sync(boolean fighting) {
+			if (!enabled) return;
+			ticks++;
+			boolean refresh = ticks % 20 == 1;
+			for (Map.Entry<String, Integer> e : pings.entrySet()) {
+				String bot = e.getKey();
+				ServerPlayer p = vexbot.api.VexBotApi.resolveBot(server, bot);
+				if (p == null || !p.isAlive()) continue;
+				var tr = trail.computeIfAbsent(bot, k -> new java.util.ArrayDeque<>());
+				tr.addFirst(p.position());
+				if (tr.size() > 14) tr.removeLast();
+				if (!fighting || !spikes || e.getValue() < 60) continue;
+				if (!nextSpike.containsKey(bot)) nextSpike.put(bot, ticks + 100 + rng.nextInt(300));
+				if (ticks >= nextSpike.get(bot)) {
+					int back = Math.min(tr.size() - 1, 5 + rng.nextInt(8));       // 0.25 to 0.65 s back
+					if (back > 2) {
+						net.minecraft.world.phys.Vec3 at = new java.util.ArrayList<>(tr).get(back);
+						p.teleportTo((net.minecraft.server.level.ServerLevel) p.level(), at.x, at.y, at.z, java.util.Set.of(), p.getYRot(), p.getXRot(), true);
+						p.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+					}
+					spikeEnd.put(bot, ticks + 6 + rng.nextInt(14));
+					nextSpike.put(bot, ticks + (int) ((160 + rng.nextInt(500)) / (1.0 + e.getValue() / 150.0)));
+					refresh = true;
+				}
+			}
+			if (!refresh) return;
+			for (Map.Entry<String, Integer> e : pings.entrySet())
+				showPing(vexbot.api.VexBotApi.resolveBot(server, e.getKey()), e.getValue() * (spiking(e.getKey()) ? 3 : 1));
+			for (Map.Entry<java.util.UUID, Integer> e : humanPings.entrySet()) {
+				ServerPlayer hp = server.getPlayerList().getPlayer(e.getKey());
+				Lag l = hp == null ? null : lagOf(hp);
+				showPing(hp, l == null ? e.getValue() : (int) (e.getValue() * l.multiplier()));
+			}
 		}
 
 		private void showPing(ServerPlayer p, int base) {
@@ -232,9 +295,12 @@ public final class Ping {
 			regions.add(r);
 		}
 		Region host = host(regions);
+		s.host = host;
 		StringBuilder sb = new StringBuilder("§7Server: " + host.label + " (closest to everyone) · ping");
 		for (String n : fighters) {
 			int ping = rtt(by.get(n), host);
+			s.regionOf.put(n, by.get(n));
+			s.allPings.put(n, ping);
 			ServerPlayer hp = humans.stream().filter(h -> h.getGameProfile().name().equalsIgnoreCase(n)).findFirst().orElse(null);
 			if (hp != null) { setLag(hp, ping); s.lagged.add(hp); s.humanPings.put(hp.getUUID(), ping); }
 			else s.pings.put(n, ping);
@@ -252,6 +318,10 @@ public final class Ping {
 	private static Channel channelOf(ServerPlayer p) {
 		var conn = ((com.relay.pvpchamps.mixin.CommonListenerAccess) p.connection).pvpchamps$connection();
 		return ((com.relay.pvpchamps.mixin.ConnectionAccess) conn).pvpchamps$channel();
+	}
+
+	private static Lag lagOf(ServerPlayer p) {
+		try { return channelOf(p).pipeline().get(HANDLER) instanceof Lag l ? l : null; } catch (RuntimeException e) { return null; }
 	}
 
 	private static void setLag(ServerPlayer p, int pingMs) {
@@ -294,6 +364,8 @@ public final class Ping {
 	private static final class Lag extends ChannelDuplexHandler {
 		volatile int oneWayMs;
 		private final Random rng = new Random();
+		private long spikeUntil, nextSpike = System.nanoTime() + (5_000L + new Random().nextInt(15_000)) * 1_000_000L;
+		private volatile double spikeMul = 1;
 		private final java.util.ArrayDeque<Item> in = new java.util.ArrayDeque<>(), out = new java.util.ArrayDeque<>();
 		private long lastIn, lastOut;
 		private boolean pumpIn, pumpOut;
@@ -302,9 +374,18 @@ public final class Ping {
 
 		Lag(int oneWayMs) { this.oneWayMs = oneWayMs; }
 
+		/** How much the delay is multiplied right now: 1, or 2.5 to 6 during a lag spike. */
+		double multiplier() { return System.nanoTime() < spikeUntil ? spikeMul : 1; }
+
 		private long due(long previous) {
+			long now = System.nanoTime();
+			if (spikes && oneWayMs >= 8 && now >= nextSpike) {          // a lag spike: the delay jumps for a fraction of a second, then drops
+				spikeUntil = now + (250L + rng.nextInt(1100)) * 1_000_000L;
+				spikeMul = 2.5 + rng.nextDouble() * 3.5;
+				nextSpike = spikeUntil + (long) ((8_000L + rng.nextInt(25_000)) / (1.0 + oneWayMs * 2 / 150.0)) * 1_000_000L;   // higher ping, more often
+			}
 			double jitter = 1.0 + (rng.nextDouble() - 0.5) * 0.24;
-			return Math.max(previous, System.nanoTime() + (long) (oneWayMs * jitter * 1_000_000L));
+			return Math.max(previous, now + (long) (oneWayMs * jitter * multiplier() * 1_000_000L));
 		}
 
 		private void queue(ChannelHandlerContext ctx, java.util.ArrayDeque<Item> q, Item item, boolean inbound) {
