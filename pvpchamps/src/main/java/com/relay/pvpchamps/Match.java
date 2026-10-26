@@ -46,6 +46,7 @@ public final class Match implements Bout {
 	private boolean loserDecided, aLost;
 	private net.minecraft.world.item.ItemStack[] kitStacks;
 	private final java.util.Map<String, String> barSeen = new java.util.HashMap<>();
+	private final WallWatch wall = new WallWatch();
 	private Ping.Session ping;
 	private long gameTicks;   // every tick of the match, for /DUR logs: game time does not depend on the server's tick rate
 	private int holeA, holeB; // ticks each fighter has spent well below the arena floor
@@ -373,6 +374,8 @@ public final class Match implements Bout {
 		// Only the Crystal kit's empty restock shulker works this way. Other kits carry a shulker with real items in it (totems,
 		// potions) that Vexbot places and loots itself: removing that block would destroy everything inside.
 		if (kit == Kits.CRYSTAL && fightTicks % 4 == 0) { restockPlaced(a); restockPlaced(b); } // a placed shulker vanishes and restocks the kit
+		wall.check(nameA, a, b, centre, kit.id, watch);
+		wall.check(nameB, b, a, centre, kit.id, true);
 		trackHoles(a, b);
 		// A bot that drops off the server mid-round while alive is brought back where it stood, with the kit, up to twice.
 		if (watch && handleBotDrop(0, nameA, nameB, a, -90f)) return;

@@ -67,6 +67,12 @@ public final class MoveEngine {
 
 	public static void forget(String bot) { STATES.remove(bot); }
 
+	/** The id of the move the named bot is running right now, or "vexbot" when its own AI is in charge. */
+	public static String currentMove(String bot) {
+		State st = STATES.get(bot);
+		return st == null || st.current == null ? "vexbot" : st.current.id();
+	}
+
 	/** @return true to skip VexBot's own tick for this bot. */
 	public static boolean tick(SwordPvpController controller) {
 		diag("hook");

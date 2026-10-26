@@ -4,7 +4,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 /**
- * Crystals only go off with the opponent above the bot, even by 0.4 blocks. Vexbot places and detonates crystals on its
+ * Crystals go off with the opponent above the bot (even by 0.4 blocks), or while the bot is healthy and well away from them. Vexbot places and detonates crystals on its
  * own whenever it carries some, so the stack is put aside while the opponent is level with or below the bot and put
  * back in the same slot the moment they are above it.
  */
@@ -13,7 +13,13 @@ public final class CrystalGate {
 
 	public static void apply(Ctx c) {
 		var inv = c.bot.getInventory();
-		boolean allowed = c.target.getY() - c.bot.getY() >= 0.4;
+		// Opponent above the bot (the explosion goes up and away from it): always. Otherwise only while the bot is healthy and far enough
+		// from the opponent that a level or low crystal cannot hurt it much; with the strict "above only" rule a Crystal bot on a flat
+		// floor almost never crystaled.
+		boolean above = c.target.getY() - c.bot.getY() >= 0.4;
+		boolean safeLevel = c.hp() >= 14f && c.dist >= 4.0;
+		boolean allowed = above || safeLevel;
+		MoveEngine.DIAG.merge("crystal_gate:" + (above ? "above" : safeLevel ? "safe_level" : "blocked"), 1, Integer::sum);
 		var st = c.st;
 		if (allowed) {
 			if (st.stash == null) return;

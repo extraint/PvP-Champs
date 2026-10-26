@@ -49,6 +49,7 @@ public final class TeamMatch implements Bout {
 	private final Set<String> dead = new HashSet<>();           // lower-case names of fighters dead this round
 	private final Map<String, Integer> missing = new HashMap<>(), hole = new HashMap<>();
 	private int lastDeathA, lastDeathB;
+	private final WallWatch wall = new WallWatch();
 	private Ping.Session ping;
 	private long gameTicks;
 	private boolean spawned;
@@ -449,6 +450,10 @@ public final class TeamMatch implements Bout {
 				ServerPlayer p = alive(n) ? entity(n) : null;
 				if (p != null && p.isAlive()) Restock.placed(level, p, isHuman(n) ? Layouts.apply(p, kit, kitStacks) : kitStacks);
 			}
+		}
+		for (String n : fighters()) {
+			ServerPlayer p = alive(n) ? entity(n) : null;
+			wall.check(n, p, nearestEnemy(n), centre, kit.id, !isHuman(n));
 		}
 		trackHoles();
 		boolean aOut = teamOut(teamA), bOut = teamOut(teamB);
