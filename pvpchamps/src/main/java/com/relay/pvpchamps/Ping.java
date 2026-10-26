@@ -153,30 +153,44 @@ public final class Ping {
 	public static final class Session {
 		private final MinecraftServer server;
 		private final Map<String, Integer> pings = new HashMap<>();
-		private final Map<String, Integer> shown = new HashMap<>();       // what each bot's tab-list ping currently says
 		private final List<ServerPlayer> lagged = new ArrayList<>();
 
 		Session(MinecraftServer server) { this.server = server; }
 
-		/** Makes each bot's ping in the tab list its simulated ping (a bot has no connection of its own, so nothing else would ever set it). */
-		public void syncBots() {
-			if (!enabled) return;
-			for (Map.Entry<String, Integer> e : pings.entrySet()) showPing(e.getKey(), e.getValue());
+		private void resetShown(ServerPlayer p) {
+			if (p == null || p.connection == null) return;
+			((com.relay.pvpchamps.mixin.CommonListenerAccess) p.connection).pvpchamps$setLatency(0);
+			server.getPlayerList().broadcastAll(new net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket(
+				java.util.EnumSet.of(net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY), List.of(p)));
 		}
 
-		private void showPing(String bot, int ms) {
-			ServerPlayer p = vexbot.api.VexBotApi.resolveBot(server, bot);
+		private final Map<java.util.UUID, Integer> humanPings = new HashMap<>();
+		private int ticks;
+
+		/**
+		 * Makes the ping in the tab list the simulated ping, for the bots (they have no connection of their own, so nothing else
+		 * would ever set it) and for the real players (Minecraft measures it only every 15 seconds, and never for the host of a
+		 * singleplayer or LAN world, whose ping always reads 0). Runs every tick; the tab list is refreshed once a second.
+		 */
+		public void syncBots() {
+			if (!enabled || ++ticks % 20 != 1) return;
+			for (Map.Entry<String, Integer> e : pings.entrySet()) showPing(vexbot.api.VexBotApi.resolveBot(server, e.getKey()), e.getValue());
+			for (Map.Entry<java.util.UUID, Integer> e : humanPings.entrySet()) showPing(server.getPlayerList().getPlayer(e.getKey()), e.getValue());
+		}
+
+		private void showPing(ServerPlayer p, int base) {
 			if (p == null || p.connection == null) return;
-			if (p.connection.latency() == ms && shown.containsKey(bot)) return;
+			int ms = Math.max(1, (int) Math.round(base * (1.0 + (rng.nextDouble() - 0.5) * 0.12)));   // a little jitter so it reads like a real connection
 			try {
 				((com.relay.pvpchamps.mixin.CommonListenerAccess) p.connection).pvpchamps$setLatency(ms);
 				server.getPlayerList().broadcastAll(new net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket(
 					java.util.EnumSet.of(net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY), List.of(p)));
-				shown.put(bot, ms);
 			} catch (RuntimeException ex) {
-				System.err.println("[pvpchamps] could not set " + bot + "'s ping: " + ex);
+				System.err.println("[pvpchamps] could not set " + p.getGameProfile().name() + "'s ping: " + ex);
 			}
 		}
+
+		private final Random rng = new Random();
 
 		/** Gives every bot in the match its ping (call after the bot's tier is applied each round, which resets its skill). */
 		public void applyBots() {
@@ -196,7 +210,9 @@ public final class Ping {
 		public void end() {
 			for (ServerPlayer p : lagged) clearLag(p);
 			lagged.clear();
-			for (String bot : pings.keySet()) showPing(bot, 0);
+			for (String bot : pings.keySet()) resetShown(vexbot.api.VexBotApi.resolveBot(server, bot));
+			for (java.util.UUID id : humanPings.keySet()) resetShown(server.getPlayerList().getPlayer(id));
+			humanPings.clear();
 		}
 	}
 
@@ -220,7 +236,7 @@ public final class Ping {
 		for (String n : fighters) {
 			int ping = rtt(by.get(n), host);
 			ServerPlayer hp = humans.stream().filter(h -> h.getGameProfile().name().equalsIgnoreCase(n)).findFirst().orElse(null);
-			if (hp != null) { setLag(hp, ping); s.lagged.add(hp); }
+			if (hp != null) { setLag(hp, ping); s.lagged.add(hp); s.humanPings.put(hp.getUUID(), ping); }
 			else s.pings.put(n, ping);
 			sb.append(" ").append(n).append(" ").append(ping).append("ms (").append(by.get(n).label).append(")");
 		}
