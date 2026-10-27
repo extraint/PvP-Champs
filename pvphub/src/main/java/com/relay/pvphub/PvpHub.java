@@ -91,11 +91,13 @@ public final class PvpHub implements ModInitializer {
 
 		// The crowd comes and goes without a word.
 		net.fabricmc.fabric.api.message.v1.ServerMessageEvents.ALLOW_GAME_MESSAGE.register((server, msg, overlay) -> {
+			try {
 			if (msg.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc && (tc.getKey().startsWith("multiplayer.player.") || tc.getKey().startsWith("death.")) && tc.getArgs().length > 0) {
 				Object a = tc.getArgs()[0];
 				String n = a instanceof net.minecraft.network.chat.Component c ? c.getString() : String.valueOf(a);
 				if (Crowd.isName(n)) return false;
 			}
+			} catch (Throwable t) { /* never break a chat message */ }
 			return true;
 		});
 		if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("vexbot")) {
