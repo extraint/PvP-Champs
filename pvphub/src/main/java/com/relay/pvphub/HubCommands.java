@@ -67,7 +67,7 @@ public final class HubCommands {
 					return 1;
 				})));
 
-		d.register(literal("pvphub").requires(s -> s.getServer().isSingleplayer() || s.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER))
+		d.register(literal("pvphub")
 			.then(literal("setlobby").executes(c -> {
 				ServerPlayer p = c.getSource().getPlayerOrException();
 				Config cfg = Config.get();
