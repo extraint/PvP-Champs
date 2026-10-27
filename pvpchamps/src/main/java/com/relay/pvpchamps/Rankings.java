@@ -15,7 +15,7 @@ import net.fabricmc.loader.api.FabricLoader;
 
 /**
  * Tiers for real players. Every real player has an Elo-style rating per kit that their results move. The roster bots keep
- * their fixed tiers, turned into the same scale ({@code 800 + 25 x MCTiers points}), so beating a high-tier bot is worth
+ * their fixed tiers, turned into the same scale ({@code 1000 + 250 x log10(MCTiers points)}), so beating a high-tier bot is worth
  * more than beating a low-tier one. A rating maps back to the nearest tier (LT5 up to HT1). A tier test promotes you outright.
  */
 public final class Rankings {
@@ -56,7 +56,8 @@ public final class Rankings {
 
 	public static boolean isBot(String name) { return Roster.byName(name) != null; }
 
-	static double eloOfPoints(int points) { return 800 + 25.0 * points; }
+	/** MCTiers points on the rating scale: LT5 (1 point) is 1000, LT3 about 1195, HT3 1250, LT1 about 1410, HT1 about 1445. A gap of 250 is a 4-to-1 favourite in a game. */
+	static double eloOfPoints(int points) { return 1000 + 250.0 * Math.log10(Math.max(1, points)); }
 
 	/** The rating of anyone in a kit: a bot's from its tier, a player's from their results (1000 before they have played). */
 	public static synchronized double rating(String name, Kits kit) {
@@ -78,11 +79,10 @@ public final class Rankings {
 	}
 
 	static String tierForRating(double elo) {
-		double pts = (elo - 800) / 25.0;
 		String best = "LT5";
 		double bestGap = Double.MAX_VALUE;
 		for (String t : Tiers.order()) {
-			double gap = Math.abs(Tiers.points(t) - pts);
+			double gap = Math.abs(eloOfPoints(Tiers.points(t)) - elo);
 			if (gap < bestGap) { bestGap = gap; best = t; }
 		}
 		return best;

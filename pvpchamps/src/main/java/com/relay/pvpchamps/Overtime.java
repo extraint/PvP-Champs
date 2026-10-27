@@ -42,6 +42,11 @@ public final class Overtime {
 				if (p.getHealth() > max) p.setHealth((float) max);
 			}
 		}
+		// Two minutes in and still standing: potions out-heal the wither, so everyone now takes a hit every second that nothing outheals,
+		// until the totems and potions run out.
+		if (into >= 2400 && into % 20 == 0) {
+			for (ServerPlayer p : alive) if (p.level() instanceof net.minecraft.server.level.ServerLevel lvl) p.hurtServer(lvl, p.damageSources().magic(), 4f);
+		}
 		if (into % 100 == 0) for (ServerPlayer p : alive) p.addEffect(new MobEffectInstance(MobEffects.WITHER, 140, Math.min(3, into / 1800)));
 	}
 
