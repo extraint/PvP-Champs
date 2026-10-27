@@ -28,9 +28,20 @@ public final class Menu {
 		private final int rows;
 
 		Gui(int id, Inventory inv, Container c, int rows, Map<Integer, Click> clicks) {
-			super(rows == 6 ? MenuType.GENERIC_9x6 : rows == 4 ? MenuType.GENERIC_9x4 : rows == 2 ? MenuType.GENERIC_9x2 : MenuType.GENERIC_9x3, id, inv, c, rows);
+			super(type(rows), id, inv, c, rows);
 			this.clicks = clicks;
 			this.rows = rows;
+		}
+
+		private static MenuType<?> type(int rows) {
+			return switch (rows) {
+				case 1 -> MenuType.GENERIC_9x1;
+				case 2 -> MenuType.GENERIC_9x2;
+				case 4 -> MenuType.GENERIC_9x4;
+				case 5 -> MenuType.GENERIC_9x5;
+				case 6 -> MenuType.GENERIC_9x6;
+				default -> MenuType.GENERIC_9x3;
+			};
 		}
 
 		@Override
