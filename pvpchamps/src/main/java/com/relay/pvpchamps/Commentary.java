@@ -25,7 +25,10 @@ public final class Commentary {
 	private record Entry(long at, String kind, String text, String match) {}
 
 	private static final ArrayDeque<Entry> FEED = new ArrayDeque<>();   // newest first
-	private static final Set<UUID> MUTED = new HashSet<>();
+	/** What a player sees: everything in chat, only the big moments in chat (the rest on the action bar), all of it on the action bar, or nothing. */
+	public enum Mode { FULL, LITE, BAR, OFF }
+
+	private static final Map<UUID, Mode> MODES = new HashMap<>();
 	private static boolean enabled = true;
 	private static Bout last;
 	private static final Map<String, Integer> totems = new HashMap<>(), said = new HashMap<>();
@@ -40,9 +43,14 @@ public final class Commentary {
 
 	public static void setEnabled(boolean on) { enabled = on; }
 
+	public static void setMode(ServerPlayer p, Mode m) { MODES.put(p.getUUID(), m); }
+
+	public static Mode modeOf(ServerPlayer p) { return MODES.getOrDefault(p.getUUID(), Mode.LITE); }
+
 	public static boolean toggleMute(ServerPlayer p) {
-		if (!MUTED.remove(p.getUUID())) { MUTED.add(p.getUUID()); return true; }
-		return false;
+		if (modeOf(p) == Mode.OFF) { MODES.remove(p.getUUID()); return false; }
+		MODES.put(p.getUUID(), Mode.OFF);
+		return true;
 	}
 
 	private static boolean fighting(String name) {
@@ -54,6 +62,7 @@ public final class Commentary {
 
 	/** Posts a line. {@code coloured} is what chat shows, {@code plain} what the website and highlights keep. */
 	private static void say(MinecraftServer server, String kind, String coloured, String plain, boolean highlight, String actor) {
+		boolean big = highlight || kind.equals("kill");
 		if (!enabled) return;
 		if (actor != null) {                                    // the same kind of line for the same fighter at most every two seconds
 			String key = kind + ":" + actor;
@@ -69,8 +78,15 @@ public final class Commentary {
 		}
 		if (highlight) Highlights.add(kind, plain, match);
 		Component c = Component.literal(coloured);
-		for (ServerPlayer p : server.getPlayerList().getPlayers())
-			if (!MUTED.contains(p.getUUID()) && !vexbot.api.VexBotApi.isBot(server, p.getGameProfile().name())) p.sendSystemMessage(c);
+		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+			if (vexbot.api.VexBotApi.isBot(server, p.getGameProfile().name())) continue;
+			switch (modeOf(p)) {
+				case FULL -> p.sendSystemMessage(c);
+				case LITE -> p.sendSystemMessage(c, !big);     // the big moments stay in chat, the rest is a line above the hotbar
+				case BAR -> p.sendSystemMessage(c, true);
+				case OFF -> { }
+			}
+		}
 	}
 
 	/** A fighter died; {@code killer} is null for an explosion or a fall. */

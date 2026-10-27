@@ -101,6 +101,9 @@ public final class PvpCommands {
 			.then(Commands.literal("commentary")
 				.then(Commands.literal("on").executes(c -> { Commentary.setEnabled(true); say(c.getSource(), "Commentary is on."); return 1; }))
 				.then(Commands.literal("off").executes(c -> { Commentary.setEnabled(false); say(c.getSource(), "Commentary is off."); return 1; }))
+				.then(Commands.literal("full").executes(c -> setCommentary(c.getSource(), Commentary.Mode.FULL, "Every call goes to chat.")))
+				.then(Commands.literal("lite").executes(c -> setCommentary(c.getSource(), Commentary.Mode.LITE, "Only kills and big moments go to chat; the rest is on the action bar.")))
+				.then(Commands.literal("bar").executes(c -> setCommentary(c.getSource(), Commentary.Mode.BAR, "All commentary is on the action bar, none in chat.")))
 				.then(Commands.literal("mute").executes(c -> {
 					boolean muted = Commentary.toggleMute(c.getSource().getPlayerOrException());
 					say(c.getSource(), muted ? "Commentary muted for you." : "Commentary back on for you.");
@@ -375,6 +378,12 @@ public final class PvpCommands {
 		String err = leave ? Viewers.leave(p) : Viewers.join(p);
 		if (err != null) say(src, err);
 		return err == null ? 1 : 0;
+	}
+
+	private static int setCommentary(CommandSourceStack src, Commentary.Mode mode, String text) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		Commentary.setMode(src.getPlayerOrException(), mode);
+		say(src, text);
+		return 1;
 	}
 
 	private static int rankCmd(CommandSourceStack src, String who) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
