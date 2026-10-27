@@ -116,6 +116,18 @@ public final class WebStats {
 	}
 
 	private static volatile int boundPort;
+	private static volatile String publicUrl = "";
+	private static final java.util.concurrent.Semaphore CONNECTIONS = new java.util.concurrent.Semaphore(120);   // a public site must not be able to starve the game of threads
+
+	/** The address to give people: the configured public one (a tunnel or domain), else this machine's. */
+	public static String url() { return publicUrl.isEmpty() ? "http://localhost:" + boundPort : publicUrl; }
+
+	/** Where the site can be reached from other machines on the same network. */
+	public static String lanUrl() {
+		try { return "http://" + java.net.InetAddress.getLocalHost().getHostAddress() + ":" + boundPort; } catch (java.net.UnknownHostException e) { return null; }
+	}
+
+	public static String publicUrlSetting() { return publicUrl; }
 
 	/** The port the site really got, or 0 if it is off. */
 	public static int port() { return boundPort; }
@@ -205,10 +217,11 @@ public final class WebStats {
 			file = dir.resolve("stats.json");
 			load();
 			Path cfg = dir.resolve("web.json");
-			if (!Files.exists(cfg)) Files.writeString(cfg, "{\n  \"enabled\": true,\n  \"port\": 8080\n}\n");
+			if (!Files.exists(cfg)) Files.writeString(cfg, "{\n  \"enabled\": true,\n  \"port\": 8080,\n  \"publicUrl\": \"\"\n}\n");
 			JsonObject c = GSON.fromJson(Files.readString(cfg), JsonObject.class);
 			if (c.has("enabled") && !c.get("enabled").getAsBoolean()) return;
 			if (c.has("port")) port = c.get("port").getAsInt();
+			if (c.has("publicUrl")) publicUrl = c.get("publicUrl").getAsString().trim().replaceAll("/+$", "");   // e.g. https://pvpchamps.example.org once a tunnel or domain points at the port
 			for (int p = port; http == null && p < port + 10; p++) { // 8080 is often taken by something else: try the next ports
 				try { http = new java.net.ServerSocket(p, 20, null); boundPort = p; }
 				catch (java.net.BindException e) { System.err.println("[pvpchamps] port " + p + " is busy, trying the next one"); }
@@ -219,7 +232,8 @@ public final class WebStats {
 				while (!srv.isClosed()) {
 					try {
 						java.net.Socket sock = srv.accept();
-						Thread t = new Thread(() -> serve(sock), "pvpchamps-web-conn");
+						if (!CONNECTIONS.tryAcquire()) { sock.close(); continue; }
+						Thread t = new Thread(() -> { try { serve(sock); } finally { CONNECTIONS.release(); } }, "pvpchamps-web-conn");
 						t.setDaemon(true);
 						t.start();
 					} catch (IOException e) { if (srv.isClosed()) return; }
@@ -245,7 +259,8 @@ public final class WebStats {
 			var in = new java.io.BufferedReader(new java.io.InputStreamReader(sock.getInputStream(), StandardCharsets.ISO_8859_1));
 			String line = in.readLine();
 			if (line == null) return;
-			for (String h = in.readLine(); h != null && !h.isEmpty(); h = in.readLine()) { /* skip headers */ }
+			int headerLines = 0;
+			for (String h = in.readLine(); h != null && !h.isEmpty(); h = in.readLine()) { if (++headerLines > 100) return; /* skip headers, but not for ever */ }
 			String[] parts = line.split(" ");
 			String path = parts.length > 1 ? parts[1] : "/";
 			int q = path.indexOf('?');

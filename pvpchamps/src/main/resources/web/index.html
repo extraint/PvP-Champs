@@ -128,10 +128,32 @@ html{scroll-behavior:smooth}
 .kc.ban .ic.full img.fb{filter:grayscale(1) brightness(.5)}
 .view{display:none}.view.on{display:block}
 @media(max-width:560px){.hide{display:none}}
+.ic{width:1.1em;height:1.1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.17em;flex:none}
+nav button .ic{margin-right:6px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.skip{position:absolute;left:-999px;top:0;background:var(--gold);color:#1a1300;padding:8px 14px;z-index:99}.skip:focus{left:8px;top:8px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
+<a class="skip" href="#main">Skip to the content</a>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><!-- Lucide icons (ISC licence, https://lucide.dev) -->
+<symbol id="i-git-fork" viewBox="0 0 24 24"><circle cx="12" cy="18" r="3" /> <circle cx="6" cy="6" r="3" /> <circle cx="18" cy="6" r="3" /> <path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9" /> <path d="M12 12v3" /></symbol>
+<symbol id="i-radio" viewBox="0 0 24 24"><path d="M16.247 7.761a6 6 0 0 1 0 8.478" /> <path d="M19.075 4.933a10 10 0 0 1 0 14.134" /> <path d="M4.925 19.067a10 10 0 0 1 0-14.134" /> <path d="M7.753 16.239a6 6 0 0 1 0-8.478" /> <circle cx="12" cy="12" r="2" /></symbol>
+<symbol id="i-trophy" viewBox="0 0 24 24"><path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" /> <path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" /> <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" /> <path d="M4 22h16" /> <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" /> <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" /></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M3 5h.01" /> <path d="M3 12h.01" /> <path d="M3 19h.01" /> <path d="M8 5h13" /> <path d="M8 12h13" /> <path d="M8 19h13" /></symbol>
+<symbol id="i-medal" viewBox="0 0 24 24"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15" /> <path d="M11 12 5.12 2.2" /> <path d="m13 12 5.88-9.8" /> <path d="M8 7h8" /> <circle cx="12" cy="17" r="5" /> <path d="M12 18v-2h-.5" /></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /></symbol>
+<symbol id="i-wand-sparkles" viewBox="0 0 24 24"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72" /> <path d="m14 7 3 3" /> <path d="M5 6v4" /> <path d="M19 14v4" /> <path d="M10 2v2" /> <path d="M7 8H3" /> <path d="M21 16h-4" /> <path d="M11 3H9" /></symbol>
+<symbol id="i-skull" viewBox="0 0 24 24"><path d="m12.5 17-.5-1-.5 1h1z" /> <path d="M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z" /> <circle cx="15" cy="12" r="1" /> <circle cx="9" cy="12" r="1" /></symbol>
+<symbol id="i-swords" viewBox="0 0 24 24"><path d="m13 19 6-6" /> <path d="M14.5 17.5 3.586 6.586A2 2 0 013 5.172V3h2.172a2 2 0 011.414.586L17.5 14.5" /> <path d="m14.828 6.172 2.586-2.586A2 2 0 0118.828 3H21v2.172a2 2 0 01-.586 1.414l-2.586 2.586" /> <path d="m16 16 4 4" /> <path d="m19 21 2-2" /> <path d="m5 14 4 4" /> <path d="m5 21-2-2" /> <path d="M7.5 16.5 4 20" /></symbol>
+<symbol id="i-heart-crack" viewBox="0 0 24 24"><path d="M12.409 5.824c-.702.792-1.15 1.496-1.415 2.166l2.153 2.156a.5.5 0 0 1 0 .707l-2.293 2.293a.5.5 0 0 0 0 .707L12 15" /> <path d="M13.508 20.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5a5.5 5.5 0 0 1 9.591-3.677.6.6 0 0 0 .818.001A5.5 5.5 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5z" /></symbol>
+<symbol id="i-signal" viewBox="0 0 24 24"><path d="M2 20h.01" /> <path d="M7 20v-4" /> <path d="M12 20v-8" /> <path d="M17 20V8" /> <path d="M22 4v16" /></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <circle cx="12" cy="12" r="6" /> <circle cx="12" cy="12" r="2" /></symbol>
+<symbol id="i-crown" viewBox="0 0 24 24"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /> <path d="M5 21h14" /></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /> <path d="M2 12h20" /></symbol>
+</svg>
 <header><div class="top"><div class="logo">PVP <b>CHAMPS</b> II</div><span class="pill" id="conn"><i></i><span>connecting</span></span><div class="sub" id="sub">Double elimination · 16 players</div>
-<nav><button data-v="bracket" class="on">Bracket</button><button data-v="live">Live</button><button data-v="board">Leaderboard</button><button data-v="results">Results</button><button data-v="tiers">Tiers</button><button data-v="highlights">Highlights</button><button data-v="predict">Predictions</button></nav></div></header>
-<main>
+<nav role="tablist" aria-label="Sections"><button role="tab" data-v="bracket" class="on" aria-selected="true"><svg class="ic" aria-hidden="true"><use href="#i-git-fork"/></svg>Bracket</button><button role="tab" data-v="live" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-radio"/></svg>Live</button><button role="tab" data-v="board" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-trophy"/></svg>Leaderboard</button><button role="tab" data-v="results" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg>Results</button><button role="tab" data-v="tiers" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-medal"/></svg>Tiers</button><button role="tab" data-v="highlights" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg>Highlights</button><button role="tab" data-v="predict" aria-selected="false"><svg class="ic" aria-hidden="true"><use href="#i-wand-sparkles"/></svg>Predictions</button></nav></div></header>
+<main id="main">
 <div class="view on" id="v-bracket"><div class="stats" id="sumstats"></div><div id="nextup"></div><div id="bk"></div></div>
 <div class="view" id="v-live"><div class="panel" id="feedbox" style="display:none"><div class="mute" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Live feed</div><div id="feed"></div></div><div id="live"></div></div>
 <div class="view" id="v-board"><div class="panel"><table id="board"><thead><tr><th>#</th><th>Player</th><th class="n">Matches</th><th class="n">Win %</th><th class="n hide">Rounds</th><th class="hide">Best kit</th></tr></thead><tbody></tbody></table></div></div>
@@ -145,9 +167,11 @@ html{scroll-behavior:smooth}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pct=(w,l)=>w+l?Math.round(100*w/(w+l))+'%':'-';
+const ic=n=>`<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const KIND_ICON={kill:'skull',totem:'sparkles',hit:'swords',match:'trophy',low:'heart-crack'};
 const mem=n=>String(n).split(' + ');   // a 2v2 entrant is "A + B"
 const head=n=>n==='BYE'?'':mem(n).map(m=>`<img${mem(n).length>1?' class="tm"':''} src="https://mc-heads.net/avatar/${encodeURIComponent(m)}/36" alt="" onerror="this.style.visibility='hidden'">`).join('');
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.view').forEach(e=>e.classList.remove('on'));b.classList.add('on');$('#v-'+b.dataset.v).classList.add('on')});
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.view').forEach(e=>e.classList.remove('on'));document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected','false'));b.classList.add('on');b.setAttribute('aria-selected','true');$('#v-'+b.dataset.v).classList.add('on')});
 
 {const t=location.hash.slice(1);const b=t&&document.querySelector(`nav button[data-v="${t}"]`);if(b)b.click()}
 let SER=[];
@@ -253,7 +277,7 @@ function fighterSkeleton(right){
   <div class="armrow"></div><div class="gl">Hotbar</div><div class="slots hb"></div><div class="gl">Materials</div><div class="slots mat"></div></div>`}
 function armorSkeleton(){return [0,1,2,3].map(i=>`<div class="arm1" data-i="${i}"><div class="aslot"></div><div class="dur"><i></i></div><em></em></div>`).join('')+`<div class="arm1 offh"><div class="oslot"></div><div class="dur" style="visibility:hidden"></div><em>Offhand</em></div>`}
 function updFighter(box,name,hp,g,net){
-  setT(box.querySelector('.nm'),name); setT(box.querySelector('.net1'),net?'📶 '+net:'');
+  setT(box.querySelector('.nm'),name); setH(box.querySelector('.net1'),net?ic('signal')+' '+esc(net):'');
   const bw=box.querySelector('.bodyw'); if(bw._n!==name){bw._n=name;bw.innerHTML=body(name)}
   setH(box.querySelector('.hearts-w'),hearts(hp));
   const ar=box.querySelector('.armrow'); if(!ar._init){ar._init=1;ar.innerHTML=armorSkeleton()}
@@ -315,13 +339,12 @@ let LASTST='';async function stats(){if(document.hidden)return;try{
 }catch(e){}}
 const ago=t=>{const s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?s+'s':s<3600?Math.round(s/60)+'m':Math.round(s/3600)+'h'};
 async function feedLoop(){if(document.hidden)return;try{const l=await (await fetch('/api/feed',{cache:'no-store'})).json();const box=$('#feedbox');
-  box.style.display=l.length?'':'none';$('#feed').innerHTML=l.slice(0,14).map(e=>`<div style="padding:2px 0"><span class="mute" style="font-size:12px">${ago(e.at)}</span> ${esc(e.text)} <span class="mute" style="font-size:12px">· ${esc(e.match||'')}</span></div>`).join('')}catch(e){}}
+  box.style.display=l.length?'':'none';$('#feed').innerHTML=l.slice(0,14).map(e=>`<div style="padding:2px 0"><span class="mute" style="font-size:12px">${ago(e.at)}</span> ${ic(KIND_ICON[e.kind]||'sparkles')} ${esc(e.text)} <span class="mute" style="font-size:12px">· ${esc(e.match||'')}</span></div>`).join('')}catch(e){}}
 const tierCol=t=>({HT1:'#ff5252',LT1:'#ff8a50',HT2:'#ffb74d',LT2:'#ffd54f',HT3:'#c5e1a5',LT3:'#a5d6a7',HT4:'#80cbc4',LT4:'#90caf9',HT5:'#b0bec5',LT5:'#9e9e9e'}[t]||'#888');
 async function tiersLoop(){if(document.hidden)return;try{const l=await (await fetch('/api/rankings',{cache:'no-store'})).json();
   $('#tiers tbody').innerHTML=l.length?l.map((p,i)=>`<tr><td>${i+1}</td><td style="display:flex;gap:8px;align-items:center"><span style="width:20px">${head(p.name)}</span><b>${esc(p.name)}</b></td><td>${Object.entries(p.kits).map(([k,v])=>`<span class="tag" style="background:${tierCol(v.tier)};margin-right:6px" title="${v.rating} rating, ${v.games} games">${esc(k)} ${v.tier}</span>`).join('')}</td></tr>`).join(''):'<tr><td colspan="3" class="empty">No ranked players yet. Play a match or take a tier test.</td></tr>'}catch(e){}}
 async function hlLoop(){if(document.hidden)return;try{const l=await (await fetch('/api/highlights',{cache:'no-store'})).json();
-  const ic={kill:'☠',totem:'✦',hit:'⚔',match:'🏆',low:'♥'};
-  $('#hl tbody').innerHTML=l.length?l.slice(0,60).map(e=>`<tr><td style="width:34px;font-size:18px">${ic[e.type]||'•'}</td><td>${esc(e.text)}<div class="mute" style="font-size:12px">${esc(e.match||'')}</div></td><td class="mute n">${ago(e.at)}</td></tr>`).join(''):'<tr><td class="empty">No highlights yet.</td></tr>'}catch(e){}}
+    $('#hl tbody').innerHTML=l.length?l.slice(0,60).map(e=>`<tr><td style="width:34px;font-size:18px">${ic(KIND_ICON[e.type]||'sparkles')}</td><td>${esc(e.text)}<div class="mute" style="font-size:12px">${esc(e.match||'')}</div></td><td class="mute n">${ago(e.at)}</td></tr>`).join(''):'<tr><td class="empty">No highlights yet.</td></tr>'}catch(e){}}
 async function predLoop(){if(document.hidden)return;try{const d=await (await fetch('/api/predictions',{cache:'no-store'})).json();const c=d.current||{};
   $('#pcur').innerHTML=c.a?`<div class="mute" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase">${c.open?'Predictions open':'Predictions closed'}</div><div style="font-family:var(--head);font-size:22px;margin:4px 0">${esc(c.a)} <span class="mute">vs</span> ${esc(c.b)}</div><div style="display:flex;height:10px;margin:8px 0;border-radius:2px;overflow:hidden;background:#2a2118"><div style="width:${c.probA}%;background:var(--gold)"></div></div><div style="display:flex;justify-content:space-between;font-size:13px"><span>${esc(c.a)} <b>${c.probA}%</b></span><span><b>${c.probB}%</b> ${esc(c.b)}</span></div><div class="mute" style="margin-top:6px">forecast from tiers, ratings and win records · ${esc(c.match||'')} · ${c.votesA} vs ${c.votesB} votes · in game: <b>/pvpchamps predict &lt;name&gt;</b> (10 points)</div>`:'<div class="mute">No series to predict right now.</div>';
   $('#plead tbody').innerHTML=(d.leaders||[]).length?d.leaders.slice(0,20).map((p,i)=>`<tr><td>${i+1}</td><td><b>${esc(p.name)}</b></td><td class="n">${p.points}</td><td class="n">${p.correct}/${p.total}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">Nobody has predicted yet.</td></tr>'}catch(e){}}

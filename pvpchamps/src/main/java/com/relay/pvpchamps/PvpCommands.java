@@ -79,6 +79,15 @@ public final class PvpCommands {
 			.then(Commands.literal("crystalgate")
 				.then(Commands.literal("strict").executes(c -> { com.relay.pvpchamps.moves.CrystalGate.strict = true; say(c.getSource(), "Crystal gate: opponent above only."); return 1; }))
 				.then(Commands.literal("loose").executes(c -> { com.relay.pvpchamps.moves.CrystalGate.strict = false; say(c.getSource(), "Crystal gate: above, or healthy and 4+ blocks away."); return 1; })))
+			.then(Commands.literal("web").executes(c -> {
+				CommandSourceStack s = c.getSource();
+				if (WebStats.port() == 0) { say(s, "The stats website is off (config/pvpchamps/web.json)."); return 0; }
+				say(s, "This machine: http://localhost:" + WebStats.port());
+				String lan = WebStats.lanUrl();
+				if (lan != null) say(s, "Same network: " + lan);
+				say(s, WebStats.publicUrlSetting().isEmpty() ? "Public: not set. Put your tunnel or domain in config/pvpchamps/web.json as \"publicUrl\" (see WEBSITE.md)." : "Public: " + WebStats.publicUrlSetting());
+				return 1;
+			}))
 			.then(Commands.literal("overtime")
 				.then(Commands.argument("kit", StringArgumentType.word())
 					.suggests((c, bld) -> SharedSuggestionProvider.suggest(Kits.ids(), bld))
