@@ -102,7 +102,7 @@ public final class HubCommands {
 					return 1;
 				}))))
 			.then(literal("status").executes(c -> {
-				say(c.getSource(), "Arenas free: " + Arenas.free() + "/" + Arenas.duels().size() + ", duels: " + Duels.active().size() + ", FFA: " + Ffa.count(c.getSource().getServer()) + Duels.active().stream().map(x -> " [" + x.phase + " " + x.score[0] + "-" + x.score[1] + "]").reduce("", String::concat));
+				say(c.getSource(), "Arenas free: " + Arenas.free() + "/" + Arenas.duels().size() + ", duels: " + Duels.active().size() + ", FFA: " + Ffa.count(c.getSource().getServer()) + Duels.active().stream().map(x -> " [" + x.phase + " " + x.score[0] + "-" + x.score[1] + " t" + x.fightTicks + " hp" + Math.round(x.p[0].getHealth()) + "/" + Math.round(x.p[1].getHealth()) + (x.simulated ? " sim" : "") + "]").reduce("", String::concat));
 				return 1;
 			})));
 	}
