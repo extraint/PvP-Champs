@@ -1,28 +1,41 @@
-# PvP Hub (singleplayer PvP server simulator)
+# PvP Hub: a PvPHQ simulator for singleplayer
 
-This mod is for singleplayer only: it turns your own world into a make-believe PvP server. The other "players" and all your opponents are VexBots (install the VexBot mod too). It does not load on a dedicated server.
-
-A server-side Fabric mod (Minecraft 26.2) that turns a server into a PvPHQ-style PvP network. Players join with a normal client; no client mod.
-
-## What it does
-- **Lobby** with a hotbar menu: Unranked queue, Ranked queue, FFA, Stats & leaderboards, Spectate, Back to lobby. Nothing in the lobby can be broken, used or damaged.
-- **Duel queues** for 8 kits (Sword, UHC, Spear & Mace, Crystal, Cart, Netherite OP, Diamond SMP, Netherite SMP). Ranked duels use Elo (K=32) with ranks Bronze to Champion. Matching looks for a close rating **and** a close ping; both windows widen the longer you wait.
-- **Instanced arenas** (6 by default), reset between rounds, 5 second countdown, best-of support, forfeit on disconnect.
-- **FFA** arena: instant respawn with the kit, 3 s spawn protection, kill-streak announcements.
-- **/duel** requests with a kit and best-of, **/spectate**, **/stats**, **/leaderboard**.
-
-## Commands
-`/hub` `/queue <kit> [ranked|unranked]` `/queue leave` `/ffa` `/duel <player> [kit] [bestof]` `/duel accept|deny <player>` `/spectate [player]` `/stats` `/leaderboard <kit|ffa>`
-Ops: `/pvphub setlobby`, `/pvphub status`, and `/pvphub dev ...` (spawns fake players for testing).
+A Fabric mod for Minecraft 26.2 that turns a singleplayer world into a make-believe PvPHQ: a busy lobby full of
+players, ranked and unranked queues, huge arenas, tiers, kit editing and live fights to watch. Every other "player" is a
+VexBot, so install the **VexBot** mod as well. The mod does nothing on a dedicated server.
 
 ## Install
-Drop `pvphub-0.1.0.jar` and Fabric API into `mods/`. Set `gamemode=adventure` and `spawn-protection=0` in `server.properties`. On first start the lobby and arenas are built; settings are in `config/pvphub/config.json`, ratings in `config/pvphub/players.json`.
+Put Fabric API, VexBot and `pvphub-0.1.0.jar` in `.minecraft/mods`, make a new **Superflat** world and open it. The
+first time, the lobby is built at once (a few seconds); the six duel colosseums and the FFA colosseum are then built in
+the background (watch the sidebar), each 255 blocks across.
+
+## The lobby
+A floating island at night: a red-carpet plaza with the spawn plinth, wooden walks, flower beds and stone walls, four
+plank paths with lamp posts, timber houses, the giant pumpkin stage under the TOURS letters with the live **Ranked
+Fights** board, the KIT and FFA halls, and the PVPHQ letters behind you. NPCs (click them): Money SMP, UHC Games,
+Ranked Queue, Unranked Queue, Kit Editor, FFA, Ranked Fights, Leaderboards, Region Selector.
+
+## Hotbar
+Iron sword: Unranked Queue · Golden sword: Ranked Queue · Cake: Events (FFA, quick duel) · Creeper head: Profile & Stats ·
+Book: Kit Editor · Spyglass: Ranked Fights · Compass: Region Selector.
+
+## Ranks and tiers
+PvPHQ ranks in the tab list and chat: OWNER, DEVELOPER, ADMIN, MANAGER, SENIOR MOD, ARBITER, MOD, HELPER, MONEY SMP,
+CRACKBEAST, CREATOR, the personal tags (KITTY, HOST, HEAVEN, ...), HQ+ and default. Pick yours with `/rank <rank>`.
+Ratings show as tiers, LT5 up to HT1, with TR points.
+
+## Kit editor
+Book or `/kiteditor`: pick a kit, move its items anywhere (armour and offhand too), then click **[CONFIRM KIT EDIT]**
+or **[CANCEL KIT EDIT]** in chat (`/kiteditor save|cancel|reset`). Your layout is used every time you get that kit.
+
+## Commands
+`/hub` `/queue <kit> [ranked]` `/queue leave` `/duel <player> [kit] [bestof]` `/ffa` `/spectate [player]` `/stats`
+`/leaderboard <kit>` `/kiteditor` `/rank <rank>` `/regions` `/pvphub status`
+
+## Settings (`config/pvphub/config.json`)
+`serverName`, `address`, `discord`, `store`, `version`, `playerRank`, `simulatedOnline`, `regions`, `crowdBots` (120),
+`crowdDuels`, `botOpponents`, `botOpponentDelaySeconds`, `duelSlots`, `arenaBuildColumnsPerTick`, `countdownSeconds`.
 
 ## Build
-`./gradlew build` (Java 25) writes `build/libs/pvphub-0.1.0.jar`.
-
-## Bot crowd (optional, needs VexBot)
-With the VexBot mod installed, the lobby fills with `crowdBots` (default 100) bots that wander the lobby, cannot be hurt, and join and leave without any chat message. Every few seconds two of them take a free arena and fight an unrated duel you can spectate; `crowdDuels` (3) limits how many run at once and `crowdReserveArenas` (2) keeps arenas free for players. Set `crowdBots` to 0 in `config/pvphub/config.json` to turn it off. Raise `max-players` in `server.properties` (the bots count as players), and give the server a little extra tick headroom.
-
-## Look and feel
-Tab list header/footer (server name, region, online, duels, queued, FFA, Discord), rank tags from the Elo rank in the tab list and chat (best rank sorts first), and a sidebar. Change `serverName`, `region`, `address` and `discord` in `config/pvphub/config.json`. The crowd bots get rank tags, 1-100 ms pings and now and then say something in chat. The sidebar is the same for everyone.
+`./gradlew build` (Java 25) writes `build/libs/pvphub-0.1.0.jar`. VexBot is read from `../pvpchamps/libs/vexbot.jar`.
+`./gradlew runServer` starts a test server with the mod switched on.
