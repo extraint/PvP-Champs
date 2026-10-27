@@ -29,7 +29,20 @@ public final class Menus {
 		return new int[] {Math.min(99, fighting), queued};
 	}
 
-	private static ItemStack counted(ItemStack s, int n) { s.setCount(Math.max(1, Math.min(99, n))); s.set(net.minecraft.core.component.DataComponents.MAX_STACK_SIZE, 99); return s; }
+	/**
+	 * Shows a number on an icon by its stack size. A sword or armour piece cannot stack (the client rejects a damageable item
+	 * with a stack size above one and drops the connection), so its durability is taken off first.
+	 */
+	private static ItemStack counted(ItemStack s, int n) {
+		int c = Math.max(1, Math.min(99, n));
+		if (c == 1) return s;
+		s.remove(net.minecraft.core.component.DataComponents.MAX_DAMAGE);
+		s.remove(net.minecraft.core.component.DataComponents.DAMAGE);
+		s.remove(net.minecraft.core.component.DataComponents.UNBREAKABLE);
+		s.set(net.minecraft.core.component.DataComponents.MAX_STACK_SIZE, 99);
+		s.setCount(c);
+		return s;
+	}
 
 	/** Pick a kit to queue for. */
 	public static void kitPick(ServerPlayer p, boolean ranked) { kitPick(p, ranked, List.of(Kit.values()), ranked ? "Ranked Queue" : "Unranked Queue"); }
