@@ -76,6 +76,19 @@ public final class PvpCommands {
 					.then(Commands.literal("on").executes(c -> { Ping.setSpikes(true); say(c.getSource(), "Lag spikes are on."); return 1; }))
 					.then(Commands.literal("off").executes(c -> { Ping.setSpikes(false); say(c.getSource(), "Lag spikes are off."); return 1; })))
 				.then(Commands.literal("status").executes(c -> { for (String l : Ping.status(c.getSource().getServer())) say(c.getSource(), l); return 1; })))
+			.then(Commands.literal("crystalgate")
+				.then(Commands.literal("strict").executes(c -> { com.relay.pvpchamps.moves.CrystalGate.strict = true; say(c.getSource(), "Crystal gate: opponent above only."); return 1; }))
+				.then(Commands.literal("loose").executes(c -> { com.relay.pvpchamps.moves.CrystalGate.strict = false; say(c.getSource(), "Crystal gate: above, or healthy and 4+ blocks away."); return 1; })))
+			.then(Commands.literal("overtime")
+				.then(Commands.argument("kit", StringArgumentType.word())
+					.suggests((c, bld) -> SharedSuggestionProvider.suggest(Kits.ids(), bld))
+					.then(Commands.argument("seconds", IntegerArgumentType.integer(30, 3600)).executes(c -> {
+						Kits k = Kits.byId(StringArgumentType.getString(c, "kit"));
+						if (k == null) { say(c.getSource(), "Unknown kit."); return 0; }
+						Overtime.setLimit(k, IntegerArgumentType.getInteger(c, "seconds"));
+						say(c.getSource(), k.label + " rounds go to overtime after " + IntegerArgumentType.getInteger(c, "seconds") + " s.");
+						return 1;
+					}))))
 			.then(Commands.literal("rank")
 				.executes(c -> rankCmd(c.getSource(), null))
 				.then(Commands.argument("player", StringArgumentType.word())

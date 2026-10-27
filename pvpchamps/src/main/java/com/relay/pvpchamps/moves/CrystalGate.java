@@ -11,13 +11,16 @@ import net.minecraft.world.item.Items;
 public final class CrystalGate {
 	private CrystalGate() {}
 
+	/** The old rule (opponent above the bot only), for comparing how many crystals get used. */
+	public static boolean strict;
+
 	public static void apply(Ctx c) {
 		var inv = c.bot.getInventory();
-		// Opponent above the bot (the explosion goes up and away from it): always. Otherwise only while the bot is healthy and far enough
-		// from the opponent that a level or low crystal cannot hurt it much; with the strict "above only" rule a Crystal bot on a flat
-		// floor almost never crystaled.
+		// Opponent above the bot (the explosion goes up and away from it): always. Otherwise while the bot is healthy, and Vexbot's own
+		// blast maths keeps it from placing one that would hurt it badly; with the strict "above only" rule a Crystal bot on a flat
+		// floor almost never crystaled (about one crystal every 15 minutes).
 		boolean above = c.target.getY() - c.bot.getY() >= 0.4;
-		boolean safeLevel = c.hp() >= 14f && c.dist >= 4.0;
+		boolean safeLevel = !strict && c.hp() >= 12f;   // Vexbot weighs the blast against itself before it places, and only engages within 4.5 blocks
 		boolean allowed = above || safeLevel;
 		MoveEngine.DIAG.merge("crystal_gate:" + (above ? "above" : safeLevel ? "safe_level" : "blocked"), 1, Integer::sum);
 		var st = c.st;

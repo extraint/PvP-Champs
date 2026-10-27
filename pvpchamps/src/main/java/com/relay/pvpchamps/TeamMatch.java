@@ -245,6 +245,8 @@ public final class TeamMatch implements Bout {
 		server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), cmd);
 	}
 
+	@Override public int bestOf() { return bestOf; }
+
 	@Override public String describe() { return roundLabel(); }
 
 	@Override public List<List<String>> sides() { return List.of(teamA, teamB); }
@@ -262,6 +264,7 @@ public final class TeamMatch implements Bout {
 	}
 
 	private void prepare(ServerPlayer p, boolean isHumanFighter) {
+		Overtime.reset(p);
 		KitManager.apply(p, isHumanFighter ? Layouts.apply(p, kit, kitStacks) : kitStacks);
 		p.setGameMode(GameType.SURVIVAL);
 		p.setHealth(p.getMaxHealth());
@@ -461,6 +464,11 @@ public final class TeamMatch implements Bout {
 			WallWatch.contain(p, centre);
 			wall.check(n, p, nearestEnemy(n), centre, kit.id, !isHuman(n));
 		}
+		{
+			List<ServerPlayer> alive = new ArrayList<>();
+			for (String n : fighters()) { ServerPlayer p = alive(n) ? entity(n) : null; if (p != null && p.isAlive()) alive.add(p); }
+			Overtime.tick(fightTicks, kit, alive, text -> message(Component.literal(text)));
+		}
 		trackHoles();
 		boolean aOut = teamOut(teamA), bOut = teamOut(teamB);
 		if (!aOut && !bOut) return;
@@ -548,7 +556,7 @@ public final class TeamMatch implements Bout {
 	private void finish(boolean aWon, boolean cancelled) {
 		if (state == State.DONE) return;
 		state = State.DONE;
-		System.err.println("[pvpchamps] DUR match " + kit.id + " " + label(teamA) + " vs " + label(teamB) + ": " + gameTicks / 20 + " s total, " + round + " rounds");
+		System.err.println("[pvpchamps] DUR match " + kit.id + " " + label(teamA) + " vs " + label(teamB) + ": " + gameTicks / 20 + " s total, " + round + " rounds, crystals placed " + Commentary.crystalCount());
 		ping.end();
 		dropTeams();
 		WebStats.endLive(label(teamA) + "|" + label(teamB));
@@ -561,6 +569,7 @@ public final class TeamMatch implements Bout {
 		if (arena != null) arena.restore();
 		revive();
 		for (ServerPlayer p : players()) {
+			Overtime.reset(p);
 			Spec.stop(p);
 			p.setGameMode(savedMode.getOrDefault(p.getUUID(), GameType.SURVIVAL));
 			net.minecraft.world.item.ItemStack[] inv = savedInv.get(p.getUUID());

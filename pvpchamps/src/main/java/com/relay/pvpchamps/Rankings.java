@@ -35,6 +35,7 @@ public final class Rankings {
 	private static Path file() { return FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("players.json"); }
 
 	public static synchronized void load() {
+		WebStats.provide("/api/rankings", Rankings::snapshot);
 		try {
 			if (!Files.exists(file())) return;
 			Map<String, Player> read = GSON.fromJson(Files.readString(file()), new TypeToken<Map<String, Player>>() {}.getType());
@@ -42,7 +43,6 @@ public final class Rankings {
 		} catch (IOException | RuntimeException e) {
 			System.err.println("[pvpchamps] players.json unreadable: " + e);
 		}
-		WebStats.provide("/api/rankings", Rankings::snapshot);
 	}
 
 	private static void save() {

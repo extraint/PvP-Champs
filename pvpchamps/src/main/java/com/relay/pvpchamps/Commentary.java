@@ -31,6 +31,10 @@ public final class Commentary {
 	private static final Map<String, Integer> totems = new HashMap<>(), said = new HashMap<>();
 	private static final Set<String> low = new HashSet<>();
 	private static int ticks;
+	private static final Set<Integer> crystalIds = new HashSet<>();
+
+	/** How many end crystals have been placed since this fight began. */
+	public static int crystalCount() { return crystalIds.size(); }
 
 	public static void init() { WebStats.provide("/api/feed", () -> { synchronized (FEED) { return new ArrayList<>(FEED); } }); }
 
@@ -54,7 +58,7 @@ public final class Commentary {
 		if (actor != null) {                                    // the same kind of line for the same fighter at most every two seconds
 			String key = kind + ":" + actor;
 			Integer prev = said.get(key);
-			if (prev != null && ticks - prev < 40) return;
+			if (prev != null && ticks - prev < (kind.equals("low") ? 400 : 40)) return;   // a low-health call at most every 20 seconds per fighter
 			said.put(key, ticks);
 		}
 		Bout b = MatchManager.current();
@@ -102,8 +106,14 @@ public final class Commentary {
 	public static void tick(MinecraftServer server) {
 		ticks++;
 		Bout b = MatchManager.current();
-		if (b != last) { totems.clear(); low.clear(); said.clear(); last = b; }
-		if (b == null || ticks % 2 != 0) return;
+		if (b != last) { totems.clear(); low.clear(); said.clear(); crystalIds.clear(); last = b; }
+		if (b == null) return;
+		if (ticks % 5 == 0 && Arena.exists()) {        // end crystals in the arena: counts how many the fighters place
+			var v = Arena.spot();
+			for (var e : b.level().getEntitiesOfClass(net.minecraft.world.entity.boss.enderdragon.EndCrystal.class,
+					new net.minecraft.world.phys.AABB(v.x - 45, v.y - 5, v.z - 45, v.x + 45, v.y + 40, v.z + 45))) crystalIds.add(e.getId());
+		}
+		if (ticks % 2 != 0) return;
 		for (String n : b.fighterNames()) {
 			ServerPlayer p = server.getPlayerList().getPlayerByName(n);
 			if (p == null || !p.isAlive()) continue;

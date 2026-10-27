@@ -9,7 +9,7 @@ public final class Events {
 
 	/** A series has begun. */
 	public static void matchStarted(MinecraftServer server, Bout match) {
-		Predictions.start(server, match.sides(), match.describe());
+		Predictions.start(server, match.sides(), match.describe(), match.kit(), match.bestOf());
 	}
 
 	/** The first round of a series is over. */

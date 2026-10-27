@@ -147,6 +147,12 @@ public final class WebStats {
 		save();
 	}
 
+	/** Matches won and lost so far, for the forecast's "form". */
+	public static synchronized int[] matchRecord(String name) {
+		Record r = STATS.get(name);
+		return r == null ? new int[] {0, 0} : new int[] {r.matchesWon, r.matchesLost};
+	}
+
 	private static Record rec(String name) { return STATS.computeIfAbsent(name, k -> new Record()); }
 
 	private static void touch(String a, String b) {

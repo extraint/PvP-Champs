@@ -26,6 +26,9 @@ public interface Bout {
 	/** The two sides of the series (names), for predictions. */
 	java.util.List<java.util.List<String>> sides();
 
+	/** How many games make the series (3 for a best-of-3). */
+	int bestOf();
+
 	/** The level the fight is in. */
 	net.minecraft.server.level.ServerLevel level();
 }

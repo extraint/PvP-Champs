@@ -36,6 +36,9 @@ public final class Predictions {
 	private static boolean open;
 	private static String match = "";
 	private static final Map<String, Integer> votes = new HashMap<>();   // lower-case name to side index
+	private static double probA = 0.5;
+	/** The forecast takes part like a player: it backs the favourite of every series and is paid like anyone else. */
+	public static final String FORECAST = "Forecast (AI)";
 
 	private static Path file() { return FabricLoader.getInstance().getConfigDir().resolve("pvpchamps").resolve("predictions.json"); }
 
@@ -63,11 +66,17 @@ public final class Predictions {
 	private static String label(List<String> side) { return String.join(" + ", side); }
 
 	/** A series begins: open predictions and tell everyone who is not in it. */
-	public static synchronized void start(MinecraftServer server, List<List<String>> bothSides, String description) {
+	public static synchronized void start(MinecraftServer server, List<List<String>> bothSides, String description, Kits kit, int bestOf) {
 		sides = bothSides;
 		open = true;
 		match = description;
 		votes.clear();
+		probA = Forecast.seriesWin(bothSides.get(0), bothSides.get(1), kit, bestOf);
+		votes.put(FORECAST.toLowerCase(), probA >= 0.5 ? 0 : 1);
+		String fav = label(bothSides.get(probA >= 0.5 ? 0 : 1));
+		Component f = Component.literal("§d🔮 Forecast: §f" + label(bothSides.get(0)) + " " + Math.round(probA * 100) + "% §d·§f " + label(bothSides.get(1)) + " " + Math.round((1 - probA) * 100)
+			+ "% §d(" + fav + " favoured, " + kit.label + ")");
+		for (ServerPlayer p : server.getPlayerList().getPlayers()) if (!vexbot.api.VexBotApi.isBot(server, p.getGameProfile().name())) p.sendSystemMessage(f);
 		Component c = Component.literal("§d🔮 Predict the winner of " + label(sides.get(0)) + " vs " + label(sides.get(1)) + ": §f/pvpchamps predict <name> §d(" + REWARD + " points, before round 1 ends)");
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
 			String n = p.getGameProfile().name();
@@ -102,7 +111,7 @@ public final class Predictions {
 		for (Map.Entry<String, Integer> v : votes.entrySet()) {
 			Record r = LEDGER.computeIfAbsent(v.getKey(), k -> new Record());
 			ServerPlayer p = server.getPlayerList().getPlayerByName(v.getKey());
-			r.name = p != null ? p.getGameProfile().name() : v.getKey();
+			r.name = v.getKey().equals(FORECAST.toLowerCase()) ? FORECAST : p != null ? p.getGameProfile().name() : v.getKey();
 			r.total++;
 			boolean right = v.getValue() == win;
 			if (right) { r.points += REWARD; r.correct++; }
@@ -131,6 +140,8 @@ public final class Predictions {
 		cur.put("match", match);
 		cur.put("votesA", votes.values().stream().filter(v -> v == 0).count());
 		cur.put("votesB", votes.values().stream().filter(v -> v == 1).count());
+		cur.put("probA", sides.isEmpty() ? null : Math.round(probA * 100));
+		cur.put("probB", sides.isEmpty() ? null : Math.round((1 - probA) * 100));
 		out.put("current", cur);
 		List<Record> rows = new ArrayList<>(LEDGER.values());
 		rows.sort((a, b) -> Integer.compare(b.points, a.points));

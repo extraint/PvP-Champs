@@ -177,6 +177,7 @@ public final class Match implements Bout {
 	}
 
 	private void prepare(ServerPlayer p) {
+		Overtime.reset(p);
 		KitManager.apply(p, p.getUUID().equals(humanId) && !watch ? Layouts.apply(p, kit, kitStacks) : kitStacks);
 		p.setGameMode(GameType.SURVIVAL);
 		p.setHealth(p.getMaxHealth());
@@ -375,6 +376,12 @@ public final class Match implements Bout {
 		// Only the Crystal kit's empty restock shulker works this way. Other kits carry a shulker with real items in it (totems,
 		// potions) that Vexbot places and loots itself: removing that block would destroy everything inside.
 		if (kit == Kits.CRYSTAL && fightTicks % 4 == 0) { restockPlaced(a); restockPlaced(b); } // a placed shulker vanishes and restocks the kit
+		{
+			java.util.List<ServerPlayer> alive = new java.util.ArrayList<>();
+			if (a != null && a.isAlive()) alive.add(a);
+			if (b != null && b.isAlive()) alive.add(b);
+			Overtime.tick(fightTicks, kit, alive, t -> message(Component.literal(t)));
+		}
 		WallWatch.contain(a, centre);
 		WallWatch.contain(b, centre);
 		wall.check(nameA, a, b, centre, kit.id, watch);
@@ -432,7 +439,7 @@ public final class Match implements Bout {
 	private void finish(boolean aWon, boolean cancelled) {
 		if (state == State.DONE) return;
 		state = State.DONE;
-		System.err.println("[pvpchamps] DUR match " + kit.id + " " + nameA + " vs " + nameB + ": " + gameTicks / 20 + " s total, " + round + " rounds");
+		System.err.println("[pvpchamps] DUR match " + kit.id + " " + nameA + " vs " + nameB + ": " + gameTicks / 20 + " s total, " + round + " rounds, crystals placed " + Commentary.crystalCount());
 		ping.end();
 		WebStats.endLive(nameA + "|" + nameB);
 		if (!cancelled) WebStats.match(aWon ? nameA : nameB, aWon ? nameB : nameA, kit.label, roundPrefix, Math.max(scoreA, scoreB), Math.min(scoreA, scoreB));
@@ -440,6 +447,7 @@ public final class Match implements Bout {
 		if (arena != null) arena.restore();
 		if (watch) VexBotApi.despawnBot(server, nameA);
 		revive();
+		Overtime.reset(humanRef);
 		Spec.stop(humanRef);
 		humanRef.setGameMode(savedMode);
 		if (!watch && saved.stacks != null) {
@@ -465,6 +473,8 @@ public final class Match implements Bout {
 	private void command(String cmd) {
 		server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), cmd);
 	}
+
+	@Override public int bestOf() { return bestOf; }
 
 	@Override public String describe() { return roundLabel(); }
 
