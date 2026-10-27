@@ -18,9 +18,14 @@ public final class Duels {
 
 	/** Starts a duel if an arena is free. */
 	public static synchronized boolean start(ServerPlayer a, ServerPlayer b, Kit kit, boolean ranked, int bestOf) {
+		return start(a, b, kit, ranked, bestOf, false);
+	}
+
+	public static synchronized boolean start(ServerPlayer a, ServerPlayer b, Kit kit, boolean ranked, int bestOf, boolean simulated) {
 		Arena arena = Arenas.acquire();
 		if (arena == null) return false;
 		Duel d = new Duel(arena, a, b, kit, ranked, bestOf);
+		d.simulated = simulated;
 		ACTIVE.add(d);
 		BY.put(a.getUUID(), d);
 		BY.put(b.getUUID(), d);

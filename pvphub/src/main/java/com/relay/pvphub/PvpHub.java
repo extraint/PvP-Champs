@@ -64,6 +64,21 @@ public final class PvpHub implements ModInitializer {
 			return Hub.inLobby(p) ? false : true;
 		});
 
+		// The crowd comes and goes without a word.
+		net.fabricmc.fabric.api.message.v1.ServerMessageEvents.ALLOW_GAME_MESSAGE.register((server, msg, overlay) -> {
+			if (msg.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc && tc.getKey().startsWith("multiplayer.player.") && tc.getArgs().length > 0) {
+				Object a = tc.getArgs()[0];
+				String n = a instanceof net.minecraft.network.chat.Component c ? c.getString() : String.valueOf(a);
+				if (Crowd.isName(n)) return false;
+			}
+			return true;
+		});
+		if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("vexbot")) {
+			Population.enable();
+			ServerTickEvents.END_SERVER_TICK.register(Population::tick);
+			System.out.println("[pvphub] VexBot found: the lobby crowd is on (" + Config.get().crowdBots + " bots)");
+		}
+
 		UseItemCallback.EVENT.register((player, level, hand) -> {
 			if (player instanceof ServerPlayer p && Hub.state(p) != Hub.State.DUEL && Hub.state(p) != Hub.State.FFA) {
 				String a = HubItems.actionOf(player.getItemInHand(hand));

@@ -11,6 +11,9 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	// VexBot is optional: with it installed the lobby fills with bots (see Population). Kept in ../pvpchamps/libs (not committed).
+	compileOnly files('../pvpchamps/libs/vexbot.jar')
+	localRuntime files('../pvpchamps/libs/vexbot.jar')
 }
 
 processResources {

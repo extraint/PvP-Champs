@@ -21,6 +21,10 @@ public final class Config {
 	public String ffaKit = "sword";
 	public int countdownSeconds = 5;
 	public int requestSeconds = 60;
+	/** With VexBot installed: how many bots keep the lobby busy (0 = none), how many duels they fight at once, how many arenas they leave free for players. */
+	public int crowdBots = 100;
+	public int crowdDuels = 3;
+	public int crowdReserveArenas = 2;
 	/** Whether the lobby platform has been built (it is built once, then left alone so you can change it). */
 	public boolean lobbyBuilt = false;
 

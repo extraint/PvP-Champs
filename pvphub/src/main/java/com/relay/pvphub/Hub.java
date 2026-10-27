@@ -55,7 +55,7 @@ public final class Hub {
 		p.clearFire();
 		p.getAbilities().flying = false;
 		setState(p, State.LOBBY);
-		HubItems.giveLobby(p, false);
+		if (!Crowd.isBot(p)) HubItems.giveLobby(p, false);
 	}
 
 	/** Puts a player in the lobby state without touching the queue (used when joining one). */
@@ -98,6 +98,7 @@ public final class Hub {
 	public static void tick(MinecraftServer server) {
 		ticks++;
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+			if (Crowd.isBot(p)) continue;          // the crowd is looked after by Population
 			State s = state(p);
 			if (s == State.LOBBY || s == State.QUEUE) {
 				p.getFoodData().setFoodLevel(20);

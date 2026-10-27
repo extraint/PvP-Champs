@@ -21,6 +21,9 @@ public final class Duel {
 	public final int[] score = new int[2];
 	public final Set<UUID> watchers = new HashSet<>();
 	public Phase phase = Phase.COUNTDOWN;
+	/** A fight between crowd bots: no ratings, no stats. */
+	public boolean simulated;
+	public int fightTicks;
 	private int timer, round;
 	private boolean finished;
 
@@ -57,7 +60,7 @@ public final class Duel {
 			x.setCamera(x);
 			x.setGameMode(GameType.SURVIVAL);
 			Hub.teleport(x, level(), s.x, s.y, s.z, arena.spawnYaw(i));
-			kit.give(x);
+			if (Crowd.isBot(x)) Population.give(x, kit); else kit.give(x);
 		}
 		phase = Phase.COUNTDOWN;
 		timer = Config.get().countdownSeconds * 20;
@@ -74,10 +77,13 @@ public final class Duel {
 				if (timer % 20 == 0 && timer > 0) for (ServerPlayer x : p) x.sendSystemMessage(Component.literal("§e" + timer / 20 + "..."), true);
 				if (--timer <= 0) {
 					phase = Phase.FIGHT;
+					fightTicks = 0;
+					if (simulated) Population.fight(this);
 					for (ServerPlayer x : p) x.sendSystemMessage(Component.literal("§c§lFIGHT!"), true);
 				}
 			}
 			case FIGHT -> {
+				fightTicks++;
 				for (int i = 0; i < 2; i++) {                  // out of the arena counts as losing the round
 					if (p[i].getY() < arena.centre.getY() - 4) { died(p[i]); return; }
 				}
@@ -122,7 +128,9 @@ public final class Duel {
 		finished = true;
 		ServerPlayer w = p[winner], l = p[1 - winner];
 		String wn = w.getGameProfile().name(), ln = l.getGameProfile().name();
-		if (ranked) {
+		if (simulated) {
+			// bots: nothing to rate
+		} else if (ranked) {
 			double[] d = Stats.ranked(w.getUUID(), wn, l.getUUID(), ln, kit);
 			double we = Stats.elo(w.getUUID(), wn, kit), le = Stats.elo(l.getUUID(), ln, kit);
 			w.sendSystemMessage(Component.literal("§a=== You won! §7Rating " + Math.round(we) + " §a(+" + Math.round(d[0]) + ") §7· " + Stats.rankName(we) + " ==="));
@@ -141,6 +149,7 @@ public final class Duel {
 		Duels.remove(this);
 		Hub.toLobby(w);
 		Hub.toLobby(l);
+		if (simulated) Population.recycle(w, l);
 	}
 
 	private void broadcastWatchers(String text) {
