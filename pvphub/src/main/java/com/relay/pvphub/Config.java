@@ -28,6 +28,9 @@ public final class Config {
 	public String discord = "discord.gg/yourserver";
 	/** With VexBot installed: how many bots keep the lobby busy (0 = none), how many duels they fight at once, how many arenas they leave free for players. */
 	public int crowdBots = 100;
+	/** Bots take the other side of a queue when no player is waiting, after this many seconds (0 = at once); false turns it off. */
+	public boolean botOpponents = true;
+	public int botOpponentDelaySeconds = 1;
 	public int crowdDuels = 3;
 	public int crowdReserveArenas = 2;
 	/** Whether the lobby platform has been built (it is built once, then left alone so you can change it). */

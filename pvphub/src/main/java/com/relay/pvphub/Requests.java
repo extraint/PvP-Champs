@@ -24,6 +24,12 @@ public final class Requests {
 	public static void send(ServerPlayer from, ServerPlayer to, Kit kit, int bestOf) {
 		if (from == to) { from.sendSystemMessage(Component.literal("§cYou cannot duel yourself.")); return; }
 		if (!Hub.inLobby(from) || !Hub.inLobby(to)) { from.sendSystemMessage(Component.literal("§cBoth of you need to be in the lobby.")); return; }
+		if (Crowd.isBot(to)) {                                       // a bot never says no
+			if (!Hub.inLobby(from) || Hub.state(to) != Hub.State.LOBBY) { from.sendSystemMessage(Component.literal("§c" + to.getGameProfile().name() + " is busy.")); return; }
+			Queues.leave(from, false);
+			if (!Duels.start(from, to, kit, false, bestOf)) from.sendSystemMessage(Component.literal("§cAll arenas are busy, try again in a moment."));
+			return;
+		}
 		OPEN.removeIf(r -> r.from == from && r.to == to);
 		OPEN.add(new Req(from, to, kit, bestOf, ticks + Config.get().requestSeconds * 20L));
 		from.sendSystemMessage(Component.literal("§7Duel request sent to §f" + to.getGameProfile().name() + " §7(" + kit.label + ", best of " + bestOf + ")."));

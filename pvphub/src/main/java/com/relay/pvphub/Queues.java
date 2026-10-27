@@ -80,7 +80,7 @@ public final class Queues {
 				double score = eloGap + pingGap;
 				if (score < bestGap) { bestGap = score; best = b; }
 			}
-			if (best == null && Crowd.active && ticks - a.since >= 160 && Arenas.free() > 0) {     // nobody to play: a bot steps in
+			if (best == null && Crowd.active && Config.get().botOpponents && ticks - a.since >= Config.get().botOpponentDelaySeconds * 20L && Arenas.free() > 0) {     // nobody to play: a bot steps in
 				ServerPlayer bot = Population.idleBot(a.p.level().getServer());
 				if (bot != null) {
 					ENTRIES.remove(a);
