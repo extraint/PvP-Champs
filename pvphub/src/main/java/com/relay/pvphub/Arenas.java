@@ -26,6 +26,11 @@ public final class Arenas {
 		if (ffa == null) return;
 		var level = Hub.world(server);
 		if (!detected) { for (Arena a : all()) a.detect(level); detected = true; }
+		for (var p : server.getPlayerList().getPlayers()) {            // while a person is fighting or watching a fight, build nothing
+			if (Crowd.isBot(p)) continue;
+			var st = Hub.state(p);
+			if (st == Hub.State.DUEL || st == Hub.State.FFA || st == Hub.State.SPECTATE) return;
+		}
 		for (Arena a : all()) {
 			if (a.isBuilt()) continue;
 			a.buildStep(level, Config.get().arenaBuildColumnsPerTick);

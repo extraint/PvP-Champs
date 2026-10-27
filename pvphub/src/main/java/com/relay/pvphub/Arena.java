@@ -88,7 +88,8 @@ public final class Arena {
 		if (nextColumn < 0) { forceChunks(level, true); nextColumn = 0; }
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 		int end = Math.min(SIDE * SIDE, nextColumn + columns);
-		for (; nextColumn < end; nextColumn++) column(level, p, nextColumn / SIDE - SPAN, nextColumn % SIDE - SPAN);
+		long deadline = System.nanoTime() + 6_000_000L;          // never more than ~6 ms of a tick, so nothing stutters
+		for (; nextColumn < end && System.nanoTime() < deadline; nextColumn++) column(level, p, nextColumn / SIDE - SPAN, nextColumn % SIDE - SPAN);
 		if (nextColumn >= SIDE * SIDE) {
 			towers(level);
 			letters(level);
@@ -254,7 +255,7 @@ public final class Arena {
 
 	/** The floor put back, the air over it cleared, stray entities gone. Only the part near the fight is touched. */
 	public void reset(ServerLevel level) {
-		if (!built) { while (!buildStep(level, 4000)) {} return; }
+		if (!built) return;                          // never build in the middle of a fight: unfinished arenas are not handed out
 		int cx = centre.getX(), cy = centre.getY(), cz = centre.getZ();
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
 		for (int dx = -FLOOR_R; dx <= FLOOR_R; dx++) {

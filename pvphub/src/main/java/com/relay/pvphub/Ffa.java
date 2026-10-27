@@ -29,6 +29,10 @@ public final class Ffa {
 	public static void reset() { PROTECTED_UNTIL.clear(); cleaned = false; ticks = 0; }
 
 	public static void join(ServerPlayer p) {
+		if (!Arenas.ffa().isBuilt()) {
+			p.sendSystemMessage(Component.literal("§eThe FFA arena is still being built (" + Arenas.ffa().progress() + "%). Try again in a moment."));
+			return;
+		}
 		Hub.toLobbyQuietly(p);
 		Queues.leave(p, false);
 		Hub.setState(p, Hub.State.FFA);
