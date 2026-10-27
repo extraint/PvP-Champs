@@ -21,6 +21,11 @@ public final class Config {
 	public String ffaKit = "sword";
 	public int countdownSeconds = 5;
 	public int requestSeconds = 60;
+	/** Shown in the tab list and on the sidebar. */
+	public String serverName = "PVP HUB";
+	public String region = "Los Angeles";
+	public String address = "play.example.com";
+	public String discord = "discord.gg/yourserver";
 	/** With VexBot installed: how many bots keep the lobby busy (0 = none), how many duels they fight at once, how many arenas they leave free for players. */
 	public int crowdBots = 100;
 	public int crowdDuels = 3;

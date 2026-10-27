@@ -39,6 +39,8 @@ public final class Population {
 	private static final Set<String> ALL = new LinkedHashSet<>();
 	private static int ticks, nextDuel = 10;
 	private static boolean started;
+	private static int nextChat = 200;
+	private static final String[] CHAT = {"gg", "gg", "lol", "xd", "L", "?", "haha", "mace", "uhc?", "anyone wanna duel", "noob", "nice", "ez", "bruh", "ggs", "who is better", "lag", "what kit", "sword queue is so long", "yooo", "hi", "wp", "close one", "ok"};
 
 	private static final class Bot {
 		final String name;
@@ -72,6 +74,8 @@ public final class Population {
 	private static void spawn(MinecraftServer server, String name) {
 		VexBotApi.spawnBot(server, name, spot(), RNG.nextFloat() * 360f, Hub.world(server).dimension().identifier().toString());
 		BOTS.put(name, new Bot(name));
+		double elo = 1100 + RNG.nextGaussian() * 260;
+		Presentation.setRank(server, name, elo);
 	}
 
 	/** Gives a bot a kit the way VexBot expects (its armour and offhand managers see the change). */
@@ -124,6 +128,8 @@ public final class Population {
 			if (p == null) continue;
 			if (!b.ready) {                                                  // just arrived: settle it into the lobby
 				b.ready = true;
+				int ms = RNG.nextInt(10) == 0 ? 1 : 12 + (int) Math.abs(RNG.nextGaussian() * 45);        // a few ping-less, most between 12 and ~100
+				if (p.connection != null) ((com.relay.pvphub.mixin.CommonListenerAccess) p.connection).pvphub$setLatency(ms);
 				p.setGameMode(GameType.ADVENTURE);
 				p.getInventory().clearContent();
 				Hub.setState(p, Hub.State.LOBBY);
@@ -136,6 +142,17 @@ public final class Population {
 		}
 
 		if (ticks % 20 == 0) duels(s);
+		if (--nextChat <= 0) { chat(s); nextChat = 60 + RNG.nextInt(200); }
+	}
+
+	/** One bot says something in chat. */
+	private static void chat(MinecraftServer s) {
+		List<Bot> ready = new ArrayList<>();
+		for (Bot b : BOTS.values()) if (b.ready) ready.add(b);
+		if (ready.isEmpty()) return;
+		ServerPlayer p = VexBotApi.resolveBot(s, ready.get(RNG.nextInt(ready.size())).name);
+		if (p == null) return;
+		s.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.empty().append(p.getDisplayName()).append(net.minecraft.network.chat.Component.literal("§f: " + CHAT[RNG.nextInt(CHAT.length)])), false);
 	}
 
 	/** Walk a little, stop, look about; turn back when near the edge. */

@@ -45,6 +45,7 @@ public final class PvpHub implements ModInitializer {
 			Duels.tick();
 			Ffa.tick();
 			Requests.tick();
+			Presentation.tick(server);
 		});
 
 		// Fighting is only allowed where a fight is on.
