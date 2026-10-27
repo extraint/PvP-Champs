@@ -32,7 +32,8 @@ java {
 loom {
 	runs {
 		server {
-			// ./gradlew runServer : a dev server with PvP Hub loaded
+			// ./gradlew runServer : a dev server with PvP Hub loaded (the mod is inert on a dedicated server unless this is set)
+			vmArg "-Dpvphub.dev=true"
 		}
 	}
 }

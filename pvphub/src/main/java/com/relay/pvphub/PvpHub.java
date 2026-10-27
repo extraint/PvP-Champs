@@ -16,7 +16,7 @@ import net.minecraft.world.InteractionResult;
 public final class PvpHub implements ModInitializer {
 	@Override
 	public void onInitialize() {
-		if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.SERVER) {
+		if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.SERVER && System.getProperty("pvphub.dev") == null) {
 			System.out.println("[pvphub] PvP Hub is a singleplayer PvP server simulator: it does nothing on a dedicated server.");
 			return;
 		}
