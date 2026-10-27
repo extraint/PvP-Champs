@@ -108,6 +108,8 @@ public final class PvpHub implements ModInitializer {
 			if (msg.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc && (tc.getKey().startsWith("multiplayer.player.") || tc.getKey().startsWith("death.")) && tc.getArgs().length > 0) {
 				Object a = tc.getArgs()[0];
 				String n = a instanceof net.minecraft.network.chat.Component c ? c.getString() : String.valueOf(a);
+				n = n.replaceAll("§.", "").trim();
+				if (n.contains(" ")) n = n.substring(n.lastIndexOf(' ') + 1);      // the rank tag comes first: the name is the last word
 				if (Crowd.isName(n)) return false;
 			}
 			} catch (Throwable t) { /* never break a chat message */ }

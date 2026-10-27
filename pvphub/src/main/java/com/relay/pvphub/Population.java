@@ -154,12 +154,15 @@ public final class Population {
 		ticks++;
 		MinecraftServer s = server;
 
+		if (ticks == 1 || ticks == 200) {                                     // VexBot keeps bots from the last session: send away any that are not ours
+			for (String n : new ArrayList<>(VexBotApi.listBots())) if (!ALL.contains(n)) VexBotApi.despawnBot(s, n);
+		}
 		if (ticks % 4 == 0 && !TO_SPAWN.isEmpty()) spawn(s, TO_SPAWN.remove(TO_SPAWN.size() - 1));      // fifteen a second at most
 
-		for (var it = RECYCLE.iterator(); it.hasNext();) {
-			Recycle r = it.next();
-			if (r.at > ticks) continue;
-			it.remove();
+		List<Recycle> due = new ArrayList<>();                                  // take the due ones out first: despawning can add new entries
+		for (Recycle r : RECYCLE) if (r.at <= ticks) due.add(r);
+		RECYCLE.removeAll(due);
+		for (Recycle r : due) {
 			if (VexBotApi.isBot(s, r.name)) {
 				VexBotApi.despawnBot(s, r.name);
 				BOTS.remove(r.name);
