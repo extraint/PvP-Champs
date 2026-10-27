@@ -102,6 +102,7 @@ public final class TeamMatch implements Bout {
 		message(Component.literal("=== " + roundPrefix + ": " + label(teamA) + " vs " + label(teamB) + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
+		Events.matchStarted(server, this);
 	}
 
 	private static final String TEAM_A = "pvpchamps_a", TEAM_B = "pvpchamps_b";
@@ -243,6 +244,10 @@ public final class TeamMatch implements Bout {
 	private void command(String cmd) {
 		server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), cmd);
 	}
+
+	@Override public String describe() { return roundLabel(); }
+
+	@Override public List<List<String>> sides() { return List.of(teamA, teamB); }
 
 	@Override public List<String> fighterNames() { return fighters(); }
 
@@ -453,6 +458,7 @@ public final class TeamMatch implements Bout {
 		}
 		for (String n : fighters()) {
 			ServerPlayer p = alive(n) ? entity(n) : null;
+			WallWatch.contain(p, centre);
 			wall.check(n, p, nearestEnemy(n), centre, kit.id, !isHuman(n));
 		}
 		trackHoles();
@@ -464,6 +470,7 @@ public final class TeamMatch implements Bout {
 		for (int i = 0; i < Math.max(win.size(), lose.size()); i++) WebStats.round(win.get(i % win.size()), lose.get(i % lose.size()), kit.label);
 		for (ServerPlayer p : players()) if (spectates(p)) Spec.roundEnd(p, lose.get(0));
 		message(Component.literal("§6" + label(win) + " win round " + round + " (" + scoreA + "-" + scoreB + ")"));
+		if (round == 1) Events.firstRoundOver();
 		System.err.println("[pvpchamps] DUR round " + round + " " + kit.id + " " + label(teamA) + " vs " + label(teamB) + ": " + fightTicks / 20 + " s of fight");
 		state = State.BETWEEN;
 		timer = sc(140);
@@ -565,6 +572,7 @@ public final class TeamMatch implements Bout {
 		command("gamerule immediate_respawn false");
 		if (!cancelled) message(Component.literal("§a=== " + label(aWon ? teamA : teamB) + " win the match " + Math.max(scoreA, scoreB) + "-" + Math.min(scoreA, scoreB) + " ==="));
 		else message(Component.literal("§7Match ended."));
+		if (!cancelled) Events.matchEnded(server, aWon ? teamA : teamB, aWon ? teamB : teamA, kit, roundPrefix, Math.max(scoreA, scoreB), Math.min(scoreA, scoreB));
 		if (!cancelled && onEnd != null) onEnd.accept(aWon);
 	}
 }

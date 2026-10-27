@@ -12,6 +12,10 @@ public final class PvpChamps implements ModInitializer {
 		Roster.load();
 		Arena.load();
 		Ping.load();
+		Rankings.load();
+		Highlights.load();
+		Predictions.load();
+		Commentary.init();
 		WebStats.start(); // up from game launch to game exit: the page works with or without a world loaded
 		net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
 			if (WebStats.port() > 0) handler.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
@@ -23,7 +27,12 @@ public final class PvpChamps implements ModInitializer {
 		vexbot.BotSettings.enderChestRegear = false;
 		vexbot.BotSettings.pearlChasing = false; // two bots chasing each other with pearls overshoot and loop; PearlClose throws one aimed pearl
 		CommandRegistrationCallback.EVENT.register((dispatcher, registry, env) -> PvpCommands.register(dispatcher));
-		ServerTickEvents.END_SERVER_TICK.register(server -> MatchManager.tick(server));
+		ServerTickEvents.END_SERVER_TICK.register(server -> { MatchManager.tick(server); Commentary.tick(server); });
+		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DAMAGE.register((entity, source, base, taken, blocked) -> Commentary.damage(entity, source, taken));
+		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register((entity, source) -> {
+			if (entity instanceof net.minecraft.server.level.ServerPlayer v && v.level().getServer() != null)
+				Commentary.kill(v.level().getServer(), v, source.getEntity() instanceof net.minecraft.server.level.ServerPlayer k ? k : null);
+		});
 		// Partners in a 2v2 never hurt each other, whatever the bots decide to swing at.
 		net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) ->
 			!(MatchManager.current() instanceof TeamMatch tm && tm.friendly(entity, source)));

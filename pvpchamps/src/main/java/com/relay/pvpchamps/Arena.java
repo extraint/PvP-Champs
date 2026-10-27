@@ -56,9 +56,23 @@ public final class Arena {
 
 	public static void forget() { centre = null; guard = null; fresh = false; try { Files.deleteIfExists(file()); } catch (Exception ignored) {} }
 
+	/** Stone under the floor, at least. */
+	public static final int DEPTH = 100;
+
+	/** Raises the arena if there is not {@link #DEPTH} blocks of world below its floor (the world is only so deep). Returns true if it moved. */
+	private static boolean ensureDepth(ServerLevel level) {
+		int lowest = level.getMinY() + DEPTH + 3;                // the floor sits three layers above the stone
+		if (centre == null || centre.getY() >= lowest) return false;
+		centre = new BlockPos(centre.getX(), lowest, centre.getZ());
+		save();
+		System.err.println("[pvpchamps] arena raised to y=" + lowest + " so there are " + DEPTH + " blocks of stone under the floor");
+		return true;
+	}
+
 	/** The shared 500 x 500 reset area, snapshotted the first time it is needed (or right after a build). */
 	public static synchronized ArenaGuard guard(ServerLevel level) {
 		if (centre == null) return null;
+		if (guard == null && ensureDepth(level)) fresh = false;   // an arena saved too low is rebuilt higher on the first match of a run
 		if (guard == null) {
 			// The first match of a run regenerates the arena from its design before taking the snapshot, so craters and holes
 			// left in the saved world by an earlier session are never "restored" as if they belonged there.
@@ -80,9 +94,10 @@ public final class Arena {
 
 	public static void build(ServerLevel level, BlockPos at) {
 		centre = at;
+		ensureDepth(level);
 		save();
 		guard = null;
-		generate(level, at);
+		generate(level, centre);   // not "at": the arena may have been raised to fit its stone foundation
 		fresh = true;
 		guard(level);
 	}
@@ -111,6 +126,9 @@ public final class Arena {
 				int x = cx + dx, z = cz + dz;
 				double ang = (Math.toDegrees(Math.atan2(dz, dx)) + 360) % 360;
 				for (int y = cy - 3; y <= cy - 2; y++) set(level, p.set(x, y, z), stone);
+				// Solid stone from the bottom of the world up to the floor, so no crater can open a hole through it (fighters used to
+				// fall out under the arena and stand against its underside).
+				for (int y = level.getMinY(); y < cy - 3; y++) set(level, p.set(x, y, z), stone);
 				int solidTo; // highest y this column fills; everything above it up to the roof is cleared
 				if (d <= FLOOR_R + 0.5) { // sandy mud floor with soft darker patches and fine cracks
 					int cell = cellOf(dx, dz, seeds);

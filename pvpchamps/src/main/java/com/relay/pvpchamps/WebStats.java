@@ -101,6 +101,10 @@ public final class WebStats {
 	public static void setBracket(Object b) { bracket = b; }
 
 	private static volatile Map<String, String> regions = Map.of();
+	private static final Map<String, java.util.function.Supplier<Object>> EXTRA = new java.util.concurrent.ConcurrentHashMap<>();
+
+	/** Serves another JSON document at {@code path} (rankings, feed, highlights, predictions). */
+	public static void provide(String path, java.util.function.Supplier<Object> data) { EXTRA.put(path, data); }
 
 	/** Roster player to region label, for the leaderboard. */
 	public static void setRegions(Map<String, String> r) { regions = r; }
@@ -245,6 +249,10 @@ public final class WebStats {
 			byte[] body;
 			switch (path) {
 				case "/api/live" -> body = GSON.toJson(new ArrayList<>(LIVE.values())).getBytes(StandardCharsets.UTF_8);
+				case "/api/rankings", "/api/feed", "/api/highlights", "/api/predictions" -> {
+					java.util.function.Supplier<Object> s = EXTRA.get(path);
+					body = GSON.toJson(s == null ? Map.of() : s.get()).getBytes(StandardCharsets.UTF_8);
+				}
 				case "/api/regions" -> body = GSON.toJson(regions).getBytes(StandardCharsets.UTF_8);
 				case "/api/bracket" -> body = GSON.toJson(bracket == null ? Map.of() : bracket).getBytes(StandardCharsets.UTF_8);
 				case "/api/stats" -> {

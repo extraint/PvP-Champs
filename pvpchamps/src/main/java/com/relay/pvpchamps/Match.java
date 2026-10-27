@@ -90,6 +90,7 @@ public final class Match implements Bout {
 		message(Component.literal("=== " + roundPrefix + ": " + a + " vs " + b + " - " + kit.label + " - first to "
 			+ (bestOf / 2 + 1) + " ==="));
 		beginRound();
+		Events.matchStarted(server, this);
 	}
 
 	/** Waits are written in ticks at the normal 20 per second; at a faster /pvpchamps speedup they stretch so real time stays the same. */
@@ -374,6 +375,8 @@ public final class Match implements Bout {
 		// Only the Crystal kit's empty restock shulker works this way. Other kits carry a shulker with real items in it (totems,
 		// potions) that Vexbot places and loots itself: removing that block would destroy everything inside.
 		if (kit == Kits.CRYSTAL && fightTicks % 4 == 0) { restockPlaced(a); restockPlaced(b); } // a placed shulker vanishes and restocks the kit
+		WallWatch.contain(a, centre);
+		WallWatch.contain(b, centre);
 		wall.check(nameA, a, b, centre, kit.id, watch);
 		wall.check(nameB, b, a, centre, kit.id, true);
 		trackHoles(a, b);
@@ -394,6 +397,7 @@ public final class Match implements Bout {
 		WebStats.round(aLost ? nameB : nameA, aLost ? nameA : nameB, kit.label);
 		if (watch) Spec.roundEnd(humanRef, aLost ? nameA : nameB); // the breakdown opens only now, never on a client-side guess
 		message(Component.literal("§6" + (aLost ? nameB : nameA) + " wins round " + round + " (" + scoreA + "-" + scoreB + ")"));
+		if (round == 1) Events.firstRoundOver();
 		System.err.println("[pvpchamps] DUR round " + round + " " + kit.id + " " + nameA + " vs " + nameB + ": " + fightTicks / 20 + " s of fight");
 		state = State.BETWEEN;
 		timer = sc(140);
@@ -445,6 +449,7 @@ public final class Match implements Bout {
 		if (changedRespawn) command("gamerule immediate_respawn false");
 		if (!cancelled) message(Component.literal("§a=== " + (aWon ? nameA : nameB) + " wins the match " + Math.max(scoreA, scoreB) + "-" + Math.min(scoreA, scoreB) + " ==="));
 		else message(Component.literal("§7Match ended."));
+		if (!cancelled) Events.matchEnded(server, java.util.List.of(aWon ? nameA : nameB), java.util.List.of(aWon ? nameB : nameA), kit, roundPrefix, Math.max(scoreA, scoreB), Math.min(scoreA, scoreB));
 		if (!cancelled && onEnd != null) onEnd.accept(aWon);
 	}
 
@@ -460,6 +465,10 @@ public final class Match implements Bout {
 	private void command(String cmd) {
 		server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), cmd);
 	}
+
+	@Override public String describe() { return roundLabel(); }
+
+	@Override public java.util.List<java.util.List<String>> sides() { return java.util.List.of(java.util.List.of(nameA), java.util.List.of(nameB)); }
 
 	@Override public java.util.List<String> fighterNames() { return java.util.List.of(nameA, nameB); }
 

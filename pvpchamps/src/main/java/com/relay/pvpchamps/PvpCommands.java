@@ -11,6 +11,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 
 /** /pvpchamps ... */
 public final class PvpCommands {
@@ -75,6 +76,38 @@ public final class PvpCommands {
 					.then(Commands.literal("on").executes(c -> { Ping.setSpikes(true); say(c.getSource(), "Lag spikes are on."); return 1; }))
 					.then(Commands.literal("off").executes(c -> { Ping.setSpikes(false); say(c.getSource(), "Lag spikes are off."); return 1; })))
 				.then(Commands.literal("status").executes(c -> { for (String l : Ping.status(c.getSource().getServer())) say(c.getSource(), l); return 1; })))
+			.then(Commands.literal("rank")
+				.executes(c -> rankCmd(c.getSource(), null))
+				.then(Commands.argument("player", StringArgumentType.word())
+					.suggests((c, bld) -> SharedSuggestionProvider.suggest(onlineNames(c.getSource()), bld))
+					.executes(c -> rankCmd(c.getSource(), StringArgumentType.getString(c, "player")))))
+			.then(Commands.literal("tiertest")
+				.then(Commands.argument("kit", StringArgumentType.word())
+					.suggests((c, bld) -> SharedSuggestionProvider.suggest(Kits.ids(), bld))
+					.executes(c -> tierTest(c))))
+			.then(Commands.literal("commentary")
+				.then(Commands.literal("on").executes(c -> { Commentary.setEnabled(true); say(c.getSource(), "Commentary is on."); return 1; }))
+				.then(Commands.literal("off").executes(c -> { Commentary.setEnabled(false); say(c.getSource(), "Commentary is off."); return 1; }))
+				.then(Commands.literal("mute").executes(c -> {
+					boolean muted = Commentary.toggleMute(c.getSource().getPlayerOrException());
+					say(c.getSource(), muted ? "Commentary muted for you." : "Commentary back on for you.");
+					return 1;
+				})))
+			.then(Commands.literal("highlights")
+				.executes(c -> highlightsCmd(c.getSource(), 8))
+				.then(Commands.argument("n", IntegerArgumentType.integer(1, 30)).executes(c -> highlightsCmd(c.getSource(), IntegerArgumentType.getInteger(c, "n")))))
+			.then(Commands.literal("predict")
+				.then(Commands.argument("who", StringArgumentType.greedyString())
+					.suggests((c, bld) -> SharedSuggestionProvider.suggest(MatchManager.current() == null ? java.util.List.<String>of() : MatchManager.current().fighterNames(), bld))
+					.executes(c -> {
+						String err = Predictions.predict(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "who"));
+						say(c.getSource(), err == null ? "Prediction locked in." : err);
+						return err == null ? 1 : 0;
+					})))
+			.then(Commands.literal("predictions").executes(c -> {
+				for (String l : Predictions.top(10)) say(c.getSource(), l);
+				return 1;
+			}))
 			.then(Commands.literal("spectate")
 				.executes(c -> viewerCmd(c.getSource(), false))
 				.then(Commands.literal("leave").executes(c -> viewerCmd(c.getSource(), true))))
@@ -110,7 +143,8 @@ public final class PvpCommands {
 					ServerPlayer p = c.getSource().getPlayerOrException();
 					say(c.getSource(), "Building the PvP Champs arena here. This takes a few seconds...");
 					Arena.build((net.minecraft.server.level.ServerLevel) p.level(), p.blockPosition());
-					p.teleportTo(p.getX(), p.getY() + 0.5, p.getZ());
+					Vec3 at = Arena.spot();   // the arena may have been raised to fit its stone foundation: stand on the new floor
+					p.teleportTo(at.x, at.y + 0.5, at.z);
 					say(c.getSource(), "Arena built. Every match is staged inside it, and the 500 x 500 area around it resets after each round.");
 					return 1;
 				}))
@@ -328,6 +362,41 @@ public final class PvpCommands {
 		String err = leave ? Viewers.leave(p) : Viewers.join(p);
 		if (err != null) say(src, err);
 		return err == null ? 1 : 0;
+	}
+
+	private static int rankCmd(CommandSourceStack src, String who) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		String name = who != null ? who : src.getPlayerOrException().getGameProfile().name();
+		say(src, "Tiers for " + name + ":");
+		for (String l : Rankings.describe(name)) say(src, "  " + l);
+		return 1;
+	}
+
+	/** /pvpchamps tiertest <kit>: a best-of-3 against a roster bot of the tier you are testing for; win it and you hold that tier. */
+	private static int tierTest(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+		CommandSourceStack src = c.getSource();
+		ServerPlayer p = src.getPlayerOrException();
+		if (MatchManager.blocksTournament()) { say(src, "A match or tournament is already running (/pvpchamps stop)."); return 0; }
+		Kits kit = Kits.byId(StringArgumentType.getString(c, "kit"));
+		if (kit == null || !Draft.POOL.contains(kit)) { say(src, "Pick one of: " + String.join(", ", Draft.POOL.stream().map(k -> k.id).toList())); return 0; }
+		String me = p.getGameProfile().name();
+		String tier = Rankings.nextTier(me, kit);
+		Roster.Opponent exam = Rankings.examiner(kit, tier);
+		if (exam == null) { say(src, "Nobody in the roster plays that kit."); return 0; }
+		say(src, "Tier test for " + tier + " in " + kit.label + ": best of 3 against " + exam.name() + " (" + Tiers.tier(exam.name(), kit) + ").");
+		MatchManager.begin(new Match(src.getServer(), p, false, me, exam.name(), kit, 3, "Tier test " + tier, EVENT, won -> {
+			if (won) {
+				Rankings.promote(me, kit, tier);
+				p.sendSystemMessage(Component.literal("§a=== Tier test passed: you are " + tier + " in " + kit.label + " ==="));
+			} else p.sendSystemMessage(Component.literal("§7Tier test failed. Try again with /pvpchamps tiertest " + kit.id));
+		}));
+		return 1;
+	}
+
+	private static int highlightsCmd(CommandSourceStack src, int n) {
+		var list = Highlights.recent(n);
+		if (list.isEmpty()) { say(src, "No highlights yet."); return 0; }
+		for (var h : list) say(src, "[" + h.type + "] " + h.text + (h.match == null || h.match.isEmpty() ? "" : "  (" + h.match + ")"));
+		return 1;
 	}
 
 	private static int draftCmd(CommandSourceStack src, String kit) {

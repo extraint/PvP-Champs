@@ -68,6 +68,9 @@ public final class Tiers {
 	private static final String[] ORDER = {"HT1", "LT1", "HT2", "LT2", "HT3", "LT3", "HT4", "LT4", "HT5", "LT5"};
 	private static final int[] POINTS = {60, 45, 30, 20, 10, 6, 4, 3, 2, 1}; // MCTiers points per tier
 
+	/** Every tier from best to worst. */
+	public static java.util.List<String> order() { return java.util.List.of(ORDER); }
+
 	/** MCTiers points for a tier: HT1 60, LT1 45, HT2 30, LT2 20, HT3 10, LT3 6, HT4 4, LT4 3, HT5 2, LT5 1. */
 	public static int points(String tier) {
 		for (int i = 0; i < ORDER.length; i++) if (ORDER[i].equals(tier)) return POINTS[i];

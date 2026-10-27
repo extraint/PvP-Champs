@@ -130,11 +130,14 @@ html{scroll-behavior:smooth}
 @media(max-width:560px){.hide{display:none}}
 </style></head><body>
 <header><div class="top"><div class="logo">PVP <b>CHAMPS</b> II</div><span class="pill" id="conn"><i></i><span>connecting</span></span><div class="sub" id="sub">Double elimination · 16 players</div>
-<nav><button data-v="bracket" class="on">Bracket</button><button data-v="live">Live</button><button data-v="board">Leaderboard</button><button data-v="results">Results</button></nav></div></header>
+<nav><button data-v="bracket" class="on">Bracket</button><button data-v="live">Live</button><button data-v="board">Leaderboard</button><button data-v="results">Results</button><button data-v="tiers">Tiers</button><button data-v="highlights">Highlights</button><button data-v="predict">Predictions</button></nav></div></header>
 <main>
 <div class="view on" id="v-bracket"><div class="stats" id="sumstats"></div><div id="nextup"></div><div id="bk"></div></div>
-<div class="view" id="v-live"><div id="live"></div></div>
+<div class="view" id="v-live"><div class="panel" id="feedbox" style="display:none"><div class="mute" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Live feed</div><div id="feed"></div></div><div id="live"></div></div>
 <div class="view" id="v-board"><div class="panel"><table id="board"><thead><tr><th>#</th><th>Player</th><th class="n">Matches</th><th class="n">Win %</th><th class="n hide">Rounds</th><th class="hide">Best kit</th></tr></thead><tbody></tbody></table></div></div>
+<div class="view" id="v-tiers"><div class="panel"><table id="tiers"><thead><tr><th>#</th><th>Player</th><th>Tiers by kit</th></tr></thead><tbody></tbody></table><div class="mute" style="padding:10px 4px 0;font-size:13px">Real players. Fight bots and friends to earn a tier, or take a tier test in game: <b>/pvpchamps tiertest &lt;kit&gt;</b></div></div></div>
+<div class="view" id="v-highlights"><div class="panel"><table id="hl"><tbody></tbody></table></div></div>
+<div class="view" id="v-predict"><div class="panel" id="pcur"></div><div class="panel"><table id="plead"><thead><tr><th>#</th><th>Player</th><th class="n">Points</th><th class="n">Right</th></tr></thead><tbody></tbody></table></div></div>
 <div class="view" id="v-results"><div class="panel"><table id="hist"><tbody></tbody></table></div></div>
 </main>
 <dialog id="dlg"></dialog>
@@ -310,5 +313,17 @@ let LASTST='';async function stats(){if(document.hidden)return;try{
   document.querySelectorAll('tr.pl').forEach(t=>t.onclick=()=>profile(t.dataset.n));
   $('#hist tbody').innerHTML=s.history.length?s.history.map(h=>`<tr><td style="display:flex;gap:8px;align-items:center"><span style="width:20px">${head(h.winner)}</span><b>${esc(h.winner)}</b>&nbsp;beat ${esc(h.loser)}</td><td class="n">${h.winnerScore}–${h.loserScore}</td><td class="hide"><span class="tag">${esc(h.kit)}</span></td><td class="hide mute">${esc(h.event||'')}</td><td class="mute n">${new Date(h.endedAt).toLocaleTimeString()}</td></tr>`).join(''):'<tr><td class="empty">Nothing yet.</td></tr>';
 }catch(e){}}
-bk();live();stats();setInterval(bk,1000);setInterval(live,400);setInterval(stats,3000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){bk();live();stats()}});
+const ago=t=>{const s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?s+'s':s<3600?Math.round(s/60)+'m':Math.round(s/3600)+'h'};
+async function feedLoop(){if(document.hidden)return;try{const l=await (await fetch('/api/feed',{cache:'no-store'})).json();const box=$('#feedbox');
+  box.style.display=l.length?'':'none';$('#feed').innerHTML=l.slice(0,14).map(e=>`<div style="padding:2px 0"><span class="mute" style="font-size:12px">${ago(e.at)}</span> ${esc(e.text)} <span class="mute" style="font-size:12px">· ${esc(e.match||'')}</span></div>`).join('')}catch(e){}}
+const tierCol=t=>({HT1:'#ff5252',LT1:'#ff8a50',HT2:'#ffb74d',LT2:'#ffd54f',HT3:'#c5e1a5',LT3:'#a5d6a7',HT4:'#80cbc4',LT4:'#90caf9',HT5:'#b0bec5',LT5:'#9e9e9e'}[t]||'#888');
+async function tiersLoop(){if(document.hidden)return;try{const l=await (await fetch('/api/rankings',{cache:'no-store'})).json();
+  $('#tiers tbody').innerHTML=l.length?l.map((p,i)=>`<tr><td>${i+1}</td><td style="display:flex;gap:8px;align-items:center"><span style="width:20px">${head(p.name)}</span><b>${esc(p.name)}</b></td><td>${Object.entries(p.kits).map(([k,v])=>`<span class="tag" style="background:${tierCol(v.tier)};margin-right:6px" title="${v.rating} rating, ${v.games} games">${esc(k)} ${v.tier}</span>`).join('')}</td></tr>`).join(''):'<tr><td colspan="3" class="empty">No ranked players yet. Play a match or take a tier test.</td></tr>'}catch(e){}}
+async function hlLoop(){if(document.hidden)return;try{const l=await (await fetch('/api/highlights',{cache:'no-store'})).json();
+  const ic={kill:'☠',totem:'✦',hit:'⚔',match:'🏆',low:'♥'};
+  $('#hl tbody').innerHTML=l.length?l.slice(0,60).map(e=>`<tr><td style="width:34px;font-size:18px">${ic[e.type]||'•'}</td><td>${esc(e.text)}<div class="mute" style="font-size:12px">${esc(e.match||'')}</div></td><td class="mute n">${ago(e.at)}</td></tr>`).join(''):'<tr><td class="empty">No highlights yet.</td></tr>'}catch(e){}}
+async function predLoop(){if(document.hidden)return;try{const d=await (await fetch('/api/predictions',{cache:'no-store'})).json();const c=d.current||{};
+  $('#pcur').innerHTML=c.a?`<div class="mute" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase">${c.open?'Predictions open':'Predictions closed'}</div><div style="font-family:var(--head);font-size:22px;margin:4px 0">${esc(c.a)} <span class="mute">vs</span> ${esc(c.b)}</div><div class="mute">${esc(c.match||'')} · ${c.votesA} vs ${c.votesB} votes · in game: <b>/pvpchamps predict &lt;name&gt;</b> (10 points)</div>`:'<div class="mute">No series to predict right now.</div>';
+  $('#plead tbody').innerHTML=(d.leaders||[]).length?d.leaders.slice(0,20).map((p,i)=>`<tr><td>${i+1}</td><td><b>${esc(p.name)}</b></td><td class="n">${p.points}</td><td class="n">${p.correct}/${p.total}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">Nobody has predicted yet.</td></tr>'}catch(e){}}
+bk();live();stats();feedLoop();tiersLoop();hlLoop();predLoop();setInterval(feedLoop,1500);setInterval(tiersLoop,5000);setInterval(hlLoop,4000);setInterval(predLoop,2000);setInterval(bk,1000);setInterval(live,400);setInterval(stats,3000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){bk();live();stats()}});
 </script></body></html>

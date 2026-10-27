@@ -20,6 +20,12 @@ public interface Bout {
 	/** Everyone fighting in it (the names a spectator can follow). */
 	java.util.List<String> fighterNames();
 
+	/** Where the series is in the event and the tournament, e.g. "Upper Round 1 (4/8) · Round 2 · 1-0". */
+	String describe();
+
+	/** The two sides of the series (names), for predictions. */
+	java.util.List<java.util.List<String>> sides();
+
 	/** The level the fight is in. */
 	net.minecraft.server.level.ServerLevel level();
 }
