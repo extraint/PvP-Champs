@@ -1,4 +1,6 @@
-# PvP Hub
+# PvP Hub (singleplayer PvP server simulator)
+
+This mod is for singleplayer only: it turns your own world into a make-believe PvP server. The other "players" and all your opponents are VexBots (install the VexBot mod too). It does not load on a dedicated server.
 
 A server-side Fabric mod (Minecraft 26.2) that turns a server into a PvPHQ-style PvP network. Players join with a normal client; no client mod.
 

@@ -16,6 +16,10 @@ import net.minecraft.world.InteractionResult;
 public final class PvpHub implements ModInitializer {
 	@Override
 	public void onInitialize() {
+		if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.SERVER) {
+			System.out.println("[pvphub] PvP Hub is a singleplayer PvP server simulator: it does nothing on a dedicated server.");
+			return;
+		}
 		Config.load();
 		Stats.load();
 
@@ -33,7 +37,11 @@ public final class PvpHub implements ModInitializer {
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> Stats.save());
 
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> Hub.toLobby(handler.player));
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			Hub.toLobby(handler.player);
+			if (!net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("vexbot"))
+				handler.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§eInstall the VexBot mod too: the other players and your opponents are VexBots."));
+		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			ServerPlayer p = handler.player;
 			Queues.leave(p, false);

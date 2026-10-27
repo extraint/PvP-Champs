@@ -3,10 +3,10 @@
   "id": "pvphub",
   "version": "${version}",
   "name": "PvP Hub",
-  "description": "A PvP server in a mod: a lobby, ranked and unranked duel queues with latency-aware matchmaking, Elo ratings, FFA, leaderboards, duel requests and spectating. Works on a dedicated server (players join with a normal client) and in singleplayer.",
+  "description": "A singleplayer PvP server simulator, a PvP server in a mod: a lobby, ranked and unranked duel queues with latency-aware matchmaking, Elo ratings, FFA, leaderboards, duel requests and spectating. Works on a dedicated server (players join with a normal client) and in singleplayer.",
   "authors": ["Relay"],
   "license": "MIT",
-  "environment": "*",
+  "environment": "client",
   "mixins": ["pvphub.mixins.json"],
   "entrypoints": { "main": ["com.relay.pvphub.PvpHub"] },
   "depends": {
