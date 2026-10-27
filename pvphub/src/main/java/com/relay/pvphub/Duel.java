@@ -78,7 +78,7 @@ public final class Duel {
 				if (--timer <= 0) {
 					phase = Phase.FIGHT;
 					fightTicks = 0;
-					if (simulated) Population.fight(this);
+					if (Crowd.isBot(p[0]) || Crowd.isBot(p[1])) Population.fight(this);
 					for (ServerPlayer x : p) x.sendSystemMessage(Component.literal("§c§lFIGHT!"), true);
 				}
 			}
@@ -128,8 +128,21 @@ public final class Duel {
 		finished = true;
 		ServerPlayer w = p[winner], l = p[1 - winner];
 		String wn = w.getGameProfile().name(), ln = l.getGameProfile().name();
+		boolean botW = Crowd.isBot(w), botL = Crowd.isBot(l);
 		if (simulated) {
 			// bots: nothing to rate
+		} else if (botW || botL) {                                   // a person against a crowd bot
+			ServerPlayer human = botW ? l : w;
+			boolean won = human == w;
+			String hn = human.getGameProfile().name();
+			if (ranked) {
+				double d = Stats.rankedVsBot(human.getUUID(), hn, kit, won);
+				double e = Stats.elo(human.getUUID(), hn, kit);
+				human.sendSystemMessage(Component.literal((won ? "§a=== You won! §7Rating " : "§c=== You lost. §7Rating ") + Math.round(e) + (won ? " §a(+" : " §c(") + Math.round(d) + ") §7· " + Stats.rankName(e) + " ==="));
+			} else {
+				Stats.casualVsBot(human.getUUID(), hn, kit, won);
+				human.sendSystemMessage(Component.literal(won ? "§a=== You won! ===" : "§c=== You lost. ==="));
+			}
 		} else if (ranked) {
 			double[] d = Stats.ranked(w.getUUID(), wn, l.getUUID(), ln, kit);
 			double we = Stats.elo(w.getUUID(), wn, kit), le = Stats.elo(l.getUUID(), ln, kit);
@@ -150,6 +163,7 @@ public final class Duel {
 		Hub.toLobby(w);
 		Hub.toLobby(l);
 		if (simulated) Population.recycle(w, l);
+		else { if (botW) Population.recycle(w, w); if (botL) Population.recycle(l, l); }
 	}
 
 	private void broadcastWatchers(String text) {

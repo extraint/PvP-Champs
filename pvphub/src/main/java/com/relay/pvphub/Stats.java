@@ -79,6 +79,22 @@ public final class Stats {
 		return new double[] {gain, -gain};
 	}
 
+	/** A rated duel against a crowd bot: the bot counts as your own rating, so a win is worth +16 and a loss -16. Only you are recorded. */
+	public static synchronized double rankedVsBot(UUID id, String name, Kit kit, boolean won) {
+		KitRecord r = record(id, name, kit);
+		double d = won ? K / 2 : -K / 2;
+		r.elo += d;
+		if (won) { r.wins++; r.streak++; r.bestStreak = Math.max(r.bestStreak, r.streak); } else { r.losses++; r.streak = 0; }
+		save();
+		return d;
+	}
+
+	public static synchronized void casualVsBot(UUID id, String name, Kit kit, boolean won) {
+		KitRecord r = record(id, name, kit);
+		if (won) r.wins++; else r.losses++;
+		save();
+	}
+
 	/** A casual (unranked or requested) duel: wins and losses count, the rating does not move. */
 	public static synchronized void casual(UUID win, String winName, UUID lose, String loseName, Kit kit) {
 		KitRecord w = record(win, winName, kit), l = record(lose, loseName, kit);

@@ -51,10 +51,21 @@ public final class Population {
 
 	private record Recycle(String name, int at) {}
 
+	/** A new world: start the crowd over. */
+	public static void reset() {
+		started = false;
+		Crowd.active = false;
+		TO_SPAWN.clear(); BOTS.clear(); RECYCLE.clear();
+		ticks = 0; nextDuel = 10; nextChat = 200;
+	}
+
 	public static void enable() { enabled = true; }
+
+	public static boolean available() { return enabled && started; }
 
 	private static void begin(MinecraftServer server) {
 		started = true;
+		Crowd.active = true;
 		int want = Config.get().crowdBots;
 		while (ALL.size() < want) {
 			String n = FIRST[RNG.nextInt(FIRST.length)] + SECOND[RNG.nextInt(SECOND.length)];
@@ -90,14 +101,28 @@ public final class Population {
 
 	/** The fight starts: each bot goes for the other. */
 	public static void fight(Duel d) {
-		VexBotApi.hunt(d.p[0].getGameProfile().name(), d.p[1].getGameProfile().name());
-		VexBotApi.hunt(d.p[1].getGameProfile().name(), d.p[0].getGameProfile().name());
+		for (int i = 0; i < 2; i++) if (Crowd.isBot(d.p[i])) VexBotApi.hunt(d.p[i].getGameProfile().name(), d.p[1 - i].getGameProfile().name());
 	}
 
 	/** A bot duel is over: drop both bots and bring them back fresh in a few seconds. */
 	public static void recycle(ServerPlayer a, ServerPlayer b) {
 		RECYCLE.add(new Recycle(a.getGameProfile().name(), ticks + 2));
-		RECYCLE.add(new Recycle(b.getGameProfile().name(), ticks + 2));
+		if (b != a) RECYCLE.add(new Recycle(b.getGameProfile().name(), ticks + 2));
+	}
+
+	/** An idle bot to stand in as an opponent when nobody else is queueing (null if none). */
+	public static ServerPlayer idleBot(MinecraftServer s) {
+		List<ServerPlayer> idle = new ArrayList<>();
+		for (Bot b : BOTS.values()) {
+			if (!b.ready) continue;
+			ServerPlayer p = VexBotApi.resolveBot(s, b.name);
+			if (p != null && Hub.state(p) == Hub.State.LOBBY && p.isAlive()) idle.add(p);
+		}
+		if (idle.isEmpty()) return null;
+		ServerPlayer p = idle.get(RNG.nextInt(idle.size()));
+		BotPlayerActionPack pack = ((ServerPlayerInterface) p).getActionPack();
+		if (pack != null) pack.stopAll();
+		return p;
 	}
 
 	public static void tick(MinecraftServer server) {

@@ -14,5 +14,8 @@ public final class Crowd {
 
 	public static boolean isBot(ServerPlayer p) { return NAMES.contains(p.getGameProfile().name()); }
 
+	/** True once the crowd has been set up (so callers can ask without loading the VexBot classes). */
+	public static volatile boolean active;
+
 	static void add(String name) { NAMES.add(name); }
 }

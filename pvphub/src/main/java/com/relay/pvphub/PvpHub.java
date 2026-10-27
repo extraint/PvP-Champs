@@ -21,6 +21,12 @@ public final class PvpHub implements ModInitializer {
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registry, env) -> HubCommands.register(dispatcher));
 
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> {        // a new world (singleplayer opens many): start from clean state
+			Config.load();
+			Stats.load();
+			Hub.reset(); Queues.reset(); Duels.reset(); Ffa.reset(); Requests.reset(); Presentation.reset();
+			if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("vexbot")) Population.reset();
+		});
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			Arenas.init();
 			Hub.buildLobby(server);

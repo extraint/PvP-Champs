@@ -54,6 +54,8 @@ public final class Presentation {
 		return top;
 	}
 
+	public static void reset() { side = null; RANK_OF.clear(); ticks = 0; }
+
 	public static void tick(MinecraftServer server) {
 		ticks++;
 		if (ticks % 20 != 3) return;

@@ -33,6 +33,8 @@ public final class Duels {
 		return true;
 	}
 
+	public static synchronized void reset() { ACTIVE.clear(); BY.clear(); }
+
 	static synchronized void remove(Duel d) {
 		ACTIVE.remove(d);
 		BY.remove(d.p[0].getUUID());

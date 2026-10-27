@@ -26,6 +26,8 @@ public final class Hub {
 
 	public static void setState(ServerPlayer p, State s) { STATE.put(p.getUUID(), s); }
 
+	public static void reset() { STATE.clear(); ticks = 0; }
+
 	public static void forget(ServerPlayer p) { STATE.remove(p.getUUID()); }
 
 	public static boolean inLobby(ServerPlayer p) { State s = state(p); return s == State.LOBBY || s == State.QUEUE; }
@@ -67,8 +69,8 @@ public final class Hub {
 	/** Builds the lobby platform once (afterwards it is yours to change). */
 	public static void buildLobby(MinecraftServer server) {
 		Config c = Config.get();
-		if (c.lobbyBuilt) return;
 		ServerLevel level = world(server);
+		if (!level.getBlockState(new BlockPos((int) Math.floor(c.lobbyX), (int) Math.floor(c.lobbyY) - 1, (int) Math.floor(c.lobbyZ))).isAir()) return;     // built already (in this world)
 		int cx = (int) Math.floor(c.lobbyX), cy = (int) Math.floor(c.lobbyY) - 1, cz = (int) Math.floor(c.lobbyZ);
 		int r = 20;
 		for (int chx = (cx - r - 2) >> 4; chx <= (cx + r + 2) >> 4; chx++) for (int chz = (cz - r - 2) >> 4; chz <= (cz + r + 2) >> 4; chz++) level.setChunkForced(chx, chz, true);
@@ -89,8 +91,6 @@ public final class Hub {
 			for (int y = cy + 1; y <= cy + 3; y++) Builder.set(level, p.set(lx, y, lz), Builder.b("polished_blackstone_bricks"));
 			Builder.set(level, p.set(lx, cy + 4, lz), Builder.b("sea_lantern"));
 		}
-		c.lobbyBuilt = true;
-		Config.save();
 		System.out.println("[pvphub] built the lobby at " + cx + " " + (cy + 1) + " " + cz);
 	}
 

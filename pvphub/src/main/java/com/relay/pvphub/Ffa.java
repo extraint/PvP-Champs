@@ -26,6 +26,8 @@ public final class Ffa {
 		return k == null ? Kit.SWORD : k;
 	}
 
+	public static void reset() { PROTECTED_UNTIL.clear(); cleaned = false; ticks = 0; }
+
 	public static void join(ServerPlayer p) {
 		Hub.toLobbyQuietly(p);
 		Queues.leave(p, false);

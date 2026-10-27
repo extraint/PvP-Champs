@@ -14,6 +14,8 @@ public final class Requests {
 	private static final List<Req> OPEN = new ArrayList<>();
 	private static long ticks;
 
+	public static void reset() { OPEN.clear(); ticks = 0; }
+
 	public static void tick() {
 		ticks++;
 		if (ticks % 20 == 0) OPEN.removeIf(r -> r.expires < ticks);

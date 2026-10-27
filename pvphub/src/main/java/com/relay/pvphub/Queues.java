@@ -29,6 +29,8 @@ public final class Queues {
 		p.sendSystemMessage(Component.literal("§7Searching for a " + (ranked ? "§branked " : "§aunranked ") + "§f" + kit.label + " §7duel... (right-click the barrier to stop)"));
 	}
 
+	public static synchronized void reset() { ENTRIES.clear(); ticks = 0; }
+
 	public static synchronized boolean isQueued(ServerPlayer p) {
 		for (Entry e : ENTRIES) if (e.p.getUUID().equals(p.getUUID())) return true;
 		return false;
@@ -61,7 +63,7 @@ public final class Queues {
 	/** Once a tick; the matching itself runs once a second. */
 	public static synchronized void tick() {
 		ticks++;
-		if (ticks % 20 != 0 || ENTRIES.size() < 2) return;
+		if (ticks % 20 != 0 || ENTRIES.isEmpty()) return;
 		for (int i = 0; i < ENTRIES.size(); i++) {
 			Entry a = ENTRIES.get(i);
 			Entry best = null;
@@ -77,6 +79,15 @@ public final class Queues {
 				if (pingGap > 50 + 8 * wait) continue;                      // pings: 50 ms apart at first, 8 more every second
 				double score = eloGap + pingGap;
 				if (score < bestGap) { bestGap = score; best = b; }
+			}
+			if (best == null && Crowd.active && ticks - a.since >= 160 && Arenas.free() > 0) {     // nobody to play: a bot steps in
+				ServerPlayer bot = Population.idleBot(a.p.level().getServer());
+				if (bot != null) {
+					ENTRIES.remove(a);
+					if (!Duels.start(a.p, bot, a.kit, a.ranked, 1)) ENTRIES.add(a);
+					i = -1;
+					continue;
+				}
 			}
 			if (best == null || Arenas.free() == 0) continue;
 			ENTRIES.remove(best);
