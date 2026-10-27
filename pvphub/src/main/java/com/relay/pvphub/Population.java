@@ -147,10 +147,14 @@ public final class Population {
 		}
 
 		int i = 0;
+		List<String> lost = new ArrayList<>();
 		for (Bot b : BOTS.values()) {
 			i++;
 			ServerPlayer p = VexBotApi.resolveBot(s, b.name);
-			if (p == null) continue;
+			if (p == null) {
+				if (b.ready && !pendingRecycle(b.name)) { lost.add(b.name); }          // a bot that dropped off: bring it back
+				continue;
+			}
 			if (!b.ready) {                                                  // just arrived: settle it into the lobby
 				b.ready = true;
 				int ms = RNG.nextInt(10) == 0 ? 1 : 12 + (int) Math.abs(RNG.nextGaussian() * 45);        // a few ping-less, most between 12 and ~100
@@ -166,6 +170,7 @@ public final class Population {
 			if ((ticks + i) % 10 == 0) wander(p, b);
 		}
 
+		for (String n : lost) { BOTS.remove(n); TO_SPAWN.add(n); }
 		if (ticks % 20 == 0) duels(s);
 		if (--nextChat <= 0) { chat(s); nextChat = 60 + RNG.nextInt(200); }
 	}
@@ -178,6 +183,11 @@ public final class Population {
 		ServerPlayer p = VexBotApi.resolveBot(s, ready.get(RNG.nextInt(ready.size())).name);
 		if (p == null) return;
 		s.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.empty().append(p.getDisplayName()).append(net.minecraft.network.chat.Component.literal("§f: " + CHAT[RNG.nextInt(CHAT.length)])), false);
+	}
+
+	private static boolean pendingRecycle(String name) {
+		for (Recycle r : RECYCLE) if (r.name.equals(name) || r.name.equals("+" + name)) return true;
+		return false;
 	}
 
 	/** Walk a little, stop, look about; turn back when near the edge. */

@@ -68,6 +68,7 @@ public final class Duel {
 
 	void tick() {
 		if (finished) return;
+		for (ServerPlayer x : p) if (x.isRemoved() || x.connection == null) { forfeit(x); return; }          // gone (left, or a bot that was removed)
 		switch (phase) {
 			case COUNTDOWN -> {
 				for (int i = 0; i < 2; i++) {                  // nobody moves until the fight starts

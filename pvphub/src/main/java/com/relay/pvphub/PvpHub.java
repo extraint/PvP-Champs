@@ -33,12 +33,22 @@ public final class PvpHub implements ModInitializer {
 		});
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			Arenas.init();
-			Hub.buildLobby(server);
+			try {
+				Hub.buildLobby(server);
+			} catch (Throwable t) {
+				System.err.println("[pvphub] could not build the lobby:");
+				t.printStackTrace();
+			}
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(server -> Stats.save());
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			Hub.toLobby(handler.player);
+			try {
+				Hub.toLobby(handler.player);
+			} catch (Throwable t) {          // never let a lobby problem turn into "Invalid player data" and a kick
+				System.err.println("[pvphub] could not put " + handler.player.getGameProfile().name() + " in the lobby:");
+				t.printStackTrace();
+			}
 			if (!net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("vexbot"))
 				handler.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§eInstall the VexBot mod too: the other players and your opponents are VexBots."));
 		});
@@ -81,7 +91,7 @@ public final class PvpHub implements ModInitializer {
 
 		// The crowd comes and goes without a word.
 		net.fabricmc.fabric.api.message.v1.ServerMessageEvents.ALLOW_GAME_MESSAGE.register((server, msg, overlay) -> {
-			if (msg.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc && tc.getKey().startsWith("multiplayer.player.") && tc.getArgs().length > 0) {
+			if (msg.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents tc && (tc.getKey().startsWith("multiplayer.player.") || tc.getKey().startsWith("death.")) && tc.getArgs().length > 0) {
 				Object a = tc.getArgs()[0];
 				String n = a instanceof net.minecraft.network.chat.Component c ? c.getString() : String.valueOf(a);
 				if (Crowd.isName(n)) return false;
