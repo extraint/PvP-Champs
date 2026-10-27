@@ -43,7 +43,7 @@ public final class Lobby {
 		for (int chx = (cx - R - 8) >> 4; chx <= (cx + R + 8) >> 4; chx++) for (int chz = (cz - R - 8) >> 4; chz <= (cz + R + 8) >> 4; chz++) level.setChunkForced(chx, chz, true);
 		entitiesAt = 40;
 		BlockPos marker = new BlockPos(cx, g - 12, cz);
-		if (level.getBlockState(marker).is(b("gilded_blackstone").getBlock())) return;
+		if (level.getBlockState(marker).is(b("chiseled_polished_blackstone").getBlock())) return;
 		long t0 = System.currentTimeMillis();
 		Builder.fill(level, cx - 22, 140, cz - 22, cx + 22, 178, cz + 22, b("air"));            // the small lobby of older versions, if any
 		island(level, cx, g, cz);
@@ -54,7 +54,7 @@ public final class Lobby {
 		signs(level, cx, g, cz);
 		lanterns(level, cx, g, cz);
 		lights(level, cx, g, cz);
-		Builder.set(level, marker, b("gilded_blackstone"));
+		Builder.set(level, marker, b("chiseled_polished_blackstone"));
 		System.out.println("[pvphub] built the lobby at " + cx + " " + (g + 3) + " " + cz + " in " + (System.currentTimeMillis() - t0) + " ms");
 	}
 
@@ -223,7 +223,7 @@ public final class Lobby {
 	// ---------------------------------------------------------------- the letters
 
 	private static void signs(ServerLevel level, int cx, int g, int cz) {
-		BlockState orange = b("orange_wool"), cream = b("smooth_sandstone"), dark = b("spruce_planks"), black = b("black_wool");
+		BlockState orange = b("shroomlight"), cream = b("ochre_froglight"), dark = b("spruce_planks"), black = b("black_wool");
 		// north: TOURS over the stage, facing the plaza
 		Font.write(level, "TOURS", cx, g + 22, cz - 80, 2, orange, black, true);
 		// south: the big logo behind you as you spawn (facing north, so it reads from the plaza)
@@ -272,7 +272,7 @@ public final class Lobby {
 	private static void lights(ServerLevel level, int cx, int g, int cz) {
 		BlockState light = b("light").setValue(BlockStateProperties.LEVEL, 15);
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
-		int[][] layers = {{5, 6}, {16, 9}, {27, 12}};          // {height over the ground, spacing}
+		int[][] layers = {{5, 5}, {14, 8}, {26, 11}};          // {height over the ground, spacing}
 		for (int[] l : layers) {
 			for (int dx = -R; dx <= R; dx += l[1]) for (int dz = -R; dz <= R; dz += l[1]) {
 				if (Math.hypot(dx, dz) > R - 4) continue;

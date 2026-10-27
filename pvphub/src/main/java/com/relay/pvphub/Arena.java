@@ -197,7 +197,7 @@ public final class Arena {
 		}
 		int clearTo = d > BARRIER_R - 1.5 ? cy - 3 : cy + HEIGHT - 1;
 		for (int y = solidTo + 1; y <= clearTo; y++) set(level, p.set(x, y, z), AIR);
-		if (d <= STANDS_R + 3 && Math.floorMod(dx, 9) == 0 && Math.floorMod(dz, 9) == 0) {
+		if (d <= STANDS_R + 3 && Math.floorMod(dx, 6) == 0 && Math.floorMod(dz, 6) == 0) {
 			int ly = d <= FLOOR_R + 2 ? cy + 5 : Math.min(walkY + 4, wallTop + 6 + (int) (d - FLOOR_R - 2));
 			set(level, p.set(x, ly, z), LIGHT);
 		}
@@ -227,7 +227,7 @@ public final class Arena {
 	/** The PVPHQ letters, three blocks a pixel, hung over the north stands and facing the floor. */
 	private void letters(ServerLevel level) {
 		int cx = centre.getX(), cy = centre.getY(), cz = centre.getZ();
-		Font.write(level, "PVPHQ", cx, cy + 34, cz - (STANDS_R - 6), 3, Builder.b("orange_wool"), Builder.b("black_wool"), true);
+		Font.write(level, "PVPHQ", cx, cy + 34, cz - (STANDS_R - 6), 3, Builder.b("shroomlight"), Builder.b("black_wool"), true);
 	}
 
 	private static Direction inward(int dx, int dz) {
