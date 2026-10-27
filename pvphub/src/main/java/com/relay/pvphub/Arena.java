@@ -71,8 +71,8 @@ public final class Arena {
 	public boolean detect(ServerLevel level) {
 		if (built) return true;
 		BlockPos probe = new BlockPos(centre.getX() + FLOOR_R + 1, centre.getY() + 7, centre.getZ());
-		if (level.getBlockState(probe).is(Builder.b("gold_block").getBlock()) && level.getBlockState(centre.below()).is(Builder.b("packed_mud").getBlock())
-			|| level.getBlockState(probe).is(Builder.b("raw_gold_block").getBlock())) built = true;
+		boolean walls = level.getBlockState(probe).is(Builder.b("gold_block").getBlock()) || level.getBlockState(probe).is(Builder.b("raw_gold_block").getBlock());
+		if (walls && level.getBlockState(centre.above(5)).is(LIGHT.getBlock())) built = true;          // an arena from before the lights is rebuilt
 		return built;
 	}
 
@@ -112,6 +112,9 @@ public final class Arena {
 		RAIL = Builder.b("stone_brick_wall"), GLASS = Builder.b("glass"), BEAM = Builder.b("polished_blackstone"), BARRIER = Builder.b("barrier"),
 		BUSH = Builder.b("azalea_leaves").setValue(BlockStateProperties.PERSISTENT, true),
 		BLOOM = Builder.b("flowering_azalea_leaves").setValue(BlockStateProperties.PERSISTENT, true);
+
+	/** Invisible light: the arena is lit at the floor and over the stands, whatever time it is. */
+	private static final BlockState LIGHT = Builder.b("light").setValue(BlockStateProperties.LEVEL, 15);
 
 	private BlockState floor(int dx, int dz) {
 		int cell = cellOf(dx, dz);
@@ -194,6 +197,10 @@ public final class Arena {
 		}
 		int clearTo = d > BARRIER_R - 1.5 ? cy - 3 : cy + HEIGHT - 1;
 		for (int y = solidTo + 1; y <= clearTo; y++) set(level, p.set(x, y, z), AIR);
+		if (d <= STANDS_R + 3 && Math.floorMod(dx, 9) == 0 && Math.floorMod(dz, 9) == 0) {
+			int ly = d <= FLOOR_R + 2 ? cy + 5 : Math.min(walkY + 4, wallTop + 6 + (int) (d - FLOOR_R - 2));
+			set(level, p.set(x, ly, z), LIGHT);
+		}
 		if (d <= WALL_R + 0.5) set(level, p.set(x, roofY, z), (Math.floorMod(dx, 9) == 0 || Math.floorMod(dz, 9) == 0) ? BEAM : GLASS);
 		if (d > BARRIER_R - 1.5) for (int y = cy - 3; y <= cy + HEIGHT; y++) set(level, p.set(x, y, z), BARRIER);
 		else set(level, p.set(x, cy + HEIGHT, z), BARRIER);
@@ -256,7 +263,10 @@ public final class Arena {
 				int x = cx + dx, z = cz + dz;
 				set(level, p.set(x, cy - 1, z), floor(dx, dz));
 				for (int y = cy - 6; y < cy - 1; y++) set(level, p.set(x, y, z), STONE);
-				for (int y = cy; y <= cy + 14; y++) if (!level.getBlockState(p.set(x, y, z)).isAir()) level.setBlock(p, AIR, 2 | 16);
+				for (int y = cy; y <= cy + 14; y++) {
+					var st = level.getBlockState(p.set(x, y, z));
+					if (!st.isAir() && !st.is(LIGHT.getBlock())) level.setBlock(p, AIR, 2 | 16);       // keep the lights
+				}
 			}
 		}
 		AABB box = new AABB(cx - BARRIER_R, cy - 10, cz - BARRIER_R, cx + BARRIER_R + 1, cy + HEIGHT, cz + BARRIER_R + 1);

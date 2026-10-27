@@ -43,7 +43,7 @@ public final class Lobby {
 		for (int chx = (cx - R - 8) >> 4; chx <= (cx + R + 8) >> 4; chx++) for (int chz = (cz - R - 8) >> 4; chz <= (cz + R + 8) >> 4; chz++) level.setChunkForced(chx, chz, true);
 		entitiesAt = 40;
 		BlockPos marker = new BlockPos(cx, g - 12, cz);
-		if (level.getBlockState(marker).is(b("lodestone").getBlock())) return;
+		if (level.getBlockState(marker).is(b("gilded_blackstone").getBlock())) return;
 		long t0 = System.currentTimeMillis();
 		Builder.fill(level, cx - 22, 140, cz - 22, cx + 22, 178, cz + 22, b("air"));            // the small lobby of older versions, if any
 		island(level, cx, g, cz);
@@ -53,7 +53,8 @@ public final class Lobby {
 		stage(level, cx, g, cz);
 		signs(level, cx, g, cz);
 		lanterns(level, cx, g, cz);
-		Builder.set(level, marker, b("lodestone"));
+		lights(level, cx, g, cz);
+		Builder.set(level, marker, b("gilded_blackstone"));
 		System.out.println("[pvphub] built the lobby at " + cx + " " + (g + 3) + " " + cz + " in " + (System.currentTimeMillis() - t0) + " ms");
 	}
 
@@ -264,6 +265,20 @@ public final class Lobby {
 			int x = cx + (int) (Math.cos(a) * r), y = g + 18 + rng.nextInt(16), z = cz + (int) (Math.sin(a) * r);
 			for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++)
 				Builder.set(level, p.set(x + dx, y + dy, z + dz), dx == 0 && dy == 0 && dz == 0 ? b("sea_lantern") : b("white_stained_glass"));
+		}
+	}
+
+	/** Invisible light blocks (only in empty air, never in a wall) so the whole lobby is bright at night. */
+	private static void lights(ServerLevel level, int cx, int g, int cz) {
+		BlockState light = b("light").setValue(BlockStateProperties.LEVEL, 15);
+		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+		int[][] layers = {{5, 6}, {16, 9}, {27, 12}};          // {height over the ground, spacing}
+		for (int[] l : layers) {
+			for (int dx = -R; dx <= R; dx += l[1]) for (int dz = -R; dz <= R; dz += l[1]) {
+				if (Math.hypot(dx, dz) > R - 4) continue;
+				p.set(cx + dx, g + l[0], cz + dz);
+				if (level.getBlockState(p).isAir()) Builder.set(level, p, light);
+			}
 		}
 	}
 
