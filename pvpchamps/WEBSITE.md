@@ -16,6 +16,30 @@ The name ends in `ts.net` (you cannot attach your own domain to a Funnel), but i
 Run `cloudflared tunnel --url http://localhost:8080`. It prints a `https://something-random.trycloudflare.com` address that
 works immediately. It changes every time you start it, so it suits a one-off event, not a permanent link.
 
+## Your DuckDNS name: pvpchamps.duckdns.org
+DuckDNS only keeps the name pointed at your home internet address. To make it work:
+
+1. **Check you can accept visitors.** Look at your router's "WAN IP" and compare it with what a "what is my IP" site says. If they
+   differ, your provider shares one address between customers (CGNAT) and nothing below will work: use Tailscale Funnel or a
+   Cloudflare tunnel instead.
+2. **Keep the name pointed at you.** On duckdns.org your page shows a token (keep it private: anyone with it can move your name).
+   Your address changes now and then, so run DuckDNS's update client on the Minecraft machine (they have a one-line script for
+   Windows, Mac and Linux), or any router that supports DuckDNS.
+3. **HTTPS with Caddy (recommended).** Install Caddy on the Minecraft machine, then use this `Caddyfile`:
+   ```
+   pvpchamps.duckdns.org {
+       reverse_proxy localhost:8080
+   }
+   ```
+   and run `caddy run`. In your router forward **TCP 80 and 443** to that machine. Caddy gets and renews the certificate by itself.
+   The website is then `https://pvpchamps.duckdns.org`.
+4. **No HTTPS (quick and not recommended):** forward TCP 80 (or 8080) to the machine's port 8080 and use `http://pvpchamps.duckdns.org`.
+5. In `config/pvpchamps/web.json` set `"publicUrl": "https://pvpchamps.duckdns.org"` and restart the game. Chat and
+   `/pvpchamps web` will show it.
+
+The catch: your home address becomes public. Forward only the ports above, keep the router firmware updated, and do not
+forward the Minecraft game port unless you want people to join the world.
+
 ## 3. A name of your own for free
 Free domains that last are rare (Freenom is gone). What does exist:
 * **DuckDNS** (`yourname.duckdns.org`, free): keeps a name pointed at your home IP. You must forward port 8080 on your
