@@ -18,3 +18,6 @@ Drop `pvphub-0.1.0.jar` and Fabric API into `mods/`. Set `gamemode=adventure` an
 
 ## Build
 `./gradlew build` (Java 25) writes `build/libs/pvphub-0.1.0.jar`.
+
+## Bot crowd (optional, needs VexBot)
+With the VexBot mod installed, the lobby fills with `crowdBots` (default 100) bots that wander the lobby, cannot be hurt, and join and leave without any chat message. Every few seconds two of them take a free arena and fight an unrated duel you can spectate; `crowdDuels` (3) limits how many run at once and `crowdReserveArenas` (2) keeps arenas free for players. Set `crowdBots` to 0 in `config/pvphub/config.json` to turn it off. Raise `max-players` in `server.properties` (the bots count as players), and give the server a little extra tick headroom.
