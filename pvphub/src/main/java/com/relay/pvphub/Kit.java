@@ -96,7 +96,7 @@ public enum Kit {
 
 	/** Clears the player and gives them the kit at full health. */
 	public void give(ServerPlayer p) {
-		ItemStack[] items = build(p.level().getServer());
+		ItemStack[] items = KitEditor.arrange(p, this, build(p.level().getServer()));
 		p.getInventory().clearContent();
 		for (int i = 0; i < 41; i++) p.getInventory().setItem(i, items[i]);
 		p.removeAllEffects();

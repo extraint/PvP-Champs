@@ -34,6 +34,25 @@ public final class HubCommands {
 				.then(literal("ranked").executes(c -> queue(c.getSource(), StringArgumentType.getString(c, "kit"), true)))
 				.then(literal("unranked").executes(c -> queue(c.getSource(), StringArgumentType.getString(c, "kit"), false)))));
 
+		d.register(literal("kiteditor")
+			.executes(c -> { KitEditor.open(c.getSource().getPlayerOrException()); return 1; })
+			.then(literal("save").executes(c -> { KitEditor.confirm(c.getSource().getPlayerOrException()); return 1; }))
+			.then(literal("cancel").executes(c -> { KitEditor.cancel(c.getSource().getPlayerOrException()); return 1; }))
+			.then(literal("reset").executes(c -> { KitEditor.resetLayout(c.getSource().getPlayerOrException()); return 1; })));
+
+		d.register(literal("rank")
+			.then(argument("rank", StringArgumentType.greedyString()).suggests((c, b) -> SharedSuggestionProvider.suggest(java.util.Arrays.stream(Ranks.STANDARD).map(Ranks.Rank::id).toList(), b))
+				.executes(c -> {
+					Ranks.Rank r = Ranks.byId(StringArgumentType.getString(c, "rank"));
+					if (r == null) { c.getSource().sendFailure(Component.literal("Ranks: OWNER, DEVELOPER, ADMIN, MANAGER, SENIOR MOD, ARBITER, MOD, HELPER, MONEY SMP, CRACKBEAST, CREATOR, HQ+, DEFAULT")); return 0; }
+					Config.get().playerRank = r.id();
+					Config.save();
+					say(c.getSource(), "Your rank is now " + r.id());
+					return 1;
+				})));
+
+		d.register(literal("regions").executes(c -> { Regions.open(c.getSource().getPlayerOrException()); return 1; }));
+
 		d.register(literal("ffa").executes(c -> { Ffa.join(c.getSource().getPlayerOrException()); return 1; }));
 
 		d.register(literal("duel")

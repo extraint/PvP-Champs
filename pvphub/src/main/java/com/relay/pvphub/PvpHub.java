@@ -28,12 +28,23 @@ public final class PvpHub implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> {        // a new world (singleplayer opens many): start from clean state
 			Config.load();
 			Stats.load();
-			Hub.reset(); Queues.reset(); Duels.reset(); Ffa.reset(); Requests.reset(); Presentation.reset();
+			Hub.reset(); Queues.reset(); Duels.reset(); Ffa.reset(); Requests.reset(); Presentation.reset(); Lobby.reset();
+			KitEditor.load();
 			if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("vexbot")) Population.reset();
 		});
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> {
 			Arenas.init();
 			try {
+				var level = Hub.world(server);
+				var rules = level.getGameRules();
+				rules.set(net.minecraft.world.level.gamerules.GameRules.ADVANCE_TIME, false, server);
+				rules.set(net.minecraft.world.level.gamerules.GameRules.ADVANCE_WEATHER, false, server);
+				rules.set(net.minecraft.world.level.gamerules.GameRules.SPAWN_MOBS, false, server);
+				rules.set(net.minecraft.world.level.gamerules.GameRules.SPAWN_MONSTERS, false, server);
+				rules.set(net.minecraft.world.level.gamerules.GameRules.SHOW_DEATH_MESSAGES, false, server);
+				rules.set(net.minecraft.world.level.gamerules.GameRules.SHOW_ADVANCEMENT_MESSAGES, false, server);
+				Holo.command(server, "time set midnight");
+				Holo.command(server, "weather clear");
 				Hub.buildLobby(server);
 			} catch (Throwable t) {
 				System.err.println("[pvphub] could not build the lobby:");
@@ -65,6 +76,8 @@ public final class PvpHub implements ModInitializer {
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			if (Arenas.ffa() == null) return;
 			Hub.tick(server);
+			Lobby.tick(server);
+			Arenas.tick(server);
 			Queues.tick();
 			Duels.tick();
 			Ffa.tick();
@@ -76,7 +89,7 @@ public final class PvpHub implements ModInitializer {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer p)) return true;
 			return switch (Hub.state(p)) {
-				case LOBBY, QUEUE, SPECTATE -> false;
+				case LOBBY, QUEUE, SPECTATE, EDIT -> false;
 				case DUEL -> Duels.allowDamage(p, source);
 				case FFA -> Ffa.allowDamage(p, source);
 			};
@@ -106,7 +119,24 @@ public final class PvpHub implements ModInitializer {
 			System.out.println("[pvphub] VexBot found: the lobby crowd is on (" + Config.get().crowdBots + " bots)");
 		}
 
+		// The lobby NPCs: right- or left-click one to open what it offers.
+		net.fabricmc.fabric.api.event.player.UseEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
+			if (player instanceof ServerPlayer p && entity.entityTags().contains("pvphub_npc")) {
+				if (hand == net.minecraft.world.InteractionHand.MAIN_HAND && Hub.inLobby(p)) { String a = Holo.actionOf(entity); if (a != null) Menus.action(p, a); }
+				return InteractionResult.SUCCESS;
+			}
+			return InteractionResult.PASS;
+		});
+		net.fabricmc.fabric.api.event.player.AttackEntityCallback.EVENT.register((player, level, hand, entity, hit) -> {
+			if (player instanceof ServerPlayer p && entity.entityTags().contains("pvphub_npc")) {
+				if (Hub.inLobby(p)) { String a = Holo.actionOf(entity); if (a != null) Menus.action(p, a); }
+				return InteractionResult.FAIL;
+			}
+			return InteractionResult.PASS;
+		});
+
 		UseItemCallback.EVENT.register((player, level, hand) -> {
+			if (player instanceof ServerPlayer p && Hub.state(p) == Hub.State.EDIT) return InteractionResult.FAIL;     // no eating the kit while editing it
 			if (player instanceof ServerPlayer p && Hub.state(p) != Hub.State.DUEL && Hub.state(p) != Hub.State.FFA) {
 				String a = HubItems.actionOf(player.getItemInHand(hand));
 				if (a != null) {

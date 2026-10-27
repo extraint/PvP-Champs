@@ -80,9 +80,10 @@ public final class Stats {
 	}
 
 	/** A rated duel against a crowd bot: the bot counts as your own rating, so a win is worth +16 and a loss -16. Only you are recorded. */
-	public static synchronized double rankedVsBot(UUID id, String name, Kit kit, boolean won) {
+	public static synchronized double rankedVsBot(UUID id, String name, Kit kit, boolean won, double botElo) {
 		KitRecord r = record(id, name, kit);
-		double d = won ? K / 2 : -K / 2;
+		double expected = 1.0 / (1.0 + Math.pow(10, (botElo - r.elo) / 400.0));
+		double d = K * ((won ? 1 : 0) - expected);
 		r.elo += d;
 		if (won) { r.wins++; r.streak++; r.bestStreak = Math.max(r.bestStreak, r.streak); } else { r.losses++; r.streak = 0; }
 		save();

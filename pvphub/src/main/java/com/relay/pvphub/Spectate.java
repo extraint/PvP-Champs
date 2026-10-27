@@ -30,16 +30,18 @@ public final class Spectate {
 
 	public static void open(ServerPlayer p) {
 		var duels = Duels.active();
-		int rows = Math.max(1, Math.min(6, (duels.size() + 8) / 9));
-		Menu.Builder b = new Menu.Builder("Live duels", rows);
+		Menu.Builder b = new Menu.Builder("Ranked Fights", 6);
 		int i = 0;
 		for (Duel d : duels) {
-			if (i >= rows * 9) break;
+			if (i >= 45) break;
 			String a = d.p[0].getGameProfile().name(), c = d.p[1].getGameProfile().name();
-			b.set(i++, Menu.icon(d.kit.iconStack(), "§f" + a + " §7vs §f" + c, "§7" + (d.ranked ? "Ranked " : "Unranked ") + d.kit.label, "§7Score " + d.score[0] + "-" + d.score[1], "§eClick to watch"),
+			double ea = Tiers.elo(d.p[0], d.kit), ec = Tiers.elo(d.p[1], d.kit);
+			b.set(i++, Menu.icon(d.kit.iconStack(), "§f" + a + " " + Tiers.tag(ea) + " §c§lVS §f" + c + " " + Tiers.tag(ec),
+				"§6| §fKit: §e" + d.kit.label, "§6| §fScore: §e" + d.score[0] + " - " + d.score[1], "§6| §f" + (d.ranked ? "Ranked" : "Unranked") + (d.bestOf > 1 ? " · best of " + d.bestOf : ""), "", "§eClick to spectate"),
 				x -> { x.closeContainer(); Duel live = Duels.of(d.p[0]); if (live != null) watch(x, live); });
 		}
-		if (duels.isEmpty()) b.set(4, Menu.icon(net.minecraft.world.item.Items.BARRIER, "§7No duels right now"));
+		if (duels.isEmpty()) b.set(22, Menu.icon(net.minecraft.world.item.Items.BARRIER, "§7No fights right now", Arenas.building().isEmpty() ? "§7Check back in a moment" : "§7" + Arenas.building()));
+		b.set(49, Menu.icon(net.minecraft.world.item.Items.CLOCK, "§6Gamemodes: §fAll", "§7" + duels.size() + " live fights"));
 		b.open(p);
 	}
 }

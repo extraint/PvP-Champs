@@ -24,10 +24,30 @@ import vexbot.kit.KitManager;
 public final class Population {
 	private Population() {}
 
-	private static final String[] FIRST = {"Dark", "Pixel", "Frost", "Shadow", "Ender", "Toxic", "Swift", "Void", "Nova", "Ghost", "Iron", "Lunar", "Blaze", "Storm", "Cyber", "Rogue", "Neon", "Crimson", "Mystic", "Turbo",
-		"Silent", "Rapid", "Lucky", "Salty", "Sweaty", "Clutch", "Hyper", "Vivid", "Arctic", "Solar", "Atomic", "Feral", "Omega", "Zero", "Cosmic", "Wild", "Sly", "Bold", "Grim", "Jolly"};
-	private static final String[] SECOND = {"Wolf", "Slayer", "Knight", "Fox", "Hawk", "Viper", "Sniper", "Wizard", "Panda", "Tiger", "Raven", "Golem", "Bandit", "Pilot", "Ninja", "Dragon", "Cobra", "Falcon", "Reaper", "Gamer",
-		"Mage", "Shark", "Bear", "Ace", "Hunter", "Phantom", "Rider", "Comet", "Titan", "Spark"};
+	private static final String[] WORDS = {"shadow", "pixel", "frost", "toxic", "swift", "void", "nova", "ghost", "lunar", "blaze", "storm", "rogue", "neon", "mystic", "turbo", "salty", "clutch",
+		"hyper", "arctic", "solar", "feral", "omega", "cosmic", "grim", "aura", "dino", "panda", "tiger", "raven", "bandit", "pilot", "ninja", "cobra", "falcon", "reaper", "wizard", "hawk",
+		"viper", "sniper", "knight", "wolf", "fox", "snake", "spike", "crisp", "mango", "pepper", "noodle", "waffle", "toast", "cookie", "sushi", "taco", "pickle", "bean", "lemon", "kiwi"};
+	private static final String[] CAPS = {"Failed", "Desquatar", "HowToSwap", "Staryay", "Zotao", "Phobied", "Jxrdan", "Snay", "Dinohams", "Deadramc", "Spikly", "Unkn0wn", "CuriousNick", "Spiller",
+		"AuraFarming", "Elproblema", "Locknap", "Corruptus", "Flowtives", "Macguy", "Solsy", "Dodged", "Zylo", "Areomas", "Charmiful", "Darzette", "Deamor", "Dentz", "Dobeer", "Dovevich",
+		"Ecaa", "Exoified", "Brandon", "Bedrogk", "Beeizzy", "Arsle", "Angelcide", "Gurrkis", "Solren", "Thewen", "Swagsense", "Adriftic", "Bozkurt", "Squizy", "Istak", "Mvandebuurt"};
+
+	/** A name that looks like a real player's: a mix of lowercase words, capitalised handles, underscores and numbers. */
+	private static String name() {
+		String n = switch (RNG.nextInt(7)) {
+			case 0 -> WORDS[RNG.nextInt(WORDS.length)] + WORDS[RNG.nextInt(WORDS.length)] + (RNG.nextInt(2) == 0 ? "" + RNG.nextInt(1000) : "");
+			case 1 -> CAPS[RNG.nextInt(CAPS.length)] + "_";
+			case 2 -> "_" + WORDS[RNG.nextInt(WORDS.length)] + WORDS[RNG.nextInt(WORDS.length)];
+			case 3 -> CAPS[RNG.nextInt(CAPS.length)] + RNG.nextInt(100);
+			case 4 -> cap(WORDS[RNG.nextInt(WORDS.length)]) + cap(WORDS[RNG.nextInt(WORDS.length)]);
+			case 5 -> CAPS[RNG.nextInt(CAPS.length)] + (RNG.nextInt(2) == 0 ? "YT" : "TTV");
+			default -> WORDS[RNG.nextInt(WORDS.length)] + "_" + RNG.nextInt(10000);
+		};
+		if (RNG.nextInt(8) == 0) n = n.replace('o', '0');
+		return n;
+	}
+
+	private static String cap(String w) { return Character.toUpperCase(w.charAt(0)) + w.substring(1); }
+
 	/** Kits the bots can fight well (the crystal and cart kits need PvP Champs' move engine). */
 	private static final Kit[] KITS = {Kit.SWORD, Kit.SWORD, Kit.UHC, Kit.NETHERITE_OP, Kit.DIAMOND_SMP, Kit.NETHERITE_SMP, Kit.SPEAR_MACE};
 
@@ -40,7 +60,11 @@ public final class Population {
 	private static int ticks, nextDuel = 10;
 	private static boolean started;
 	private static int nextChat = 200;
-	private static final String[] CHAT = {"gg", "gg", "lol", "xd", "L", "?", "haha", "mace", "uhc?", "anyone wanna duel", "noob", "nice", "ez", "bruh", "ggs", "who is better", "lag", "what kit", "sword queue is so long", "yooo", "hi", "wp", "close one", "ok"};
+	private static final String[] CHAT = {"gg", "gg", "gg", "GG", "lol", "xd", "L", ".", "haha", "hahahah", "mace", "uhc?", "anyone wanna duel", "noob", "nice", "ez", "bruh", "ggs", "lag",
+		"what kit", "sword queue is so long", "yoooo", "hi", "wp", "close one", "ok", "i dont have a mic", "AAAAAH", "your horrible", "geeg", "kiwi", "Jajaa", "gnice", "streaming rn", "1v1 me",
+		"who wants to 2v2", "ranked is so sweaty", "just hit HT3", "LT5 forever", "crystal queue dead?", "nethpot anyone", "bro is cheating", "report him", "lag spike", "my ping is 200",
+		"spear mace is broken", "netherite op > everything", "rate my kit", "how do i edit kits", "book in hotbar", "w", "fr", "no way", "ratio", "im so tilted", "one more", "rematch?"};
+	private static final String[] AT = {"%s whos better u or %s", "gg %s", "%s 1v1?", "yoooo %s", "%s u gotta invite people", "%s q uhc lol", "i love %s", "%s rematch"};
 
 	private static final class Bot {
 		final String name;
@@ -68,9 +92,8 @@ public final class Population {
 		Crowd.active = true;
 		int want = Config.get().crowdBots;
 		while (ALL.size() < want) {
-			String n = FIRST[RNG.nextInt(FIRST.length)] + SECOND[RNG.nextInt(SECOND.length)];
-			if (RNG.nextInt(3) == 0) n += RNG.nextInt(100);
-			if (n.length() > 16 || !ALL.add(n)) continue;
+			String n = name();
+			if (n.length() < 3 || n.length() > 16 || !ALL.add(n)) continue;
 		}
 		for (String n : ALL) { Crowd.add(n); TO_SPAWN.add(n); }
 		java.util.Collections.shuffle(TO_SPAWN, RNG);
@@ -78,15 +101,15 @@ public final class Population {
 
 	private static Vec3 spot() {
 		Config c = Config.get();
-		double a = RNG.nextDouble() * Math.PI * 2, r = 3 + RNG.nextDouble() * 12;
-		return new Vec3(c.lobbyX + Math.cos(a) * r, c.lobbyY, c.lobbyZ + Math.sin(a) * r);
+		double a = RNG.nextDouble() * Math.PI * 2, r = 6 + RNG.nextDouble() * 11;
+		return new Vec3(c.lobbyX + Math.cos(a) * r, Lobby.ground() + 1, c.lobbyZ + Math.sin(a) * r);
 	}
 
 	private static void spawn(MinecraftServer server, String name) {
 		VexBotApi.spawnBot(server, name, spot(), RNG.nextFloat() * 360f, Hub.world(server).dimension().identifier().toString());
 		BOTS.put(name, new Bot(name));
-		double elo = 1100 + RNG.nextGaussian() * 260;
-		Presentation.setRank(server, name, elo);
+		Crowd.setElo(name, 1180 + RNG.nextGaussian() * 220);
+		Ranks.randomFor(server, name, RNG);
 	}
 
 	/** Gives a bot a kit the way VexBot expects (its armour and offhand managers see the change). */
@@ -172,7 +195,7 @@ public final class Population {
 
 		for (String n : lost) { BOTS.remove(n); TO_SPAWN.add(n); }
 		if (ticks % 20 == 0) duels(s);
-		if (--nextChat <= 0) { chat(s); nextChat = 60 + RNG.nextInt(200); }
+		if (--nextChat <= 0) { chat(s); nextChat = 30 + RNG.nextInt(120); }
 	}
 
 	/** One bot says something in chat. */
@@ -182,7 +205,12 @@ public final class Population {
 		if (ready.isEmpty()) return;
 		ServerPlayer p = VexBotApi.resolveBot(s, ready.get(RNG.nextInt(ready.size())).name);
 		if (p == null) return;
-		s.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.empty().append(p.getDisplayName()).append(net.minecraft.network.chat.Component.literal("§f: " + CHAT[RNG.nextInt(CHAT.length)])), false);
+		String msg = CHAT[RNG.nextInt(CHAT.length)];
+		if (RNG.nextInt(5) == 0 && ready.size() > 2) {                        // now and then someone talks to someone
+			String a = ready.get(RNG.nextInt(ready.size())).name, b2 = ready.get(RNG.nextInt(ready.size())).name;
+			msg = String.format(AT[RNG.nextInt(AT.length)], a, b2);
+		}
+		s.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.empty().append(p.getDisplayName()).append(net.minecraft.network.chat.Component.literal("§f: " + msg)), false);
 	}
 
 	private static boolean pendingRecycle(String name) {
@@ -198,7 +226,7 @@ public final class Population {
 		if (pack == null) return;
 		Config c = Config.get();
 		double dx = c.lobbyX - p.getX(), dz = c.lobbyZ - p.getZ();
-		boolean far = Math.hypot(dx, dz) > 15;
+		boolean far = Math.hypot(dx, dz) > 16;
 		int roll = RNG.nextInt(10);
 		if (roll < 3 && !far) {                                              // stand and look around
 			pack.stopMovement();
@@ -236,7 +264,7 @@ public final class Population {
 		if (pa != null) pa.stopAll();
 		if (pb != null) pb.stopAll();
 		Kit kit = KITS[RNG.nextInt(KITS.length)];
-		Duels.start(a, b, kit, false, RNG.nextInt(4) == 0 ? 3 : 1, true);
+		Duels.start(a, b, kit, true, RNG.nextInt(4) == 0 ? 3 : 1, true);
 		nextDuel = 8 + RNG.nextInt(20);
 	}
 }

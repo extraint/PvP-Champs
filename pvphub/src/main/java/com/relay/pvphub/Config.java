@@ -11,30 +11,39 @@ import net.fabricmc.loader.api.FabricLoader;
 public final class Config {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-	public double lobbyX = 0.5, lobbyY = 151, lobbyZ = 0.5;
-	public float lobbyYaw = 0f;
-	/** First duel arena's centre (floor top); the others follow along +x. */
-	public int arenaX = 1000, arenaY = 100, arenaZ = 0;
+	/** Bumped when the layout changes: an older file gets the new places for the lobby and arenas. */
+	public int configVersion = 2;
+	public double lobbyX = 0.5, lobbyY = 103, lobbyZ = 0.5;
+	public float lobbyYaw = 180f;
+	/** First duel colosseum's centre (floor top); the others follow along +x. Each is 255 blocks across. */
+	public int arenaX = 3000, arenaY = 120, arenaZ = 0;
 	public int duelSlots = 6;
-	public int slotSpacing = 120;
-	public int ffaX = 1000, ffaY = 100, ffaZ = 400;
+	public int slotSpacing = 320;
+	public int ffaX = 3000, ffaY = 120, ffaZ = -400;
 	public String ffaKit = "sword";
+	/** How fast the colosseums go up in the background (columns a tick; each column is a couple of hundred blocks). */
+	public int arenaBuildColumnsPerTick = 120;
 	public int countdownSeconds = 5;
 	public int requestSeconds = 60;
-	/** Shown in the tab list and on the sidebar. */
-	public String serverName = "PVP HUB";
-	public String region = "Los Angeles";
-	public String address = "play.example.com";
-	public String discord = "discord.gg/yourserver";
-	/** With VexBot installed: how many bots keep the lobby busy (0 = none), how many duels they fight at once, how many arenas they leave free for players. */
-	public int crowdBots = 100;
-	/** Bots take the other side of a queue when no player is waiting, after this many seconds (0 = at once); false turns it off. */
+	/** The look of the simulated server. */
+	public String serverName = "PVPHQ";
+	public String version = "1.21.11+";
+	public String address = "play.pvphq.com";
+	public String discord = "discord.gg/pvphq";
+	public String store = "store.pvphq.com";
+	/** Your rank (OWNER, DEVELOPER, ADMIN, MANAGER, SENIOR MOD, ARBITER, MOD, HELPER, MONEY SMP, CREATOR, HQ+ or DEFAULT). */
+	public String playerRank = "HQ+";
+	/** The "Online:" count shows this many on top of who is really there. */
+	public int simulatedOnline = 3900;
+	/** Regions switched on in the region selector (the lowest-ping one is yours). */
+	public java.util.List<String> regions = new java.util.ArrayList<>(java.util.List.of("NA West", "NA Central", "NA East", "EU West", "EU Central"));
+	/** The bots: how many fill the lobby, how many duels they fight at once, how many arenas they leave free for you. */
+	public int crowdBots = 120;
+	/** Bots take the other side of a queue when no player is waiting, after this many seconds (0 = at once). */
 	public boolean botOpponents = true;
-	public int botOpponentDelaySeconds = 1;
-	public int crowdDuels = 3;
-	public int crowdReserveArenas = 2;
-	/** Whether the lobby platform has been built (it is built once, then left alone so you can change it). */
-	public boolean lobbyBuilt = false;
+	public int botOpponentDelaySeconds = 2;
+	public int crowdDuels = 5;
+	public int crowdReserveArenas = 1;
 
 	private static Config current = new Config();
 
@@ -51,6 +60,16 @@ public final class Config {
 			System.err.println("[pvphub] config.json unreadable, using defaults: " + e);
 			current = new Config();
 		}
+		if (current.configVersion < 2) {          // the old small lobby and arenas: move everything to the new layout
+			Config fresh = new Config();
+			current.configVersion = 2;
+			current.lobbyX = fresh.lobbyX; current.lobbyY = fresh.lobbyY; current.lobbyZ = fresh.lobbyZ; current.lobbyYaw = fresh.lobbyYaw;
+			current.arenaX = fresh.arenaX; current.arenaY = fresh.arenaY; current.arenaZ = fresh.arenaZ; current.slotSpacing = fresh.slotSpacing; current.duelSlots = fresh.duelSlots;
+			current.ffaX = fresh.ffaX; current.ffaY = fresh.ffaY; current.ffaZ = fresh.ffaZ;
+			current.serverName = fresh.serverName; current.address = fresh.address; current.discord = fresh.discord;
+			current.crowdBots = fresh.crowdBots; current.crowdDuels = fresh.crowdDuels; current.crowdReserveArenas = fresh.crowdReserveArenas;
+		}
+		if (current.regions == null) current.regions = new Config().regions;
 		save();   // writes new settings into an older file
 	}
 

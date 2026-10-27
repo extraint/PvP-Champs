@@ -17,7 +17,7 @@ import net.minecraft.world.level.GameType;
 public final class Hub {
 	private Hub() {}
 
-	public enum State { LOBBY, QUEUE, DUEL, FFA, SPECTATE }
+	public enum State { LOBBY, QUEUE, DUEL, FFA, SPECTATE, EDIT }
 
 	private static final Map<UUID, State> STATE = new HashMap<>();
 	private static int ticks;
@@ -66,33 +66,8 @@ public final class Hub {
 		toLobby(p);
 	}
 
-	/** Builds the lobby platform once (afterwards it is yours to change). */
-	public static void buildLobby(MinecraftServer server) {
-		Config c = Config.get();
-		ServerLevel level = world(server);
-		if (!level.getBlockState(new BlockPos((int) Math.floor(c.lobbyX), (int) Math.floor(c.lobbyY) - 1, (int) Math.floor(c.lobbyZ))).isAir()) return;     // built already (in this world)
-		int cx = (int) Math.floor(c.lobbyX), cy = (int) Math.floor(c.lobbyY) - 1, cz = (int) Math.floor(c.lobbyZ);
-		int r = 20;
-		for (int chx = (cx - r - 2) >> 4; chx <= (cx + r + 2) >> 4; chx++) for (int chz = (cz - r - 2) >> 4; chz <= (cz + r + 2) >> 4; chz++) level.setChunkForced(chx, chz, true);
-		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
-		for (int x = cx - r; x <= cx + r; x++) {
-			for (int z = cz - r; z <= cz + r; z++) {
-				double d = Math.hypot(x - cx, z - cz);
-				if (d > r + 0.5) continue;
-				Builder.set(level, p.set(x, cy, z), d > r - 1.5 ? Builder.b("polished_blackstone_bricks") : (((x + z) & 1) == 0 ? Builder.b("smooth_quartz") : Builder.b("quartz_bricks")));
-				Builder.set(level, p.set(x, cy - 1, z), Builder.b("stone_bricks"));
-				for (int y = cy + 1; y <= cy + 6; y++) Builder.set(level, p.set(x, y, z), Builder.b("air"));
-				if (d > r - 1.5) for (int y = cy + 1; y <= cy + 25; y++) Builder.set(level, p.set(x, y, z), Builder.b(y <= cy + 2 ? "polished_blackstone_bricks" : "barrier"));
-			}
-		}
-		for (int i = 0; i < 8; i++) {                                      // light posts around the middle
-			double a = i * Math.PI / 4;
-			int lx = cx + (int) Math.round(Math.cos(a) * 9), lz = cz + (int) Math.round(Math.sin(a) * 9);
-			for (int y = cy + 1; y <= cy + 3; y++) Builder.set(level, p.set(lx, y, lz), Builder.b("polished_blackstone_bricks"));
-			Builder.set(level, p.set(lx, cy + 4, lz), Builder.b("sea_lantern"));
-		}
-		System.out.println("[pvphub] built the lobby at " + cx + " " + (cy + 1) + " " + cz);
-	}
+	/** Builds the lobby (see Lobby). */
+	public static void buildLobby(MinecraftServer server) { Lobby.build(server); }
 
 	/** Once a tick: no hunger, no loose items, nobody falling out of the world; once a second: the hotbar and the status line. */
 	public static void tick(MinecraftServer server) {
@@ -100,7 +75,7 @@ public final class Hub {
 		for (ServerPlayer p : server.getPlayerList().getPlayers()) {
 			if (Crowd.isBot(p)) continue;          // the crowd is looked after by Population
 			State s = state(p);
-			if (s == State.LOBBY || s == State.QUEUE) {
+			if (s == State.LOBBY || s == State.QUEUE || s == State.EDIT) {
 				p.getFoodData().setFoodLevel(20);
 				if (p.getY() < Config.get().lobbyY - 20) toLobby(p);
 			}
@@ -108,7 +83,7 @@ public final class Hub {
 		}
 		if (ticks % 20 == 0) {
 			Config c = Config.get();
-			for (ItemEntity e : world(server).getEntitiesOfClass(ItemEntity.class, new net.minecraft.world.phys.AABB(c.lobbyX - 40, c.lobbyY - 10, c.lobbyZ - 40, c.lobbyX + 40, c.lobbyY + 30, c.lobbyZ + 40))) e.discard();
+			for (ItemEntity e : world(server).getEntitiesOfClass(ItemEntity.class, new net.minecraft.world.phys.AABB(c.lobbyX - 90, c.lobbyY - 30, c.lobbyZ - 90, c.lobbyX + 90, c.lobbyY + 40, c.lobbyZ + 90))) e.discard();
 		}
 	}
 
@@ -116,11 +91,12 @@ public final class Hub {
 		boolean queued = s == State.QUEUE;
 		if ((s == State.LOBBY || queued) && !HubItems.intact(p, queued)) HubItems.giveLobby(p, queued);
 		String line = switch (s) {
-			case LOBBY -> "§b§lPvP Hub §7· " + p.getGameProfile().name() + " · /queue, /duel, /ffa";
+			case LOBBY -> Arenas.building().isEmpty() ? "" : "§7" + Arenas.building();
 			case QUEUE -> Queues.status(p);
 			case DUEL -> Duels.status(p);
 			case FFA -> Ffa.status(p);
 			case SPECTATE -> "§7Spectating · §f/hub §7to leave";
+			case EDIT -> "§aEditing " + KitEditor.editing(p) + " §7· move your items, then §a/kiteditor save §7or §c/kiteditor cancel";
 		};
 		p.sendSystemMessage(Component.literal(line), true);
 	}

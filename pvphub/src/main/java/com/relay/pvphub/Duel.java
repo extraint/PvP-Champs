@@ -137,9 +137,9 @@ public final class Duel {
 			boolean won = human == w;
 			String hn = human.getGameProfile().name();
 			if (ranked) {
-				double d = Stats.rankedVsBot(human.getUUID(), hn, kit, won);
+				double d = Stats.rankedVsBot(human.getUUID(), hn, kit, won, Crowd.elo((botW ? w : l).getGameProfile().name(), kit));
 				double e = Stats.elo(human.getUUID(), hn, kit);
-				human.sendSystemMessage(Component.literal((won ? "§a=== You won! §7Rating " : "§c=== You lost. §7Rating ") + Math.round(e) + (won ? " §a(+" : " §c(") + Math.round(d) + ") §7· " + Stats.rankName(e) + " ==="));
+				human.sendSystemMessage(Component.literal((won ? "§a§lVICTORY! §7" : "§c§lDEFEAT! §7") + kit.label + " " + Tiers.tag(e) + (d >= 0 ? " §a(+" : " §c(") + Math.round(d * 0.6) + " TR)"));
 			} else {
 				Stats.casualVsBot(human.getUUID(), hn, kit, won);
 				human.sendSystemMessage(Component.literal(won ? "§a=== You won! ===" : "§c=== You lost. ==="));
