@@ -153,43 +153,83 @@ public final class Lobby {
 		int[][] at = {{-44, -42}, {44, -42}, {-44, 42}, {44, 42}, {-32, -66}, {32, -66}, {-64, -24}, {64, -24}, {-64, 26}, {64, 26}};
 		for (int i = 0; i < at.length; i++) {
 			String[] l = looks[i % looks.length];
-			house(level, cx + at[i][0], g, cz + at[i][1], 14 + (i % 3) * 2, 10 + (i % 2) * 2, 7 + (i % 3), l);
+			house(level, cx + at[i][0], g, cz + at[i][1], 14 + (i % 3) * 2, 10 + (i % 2) * 2, 7 + (i % 3), l, cz);
 		}
 		// the two halls at the ends of the west and east paths
-		house(level, cx - 72, g, cz, 12, 18, 10, looks[0]);
-		house(level, cx + 72, g, cz, 12, 18, 10, looks[2]);
+		house(level, cx - 72, g, cz, 12, 18, 10, looks[0], cz);
+		house(level, cx + 72, g, cz, 12, 18, 10, looks[2], cz);
 	}
 
-	/** A timber-framed house: stone base, framed walls with windows, a steep gable roof along x. */
-	private static void house(ServerLevel level, int hx, int g, int hz, int w, int d, int h, String[] look) {
+	/** A timber-framed house: stone base, corner posts, framed walls with shuttered windows, a door under a porch, a gable roof with overhang, dormer and chimney. */
+	private static void house(ServerLevel level, int hx, int g, int hz, int w, int d, int h, String[] look, int cz) {
 		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
-		BlockState wall = b(look[0]), frame = b(look[1]), base = b("stone_bricks"), glass = b("glass"), roofFull = b(look[3]), air = b("air");
+		BlockState wall = b(look[0]), frame = b(look[1]), base = b("stone_bricks"), pane = b("glass_pane"), roofFull = b(look[3]), air = b("air"),
+			log = b("dark_oak_log"), plank = b("dark_oak_planks");
 		int x0 = hx - w / 2, x1 = hx + w / 2, z0 = hz - d / 2, z1 = hz + d / 2;
+		int front = hz > cz ? z0 : z1;                       // the door side: toward the plaza
+		int out = front == z0 ? -1 : 1;
+		for (int x = x0 - 1; x <= x1 + 1; x++) for (int z = z0 - 1; z <= z1 + 1; z++) Builder.set(level, p.set(x, g, z), b("cobblestone"));
 		for (int x = x0; x <= x1; x++) for (int z = z0; z <= z1; z++) {
 			boolean edgeX = x == x0 || x == x1, edgeZ = z == z0 || z == z1;
-			Builder.set(level, p.set(x, g, z), base);
+			Builder.set(level, p.set(x, g, z), plank);
 			for (int y = g + 1; y <= g + h; y++) {
-				BlockState s;
-				if (!edgeX && !edgeZ) s = air;
-				else if ((edgeX && edgeZ) || y == g + h || y == g + 1) s = frame;
-				else if (y >= g + 3 && y <= g + h - 2 && ((edgeX ? z : x) % 3 == 0)) s = glass;
-				else s = wall;
-				if (y == g + 1 && !(edgeX && edgeZ)) s = base;
-				Builder.set(level, p.set(x, y, z), s);
+				BlockState st;
+				boolean corner = edgeX && edgeZ;
+				int along = edgeX ? z - z0 : x - x0;
+				if (!edgeX && !edgeZ) st = air;
+				else if (corner) st = log;
+				else if (y == g + 1) st = base;
+				else if (y == g + h) st = frame;
+				else if (y == g + h / 2 + 1 && h > 7) st = frame;                                   // a beam between the floors
+				else if (along % 4 == 0 && along > 0) st = log;                                      // posts
+				else if ((y == g + 3 || y == g + h - 2 || (h > 7 && y == g + h / 2 + 3)) && along % 4 == 2) st = pane;
+				else if ((y == g + 4 || y == g + h - 3) && along % 4 == 2 && y > g + 3) st = pane;
+				else st = wall;
+				Builder.set(level, p.set(x, y, z), st);
 			}
 		}
-		// roof: stairs stepping in from both long sides up to a ridge along x
-		int layers = d / 2 + 1;
+		// door and porch
+		int dxm = (x0 + x1) / 2;
+		BlockState door = b("dark_oak_door").setValue(BlockStateProperties.HORIZONTAL_FACING, out < 0 ? Direction.NORTH : Direction.SOUTH);
+		Builder.set(level, p.set(dxm, g + 1, front), door.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.LOWER));
+		Builder.set(level, p.set(dxm, g + 2, front), door.setValue(BlockStateProperties.DOUBLE_BLOCK_HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+		for (int dx = -2; dx <= 2; dx++) {
+			Builder.set(level, p.set(dxm + dx, g, front + out), b("stone_brick_slab"));
+			Builder.set(level, p.set(dxm + dx, g, front + 2 * out), b("stone_brick_stairs").setValue(BlockStateProperties.HORIZONTAL_FACING, out < 0 ? Direction.NORTH : Direction.SOUTH));
+		}
+		for (int dx : new int[] {-2, 2}) {
+			for (int y = g + 1; y <= g + 3; y++) Builder.set(level, p.set(dxm + dx, y, front + out), b("dark_oak_fence"));
+			Builder.set(level, p.set(dxm + dx, g + 4, front + out), b("lantern").setValue(BlockStateProperties.HANGING, false));
+		}
+		for (int dx = -2; dx <= 2; dx++) Builder.set(level, p.set(dxm + dx, g + 4, front + out), b("dark_oak_slab"));
+		Builder.set(level, p.set(dxm - 1, g + 1, front + out * 2), b("barrel"));
+		// roof: stairs stepping in from both long sides up to a ridge along x, overhanging by one block on every side
+		int layers = d / 2 + 2;
 		for (int k = 0; k <= layers; k++) {
-			int y = g + h + 1 + k, zn = z0 - 1 + k, zs = z1 + 1 - k;
+			int y = g + h + 1 + k, zn = z0 - 2 + k, zs = z1 + 2 - k;
 			if (zn > zs) break;
-			for (int x = x0 - 1; x <= x1 + 1; x++) {
+			for (int x = x0 - 2; x <= x1 + 2; x++) {
 				if (zn == zs) { Builder.set(level, p.set(x, y, zn), roofFull); continue; }
 				Builder.set(level, p.set(x, y, zn), facing(look[2], Direction.SOUTH));
 				Builder.set(level, p.set(x, y, zs), facing(look[2], Direction.NORTH));
-				if (x == x0 - 1 || x == x1 + 1) continue;
-				for (int z = zn + 1; z < zs; z++) Builder.set(level, p.set(x, y, z), (x == x0 || x == x1) ? wall : air);    // gable ends
+				if (x == x0 - 2 || x == x1 + 2) continue;
+				for (int z = zn + 1; z < zs; z++) {
+					boolean gable = x == x0 || x == x1;
+					Builder.set(level, p.set(x, y, z), gable ? ((z - zn) % 3 == 1 ? frame : wall) : air);
+				}
 			}
+		}
+		// gable windows and a ridge cap
+		for (int x : new int[] {x0, x1}) { Builder.set(level, p.set(x, g + h + 3, hz), pane); }
+		// chimney
+		int cxh = x1 - 2, czh = hz;
+		int top = g + h + d / 2 + 4;
+		for (int y = g + h + 1; y <= top; y++) for (int dx = 0; dx <= 1; dx++) for (int dz2 = 0; dz2 <= 1; dz2++) Builder.set(level, p.set(cxh + dx, y, czh + dz2), b("bricks"));
+		Builder.set(level, p.set(cxh, top + 1, czh), b("campfire").setValue(BlockStateProperties.LIT, false));
+		// window boxes
+		for (int x = x0 + 2; x < x1; x += 4) {
+			Builder.set(level, p.set(x, g + 2, front + out), b("spruce_trapdoor").setValue(BlockStateProperties.OPEN, false));
+			Builder.set(level, p.set(x, g + 3, front + out), b("azalea"));
 		}
 	}
 
