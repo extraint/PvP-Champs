@@ -116,6 +116,7 @@ public final class Population {
 	public static void give(ServerPlayer p, Kit kit) {
 		KitManager.apply(p, kit.build(p.level().getServer()));
 		p.setGameMode(GameType.SURVIVAL);
+		p.setInvulnerable(false);
 		p.removeAllEffects();
 		p.setHealth(p.getMaxHealth());
 		p.getFoodData().setFoodLevel(20);
@@ -186,6 +187,7 @@ public final class Population {
 				int ms = RNG.nextInt(10) == 0 ? 1 : 12 + (int) Math.abs(RNG.nextGaussian() * 45);        // a few ping-less, most between 12 and ~100
 				if (p.connection != null) ((com.relay.pvphub.mixin.CommonListenerAccess) p.connection).pvphub$setLatency(ms);
 				p.setGameMode(GameType.ADVENTURE);
+				p.setInvulnerable(true);
 				p.getInventory().clearContent();
 				Hub.setState(p, Hub.State.LOBBY);
 				continue;

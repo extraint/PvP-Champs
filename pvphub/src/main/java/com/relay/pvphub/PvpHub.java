@@ -97,6 +97,8 @@ public final class PvpHub implements ModInitializer {
 		// A fighter who would die has the fight ended for them instead of dying.
 		ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
 			if (!(entity instanceof ServerPlayer p)) return true;
+			Hub.State st = Hub.state(p);
+			if ((st == Hub.State.DUEL || st == Hub.State.FFA) && Totems.pop(p)) return false;
 			if (Duels.onDeath(p)) return false;
 			if (Ffa.onDeath(p, source)) return false;
 			return Hub.inLobby(p) ? false : true;
@@ -134,6 +136,8 @@ public final class PvpHub implements ModInitializer {
 				if (Hub.inLobby(p)) { String a = Holo.actionOf(entity); if (a != null) Menus.action(p, a); }
 				return InteractionResult.FAIL;
 			}
+			// nobody throws a punch outside a fight
+			if (player instanceof ServerPlayer p && Hub.state(p) != Hub.State.DUEL && Hub.state(p) != Hub.State.FFA && entity instanceof net.minecraft.world.entity.player.Player) return InteractionResult.FAIL;
 			return InteractionResult.PASS;
 		});
 
